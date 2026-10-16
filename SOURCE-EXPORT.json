@@ -250,7 +250,7 @@
     },
     {
       "path": "README-ipadOS.md",
-      "sha256": "1d0bab1e8b78dfa2e05b67206185bcdc6a2121551fff270124216ffe8f8ad860"
+      "sha256": "829de1c7319dcbc2aa96dd62c6d74fe975eb8db3d4c89980ded976f9fb31627a"
     },
     {
       "path": "README-upstream.md",
@@ -259,26 +259,6 @@
     {
       "path": "README.md",
       "sha256": "bb6498785ab54977f3cfe659b31c3498f24a416fabcb64a1835127a89f3be9bf"
-    },
-    {
-      "path": "api/generate-theme.js",
-      "sha256": "553caec53b42459e972da021aab3140ab415fd2e2baa5d6853b2d1ec4c5b2975"
-    },
-    {
-      "path": "api/generate-theme_openai.js",
-      "sha256": "0b41bfbfbbe1806c7398ca6d6d56a067fac6443ea71120996120a18ae94b73a1"
-    },
-    {
-      "path": "api/lyric-proxy.js",
-      "sha256": "7608f2d0b234bf8db9ba613f77dba5d787f1b12cf01d311f983ecfabca89e190"
-    },
-    {
-      "path": "api/qq.js",
-      "sha256": "1f3c7df92606b4dbae5e16a9c2f876d33c4d6dbde4833b5627f021e0f6fc7222"
-    },
-    {
-      "path": "api/segment-lyrics.js",
-      "sha256": "761efe30ce5fc9bfd6292ed5e74a5b96c5383dacc051625ad64ae02bcb572cf0"
     },
     {
       "path": "api-ts/generate-theme.ts",
@@ -303,6 +283,26 @@
     {
       "path": "api-ts/tsconfig.json",
       "sha256": "849edbd40ff4236fa124e4ef13bfe659febae5c70a6eff5f1984ff7601427db6"
+    },
+    {
+      "path": "api/generate-theme.js",
+      "sha256": "553caec53b42459e972da021aab3140ab415fd2e2baa5d6853b2d1ec4c5b2975"
+    },
+    {
+      "path": "api/generate-theme_openai.js",
+      "sha256": "0b41bfbfbbe1806c7398ca6d6d56a067fac6443ea71120996120a18ae94b73a1"
+    },
+    {
+      "path": "api/lyric-proxy.js",
+      "sha256": "7608f2d0b234bf8db9ba613f77dba5d787f1b12cf01d311f983ecfabca89e190"
+    },
+    {
+      "path": "api/qq.js",
+      "sha256": "1f3c7df92606b4dbae5e16a9c2f876d33c4d6dbde4833b5627f021e0f6fc7222"
+    },
+    {
+      "path": "api/segment-lyrics.js",
+      "sha256": "761efe30ce5fc9bfd6292ed5e74a5b96c5383dacc051625ad64ae02bcb572cf0"
     },
     {
       "path": "assets/placeholder_cover-2.jpg",
@@ -517,10 +517,6 @@
       "sha256": "8243565767a42e08c3f3028ae50360f6e2b768b2f9916658f9b0f861700c8c41"
     },
     {
-      "path": "deploy/ipados/https-proxy.conf.example",
-      "sha256": "870c356270c423c202435fadcfd51da2297f0b1b6918f3dfd034c67d96cd3b64"
-    },
-    {
       "path": "deploy/ipados-bodian/.env.example",
       "sha256": "24faf19b87ebad2f083a9055888aeb540a959439f7eda75653027944b5de6a3d"
     },
@@ -535,6 +531,14 @@
     {
       "path": "deploy/ipados-bodian/server.mjs",
       "sha256": "cd9a9a7be6f75ee779444cb28e170d27986b8cee71d99a483a1fb4a279670c52"
+    },
+    {
+      "path": "deploy/ipados/https-proxy.conf.example",
+      "sha256": "870c356270c423c202435fadcfd51da2297f0b1b6918f3dfd034c67d96cd3b64"
+    },
+    {
+      "path": "dev-probe.html",
+      "sha256": "91bfba9defd87b3824ddf1648c02e5cfad7aa1120a5b2acef1c1c3307ba2951a"
     },
     {
       "path": "dev/build/buildIdentity.mjs",
@@ -673,6 +677,10 @@
       "sha256": "fc949725f0a0f61aad0a52433744ba63126e6739355b65ddf799db8217cf25c6"
     },
     {
+      "path": "dev/ipados/package-unsigned-ipa.py",
+      "sha256": "1a7b7587c418c62a6755e5bd34337ce4c7a65bfa66dd9d329e1dd94f288b5ff2"
+    },
+    {
       "path": "dev/ipados/transport/playwright.config.ts",
       "sha256": "b4116ba9a0e4ffa4c287d2ab4ec00bc3dd51f00c735781d4d53ded0d417724d5"
     },
@@ -785,6 +793,10 @@
       "sha256": "3bdc9a94d448c2b6f970c206f3e7c1aa1f5a7f2c528fcf85b35c4e146dba4fca"
     },
     {
+      "path": "dev/probes/accountBehavior.probe.tsx",
+      "sha256": "60ab030ef9496c11897320019e9883bcc58449f84b654a594950abda1be9a6f0"
+    },
+    {
       "path": "dev/probes/accountBehavior/accountFixtureRules.ts",
       "sha256": "26c35117f554ceac1a9e757024b021c79c6cc5046a8a3978ff2dbc2d7f9c4260"
     },
@@ -803,10 +815,6 @@
     {
       "path": "dev/probes/accountBehavior/useAccountProbeHarness.ts",
       "sha256": "8df164248c8bc4db745089e8d6cf40a6245cfca59b08bf0992ef71cacdaad1bf"
-    },
-    {
-      "path": "dev/probes/accountBehavior.probe.tsx",
-      "sha256": "60ab030ef9496c11897320019e9883bcc58449f84b654a594950abda1be9a6f0"
     },
     {
       "path": "dev/probes/activeGridMarker.probe.tsx",
@@ -909,16 +917,20 @@
       "sha256": "3c831d7e92074ad896971ed5cddbeed8f82515770962bb667726e506451a80e9"
     },
     {
-      "path": "dev/probes/gridEntrancePerf/scriptedPagingResource.ts",
-      "sha256": "4321ff1330f4d1c222160edde2aa154b7dc77fd81f2c766b818ad25c25ee5129"
-    },
-    {
       "path": "dev/probes/gridEntrancePerf.probe.tsx",
       "sha256": "3e77017e78e7cb7f8f5c560456dc8e126d70c768b860996c8766f533e3fe657c"
     },
     {
+      "path": "dev/probes/gridEntrancePerf/scriptedPagingResource.ts",
+      "sha256": "4321ff1330f4d1c222160edde2aa154b7dc77fd81f2c766b818ad25c25ee5129"
+    },
+    {
       "path": "dev/probes/gridPanelToggle.probe.tsx",
       "sha256": "b01b9aabc2e7312e01a6636a1332948b62a34a0c771485f6a86b178fa1c250e0"
+    },
+    {
+      "path": "dev/probes/homeBehavior.probe.tsx",
+      "sha256": "e04b2b26bd03488e5fec2e30ed2153248970481b2c71476a15ad94d25ba93969"
     },
     {
       "path": "dev/probes/homeBehavior/bravaisHomeProbe.ts",
@@ -959,10 +971,6 @@
     {
       "path": "dev/probes/homeBehavior/useHomeProbeHarness.ts",
       "sha256": "8bcb834d49e5fd7d4a725165c90574a33c8c768031ef6858e54d3d248955efbd"
-    },
-    {
-      "path": "dev/probes/homeBehavior.probe.tsx",
-      "sha256": "e04b2b26bd03488e5fec2e30ed2153248970481b2c71476a15ad94d25ba93969"
     },
     {
       "path": "dev/probes/icu-folia/songs.ts",
@@ -1029,6 +1037,10 @@
       "sha256": "ead73d0d0049ca6ea1bfbdb8f098a1c2af7ad462cb47ab69b5506cbb6ba6e8e9"
     },
     {
+      "path": "dev/probes/libraryBehavior.probe.tsx",
+      "sha256": "40af3a38be072209b97a7a2bea85f784a2afa9bab1cf6b9380e84af48d521513"
+    },
+    {
       "path": "dev/probes/libraryBehavior/ProbeControlPanel.tsx",
       "sha256": "00e465b0d505d4d591650f5c4170e9b71d33f0289d3e84d69c15f7592e7b0aa1"
     },
@@ -1075,10 +1087,6 @@
     {
       "path": "dev/probes/libraryBehavior/useLibraryProbeHarness.ts",
       "sha256": "b4dcf6db944545f91d6294c826e6ddfac9efeb3e7e9e64d69366bb0abdfaebb1"
-    },
-    {
-      "path": "dev/probes/libraryBehavior.probe.tsx",
-      "sha256": "40af3a38be072209b97a7a2bea85f784a2afa9bab1cf6b9380e84af48d521513"
     },
     {
       "path": "dev/probes/localFolderIgnore.probe.tsx",
@@ -1185,28 +1193,24 @@
       "sha256": "0f2f4045476c8021f32cb0825f54fede3423d6d284e4872ed093e1bc325db1e9"
     },
     {
-      "path": "dev/probes/wallToolsIsland/islandProbeApi.ts",
-      "sha256": "40f791b97c3da56d2f274e7c0b029df09d8059752e1f097b5fcbaa9c0c34fb91"
-    },
-    {
       "path": "dev/probes/wallToolsIsland.probe.tsx",
       "sha256": "9dc85ee25c1b07d2a0983291dfa847fde64130014c7a4573bae2a992b049229c"
+    },
+    {
+      "path": "dev/probes/wallToolsIsland/islandProbeApi.ts",
+      "sha256": "40f791b97c3da56d2f274e7c0b029df09d8059752e1f097b5fcbaa9c0c34fb91"
     },
     {
       "path": "dev/probes/wallpaperEntryConfirm.probe.tsx",
       "sha256": "19ce198b6810d2899bb04dd739c6f0b57a535dc890a3fac28de982297a6ce251"
     },
     {
-      "path": "dev/prototypes/bravais/index.html",
-      "sha256": "3a5bf45236b6dc5702924cb834663ffc24795ff0b1a756facb1ce4ed64bd8135"
-    },
-    {
       "path": "dev/prototypes/bravais-kinds/index.html",
       "sha256": "52503c3765d4693ef458d767fcfdd690ac9cc343675f87ca4b5a40ff7b1ee2cb"
     },
     {
-      "path": "dev-probe.html",
-      "sha256": "91bfba9defd87b3824ddf1648c02e5cfad7aa1120a5b2acef1c1c3307ba2951a"
+      "path": "dev/prototypes/bravais/index.html",
+      "sha256": "3a5bf45236b6dc5702924cb834663ffc24795ff0b1a756facb1ce4ed64bd8135"
     },
     {
       "path": "docs/CODEMAP.md",
@@ -1278,7 +1282,7 @@
     },
     {
       "path": "docs/ipados-github-publication.md",
-      "sha256": "7a0ddaaa95703a4f86f384a2d92f2dc20769d31b0ca3449a6942a8935315b53f"
+      "sha256": "de52f52e4e4be0ba68a784831c0d9d2cee056680788a7817898250abbc416471"
     },
     {
       "path": "docs/ipados-netease-direct.md",
@@ -1305,8 +1309,12 @@
       "sha256": "81c55ea135def5e2eeb40210a79a3f09a2bf68aac63e07d83311fa7c59c88628"
     },
     {
+      "path": "docs/ipados-release-downloads.md",
+      "sha256": "6d1fa5b8c79ddacf35f85941c836431dc682901c247e7ef3ac242912c82b4e67"
+    },
+    {
       "path": "docs/ipados-self-build.md",
-      "sha256": "15bf8d9db5f2653edbcd67d8cd5caf0940d0413e711c728f3f8a232ffcb76556"
+      "sha256": "816d49e6e5db7d006c482f189580a7d12bd113deccd408045c2d3738b878ea3d"
     },
     {
       "path": "docs/ipados-source-preservation.json",
@@ -1683,6 +1691,30 @@
     {
       "path": "docs/ipados-validation/playback-start-regression-web-build.log",
       "sha256": "1600906cfef2681e8abde1558c0f3bcc361f117a104c2452209d8f4e0d7cc56f"
+    },
+    {
+      "path": "docs/ipados-validation/release-ios-archive.log",
+      "sha256": "438bcc8e05b3f18b540f38a20e7073c0c7c7fd4d692163c2a3671d3a5b28e4ba"
+    },
+    {
+      "path": "docs/ipados-validation/release-ios-sync.log",
+      "sha256": "9dfb21f50e9e5c2d8f7b6e144c76df8f1f25f9c288139eed1e8ab6d2461e0022"
+    },
+    {
+      "path": "docs/ipados-validation/release-package.json",
+      "sha256": "b20ec4418a431286f4eeb7a04a9cd551c12af6bf9c60e9b343a6e28b7008730a"
+    },
+    {
+      "path": "docs/ipados-validation/release-schemes.log",
+      "sha256": "828fbad09113e72d763ae0354b7733ee8b1533cbf2f491845a9cae93d472eaaf"
+    },
+    {
+      "path": "docs/ipados-validation/release-sdks.log",
+      "sha256": "5c577db8d316a5d6dcb343f01a4357bdfbc45fe7a3f8a2b3487b4765d79ce00a"
+    },
+    {
+      "path": "docs/ipados-validation/release-typecheck.log",
+      "sha256": "d2834a27322c3483d04b983213cf75e3cfa226ea27d86ac822370651a3b23472"
     },
     {
       "path": "docs/ipados-validation/system-media-bundle.json",
@@ -2177,6 +2209,18 @@
       "sha256": "2b7132a9943d2622e51e656897ca5162f56b121b40b423dedce1fbc699dba88a"
     },
     {
+      "path": "ios/App/App.xcodeproj/project.pbxproj",
+      "sha256": "17e00ce87094d0fe1fa43075e90828b21ea21c40ec227c08a387123e337ad44b"
+    },
+    {
+      "path": "ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+      "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
+    },
+    {
+      "path": "ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved",
+      "sha256": "395ae1d0238b45be5835b28ed34474c8ddd3575b63aef95b7c66a5c32ad27a20"
+    },
+    {
       "path": "ios/App/App/AI/AIConfiguration.swift",
       "sha256": "19408c27827b41b7313f2d21d55f223cd22b32b8835e7356e3b7e6094294951a"
     },
@@ -2327,18 +2371,6 @@
     {
       "path": "ios/App/App/config 5.xml",
       "sha256": "e9dcda493e663c5c4db9e3cb3bd968477a6e90aa8840bcbba40d72ed54b767ce"
-    },
-    {
-      "path": "ios/App/App.xcodeproj/project.pbxproj",
-      "sha256": "17e00ce87094d0fe1fa43075e90828b21ea21c40ec227c08a387123e337ad44b"
-    },
-    {
-      "path": "ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
-      "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542"
-    },
-    {
-      "path": "ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved",
-      "sha256": "395ae1d0238b45be5835b28ed34474c8ddd3575b63aef95b7c66a5c32ad27a20"
     },
     {
       "path": "ios/App/CapApp-SPM/.gitignore",
@@ -9681,6 +9713,10 @@
       "sha256": "1ae642d70a7a6be2b561307702f8b64f49f68469a9dd25f77f95515d1f119fd7"
     },
     {
+      "path": "src/types.ts",
+      "sha256": "b6c64ebede1dab6c42866039230aa0e4f4202f1c830e6e2c54f271d4bcab1ee5"
+    },
+    {
       "path": "src/types/appPlayback.ts",
       "sha256": "9ca7ea68ccecadbf0e6627a1f94f06d648c9ea8a19eab93cae7372204d558fbb"
     },
@@ -9755,10 +9791,6 @@
     {
       "path": "src/types/webLyricSource.ts",
       "sha256": "614b61483d5943f68449eb454d081936e609355d9b013d014bd2f2693443e031"
-    },
-    {
-      "path": "src/types.ts",
-      "sha256": "b6c64ebede1dab6c42866039230aa0e4f4202f1c830e6e2c54f271d4bcab1ee5"
     },
     {
       "path": "src/utils/aiThemePrompts.ts",

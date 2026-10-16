@@ -1,0 +1,16 @@
+{
+  "file": "Folia-iPadOS-0.7.19-preview.1-unsigned.ipa",
+  "bytes": 18445929,
+  "sha256": "0b03b420346a689369e939e577bb2ce523efa13a43af5528c9358b8d29a272c5",
+  "bundleIdentifier": "org.folia.personal",
+  "version": "0.7.19",
+  "minimumOSVersion": "18.6",
+  "architecture": "arm64",
+  "signing": "Unsigned public build; requires the recipient to sign before installation.",
+  "archive": "Release archive succeeded; App scheme; iphoneos26.5; CODE_SIGNING_ALLOWED=NO",
+  "bundledWebFilesMatched": 1867,
+  "sourceAndNativeBundle": "Public placeholder org.folia.personal",
+  "newDeviceInstallVerified": false,
+  "thirdPartyResigningVerified": false,
+  "backgroundAndSystemButtons": "Pending device validation; see test report"
+}

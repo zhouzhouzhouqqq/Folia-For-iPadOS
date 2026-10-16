@@ -1,5 +1,7 @@
 # Folia iPadOS 源码自签名版
 
+下载入口：[GitHub Releases](https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS/releases)。开发预览提供未签名 IPA、对应源码 ZIP 与 SHA-256 校验文件；IPA 必须由安装者自行签名，详见 [下载包说明](docs/ipados-release-downloads.md)。
+
 自定义 AI 已支持原版歌词主题分析，无需部署 Folia 后端。新增原生插件后需 Xcode ⌘R 覆盖安装；配置步骤与范围见 [iPad AI 指南](docs/ipados-ai.md)。
 
 基于 [chthollyphile/folia-major](https://github.com/chthollyphile/folia-major) 0.7.19 的 iPadOS 适配，沿用上游 AGPL-3.0 许可证与署名。采用本地前端资源 + Capacitor/WKWebView + Swift 平台桥。保留原 Web/PWA/Electron 构建入口。
