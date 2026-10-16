@@ -1,0 +1,120 @@
+{
+  "scope": "Mac native runtime microbenchmark; not iPad memory, power or FPS; synthetic PCM only",
+  "host": {
+    "model": "MacBookPro16,1",
+    "architecture": "x86_64",
+    "cpu": "Intel Core i9-9980HK 2.40GHz",
+    "physicalCores": 8,
+    "logicalCores": 16
+  },
+  "configuration": "SwiftPM Release (-c release); official ORT 1.24.2 CPU; intraOp=2/interOp=1; no simultaneous benchmark runs",
+  "baseline": [
+    {
+      "durations": {
+        "beatSeconds": 1.8824746069999492,
+        "decodeEightSeconds": 0.1369344480003747,
+        "encodeSeconds": 0.04371524399994087,
+        "stemsSeconds": 29.49535009300007
+      },
+      "hostOS": "Version 26.7.1 (Build 25G241)",
+      "label": "baseline-release-1",
+      "peakRSSBytes": 2068783104,
+      "seconds": 30,
+      "syntheticOnly": true
+    },
+    {
+      "durations": {
+        "beatSeconds": 1.8377057479997347,
+        "decodeEightSeconds": 0.13045144200032155,
+        "encodeSeconds": 0.04707463500017184,
+        "stemsSeconds": 28.74042892899979
+      },
+      "hostOS": "Version 26.7.1 (Build 25G241)",
+      "label": "baseline-release-2",
+      "peakRSSBytes": 2124943360,
+      "seconds": 30,
+      "syntheticOnly": true
+    },
+    {
+      "durations": {
+        "beatSeconds": 1.6294041700002708,
+        "decodeEightSeconds": 0.14004435800006831,
+        "encodeSeconds": 0.05321811900012108,
+        "stemsSeconds": 25.767076541999813
+      },
+      "hostOS": "Version 26.7.1 (Build 25G241)",
+      "label": "baseline-release-3",
+      "peakRSSBytes": 2021974016,
+      "seconds": 30,
+      "syntheticOnly": true
+    }
+  ],
+  "optimized": [
+    {
+      "durations": {
+        "beatSeconds": 1.7064332999998442,
+        "decodeEightSeconds": 0.046793049999905634,
+        "encodeSeconds": 0.014039999000033276,
+        "stemsSeconds": 24.853691794000042
+      },
+      "hostOS": "Version 26.7.1 (Build 25G241)",
+      "label": "optimized-release-2",
+      "peakRSSBytes": 1966731264,
+      "seconds": 30,
+      "syntheticOnly": true
+    },
+    {
+      "durations": {
+        "beatSeconds": 1.7922201590004079,
+        "decodeEightSeconds": 0.050291161999666656,
+        "encodeSeconds": 0.010315107999758766,
+        "stemsSeconds": 24.621221665999656
+      },
+      "hostOS": "Version 26.7.1 (Build 25G241)",
+      "label": "optimized-release-3",
+      "peakRSSBytes": 2058858496,
+      "seconds": 30,
+      "syntheticOnly": true
+    }
+  ],
+  "summary": {
+    "stemsSeconds": {
+      "baselineMedian": 28.74042892899979,
+      "optimizedMedian": 24.73745672999985,
+      "medianReductionPercent": 13.928018293981847
+    },
+    "encodeSeconds": {
+      "baselineMedian": 0.04707463500017184,
+      "optimizedMedian": 0.012177553499896021,
+      "medianReductionPercent": 74.13139050392729
+    },
+    "decodeEightSeconds": {
+      "baselineMedian": 0.1369344480003747,
+      "optimizedMedian": 0.048542105999786145,
+      "medianReductionPercent": 64.55084406543683
+    }
+  },
+  "memoryConclusion": "Peak process RSS ranges overlap; no stable reduction established. ORT remains the dominant memory risk.",
+  "excludedExploratoryRuns": [
+    "optimized-1 preceded final overlap-add vectorization/spinning settings",
+    "no-prepack changed ORT prepacking; not retained or used in final statistics"
+  ],
+  "finalSourceSHA256": {
+    "ios/FoliaAutomixRuntime/Sources/FoliaAutomixRuntime/HTDemucsFFT.swift": "54f818a2e4524a362e599cdf4c3eb979d317398ea19e9ca62d6b2513a69cb1e3",
+    "ios/FoliaAutomixRuntime/Sources/FoliaAutomixRuntime/ModelSession.swift": "4d5e8150beccc16e33d877e560ec137f404c9161a2e4050a9a027ead11aae2f8",
+    "ios/FoliaAutomixRuntime/Sources/FoliaAutomixRuntime/NativeHTDemucs.swift": "f9e859bea55ce1718ba1474fce3a549860397f7f1882713e01789dd2c7621ff6",
+    "ios/FoliaAutomixRuntime/Sources/FoliaORTC/FoliaORTC.cpp": "63554fa20fe3efb167bc1b852f54d47927a3782a1dcec0f11ee8b12ae7125e59",
+    "ios/FoliaAutomixRuntime/Sources/FoliaORTC/include/FoliaORTC.h": "8153bb1b449b2a534d392b89cc32b1bfebc2141e5b5578e22841d394cb088b51",
+    "src/services/automix/nativeInference.ts": "6848d4c1b084b9f8077920bb6b6a7bca9aeaa08bda6057889a51df1f5d547166",
+    "ios/App/App/Automix/AutomixInference.swift": "ca564315e45ce74376b110cff90f5118c416cc1bf94f85c34704a24d365f09eb",
+    "ios/FoliaAutomixRuntime/Tests/FoliaAutomixRuntimeTests/RuntimeTests.swift": "67288908ad3b3b4c484b3ec3e64ac20211247dce8fa46160a2c86aaf0dfed7b0"
+  },
+  "baselineSourceSHA256": {
+    "Sources/FoliaAutomixRuntime/HTDemucsFFT.swift": "899108e9e965ae2b87acc2dc657f716e305a4c30c01342df72d2a06a86a13a32",
+    "Sources/FoliaAutomixRuntime/NativeHTDemucs.swift": "1610639091fda547a5800606c40e844bd0c1e7ca1ad1f8ee30b5022e6c368a07",
+    "Sources/FoliaAutomixRuntime/ModelSession.swift": "fa3d77a6b5656f4678b1d9c1af68e881847046e1c17d5b258327ca743d34ee79",
+    "Sources/FoliaAutomixRuntime/Resources/ORT-LICENSE": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+    "Sources/FoliaORTC/FoliaORTC.cpp": "48ef12116577414ba2ad0d6219e6bbfe8c96984b07cccbd2c8585af6e09f7db1",
+    "Sources/FoliaORTC/include/FoliaORTC.h": "1a3f648232947c77be8f77f6dc450c71be48cc79f8574e7fac10612a7035cb5c"
+  }
+}

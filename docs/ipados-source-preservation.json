@@ -1,0 +1,130 @@
+{
+  "baseline": "35db05ccef6065e868fab14f49b433c8344e9ca1",
+  "scope": "Source equality, not visual/runtime verification",
+  "modes": [
+    {
+      "kind": "lyrics",
+      "id": "cadenza",
+      "sourceFiles": 9,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "cappella",
+      "sourceFiles": 15,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "claddagh",
+      "sourceFiles": 7,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "classic",
+      "sourceFiles": 3,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "diorama",
+      "sourceFiles": 30,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "fume",
+      "sourceFiles": 16,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "lumiere",
+      "sourceFiles": 65,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "monet",
+      "sourceFiles": 17,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "partita",
+      "sourceFiles": 5,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "pendolo",
+      "sourceFiles": 18,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "sonnet",
+      "sourceFiles": 60,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "still",
+      "sourceFiles": 2,
+      "changedFiles": []
+    },
+    {
+      "kind": "lyrics",
+      "id": "tempera",
+      "sourceFiles": 55,
+      "changedFiles": [
+        "src/components/visualizer/tempera/TemperaImageLayerControls.tsx"
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "tilt",
+      "sourceFiles": 3,
+      "changedFiles": []
+    },
+    {
+      "kind": "backgrounds",
+      "id": "common",
+      "sourceFiles": 4,
+      "changedFiles": []
+    },
+    {
+      "kind": "backgrounds",
+      "id": "latent",
+      "sourceFiles": 3,
+      "changedFiles": []
+    },
+    {
+      "kind": "backgrounds",
+      "id": "monet",
+      "sourceFiles": 4,
+      "changedFiles": []
+    },
+    {
+      "kind": "backgrounds",
+      "id": "nomand",
+      "sourceFiles": 11,
+      "changedFiles": []
+    },
+    {
+      "kind": "backgrounds",
+      "id": "sora",
+      "sourceFiles": 3,
+      "changedFiles": []
+    },
+    {
+      "kind": "backgrounds",
+      "id": "url",
+      "sourceFiles": 3,
+      "changedFiles": []
+    }
+  ],
+  "fluidSafariFixUnchanged": true,
+  "onlyVisualSubtreeChange": "Tempera image ZIP export uses the shared native save/share adapter; renderer animation code is unchanged"
+}

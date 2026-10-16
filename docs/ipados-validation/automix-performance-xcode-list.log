@@ -1,0 +1,26 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -list -project ios/App/App.xcodeproj -clonedSourcePackagesDirPath ../../work/SourcePackages -disableAutomaticPackageResolution
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  FoliaAutomixRuntime: /FOLIA_SOURCE/ios/FoliaAutomixRuntime @ local
+  capacitor-swift-pm: https://github.com/ionic-team/capacitor-swift-pm.git @ 8.5.3
+  CapApp-SPM: /FOLIA_SOURCE/ios/App/CapApp-SPM @ local
+
+Information about project "App":
+    Targets:
+        App
+
+    Build Configurations:
+        Debug
+        Release
+
+    If no build configuration is specified and -scheme is not passed then "Release" is used.
+
+    Schemes:
+        App
+        CapApp-SPM
+        FoliaAutomixRuntime
+

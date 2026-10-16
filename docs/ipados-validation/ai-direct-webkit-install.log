@@ -1,0 +1,14 @@
+npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Downloading WebKit 26.6 (playwright webkit v2359)[2m from https://cdn.playwright.dev/dbazure/download/playwright/builds/webkit/2359/webkit-mac-26.zip[22m
+|                                                                                |   0% of 83.8 MiB
+|■■■■■■■■                                                                        |  10% of 83.8 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 83.8 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 83.8 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 83.8 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 83.8 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 83.8 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 83.8 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 83.8 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 83.8 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 83.8 MiB
+WebKit 26.6 (playwright webkit v2359) downloaded to /FOLIA_USER/Library/Caches/ms-playwright/webkit-2359

@@ -1,0 +1,62 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphoneos -destination generic/platform=iOS -derivedDataPath ../../work/DerivedData -clonedSourcePackagesDirPath ../../work/SourcePackages -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO build
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+    SDKROOT = iphoneos26.5
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  capacitor-swift-pm: https://github.com/ionic-team/capacitor-swift-pm.git @ 8.5.3
+  CapApp-SPM: /FOLIA_SOURCE/ios/App/CapApp-SPM @ local
+
+2026-10-16 13:47:01.182 xcodebuild[57684:751598] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (5 targets)
+    Target 'App' in project 'App'
+        ➜ Explicit dependency on target 'CapApp-SPM' in project 'CapApp-SPM'
+    Target 'CapApp-SPM' in project 'CapApp-SPM'
+        ➜ Explicit dependency on target 'CapApp-SPM' in project 'CapApp-SPM'
+        ➜ Explicit dependency on target 'Capacitor' in project 'capacitor-swift-pm'
+        ➜ Explicit dependency on target 'Cordova' in project 'capacitor-swift-pm'
+    Target 'CapApp-SPM' in project 'CapApp-SPM'
+        ➜ Explicit dependency on target 'Capacitor' in project 'capacitor-swift-pm'
+        ➜ Explicit dependency on target 'Cordova' in project 'capacitor-swift-pm'
+    Target 'Cordova' in project 'capacitor-swift-pm' (no dependencies)
+    Target 'Capacitor' in project 'capacitor-swift-pm' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk /FOLIA_WORKSPACE/work/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F73-32daed1954a7d5dd0789fcaf2a9bb78b.sdkstatcache
+    cd /FOLIA_SOURCE/ios/App/App.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -o /FOLIA_WORKSPACE/work/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F73-32daed1954a7d5dd0789fcaf2a9bb78b.sdkstatcache
+
+CpResource /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/capacitor.config.json /FOLIA_SOURCE/ios/App/App/capacitor.config.json (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /FOLIA_SOURCE/ios/App/App/capacitor.config.json /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app
+
+CpResource /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/config.xml /FOLIA_SOURCE/ios/App/App/config.xml (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /FOLIA_SOURCE/ios/App/App/config.xml /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app
+
+CpResource /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/public /FOLIA_SOURCE/ios/App/App/public (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /FOLIA_SOURCE/ios/App/App/public /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app
+
+** BUILD SUCCEEDED **
+

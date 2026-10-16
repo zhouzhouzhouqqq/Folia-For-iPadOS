@@ -1,0 +1,74 @@
+2026-10-16 00:24:59.912 xcodebuild[6003:121149]  DVTFilePathFSEvents: Failed to start fs event stream.
+2026-10-16 00:25:01.456 xcodebuild[6003:121150] CoreSimulatorService connection became invalid.  Simulator services will no longer be available.
+2026-10-16 00:25:01.457 xcodebuild[6003:121232] Logging connecton invalid: <OS_xpc_error: <dictionary: 0x7ff841a6bd80> { count = 1, transaction: 0, voucher = 0x0, contents =
+	"XPCErrorDescription" => <string: 0x7ff841a6bef0> { string cache = 0x0, length = 18, contents = "Connection invalid" }
+}>
+2026-10-16 00:25:01.458 xcodebuild[6003:121232] Error opening log file (/FOLIA_USER/Library/Logs/CoreSimulator/CoreSimulator.com.apple.dt.xcodebuild.log): Operation not permitted
+[-[SimServiceContext sendRequest:]:1751] ERROR : Unable to deliver request ({
+    "developer_dir" = "/Applications/Xcode.app/Contents/Developer";
+    request = "set_developer_dir";
+}) because we are not connected to CoreSimulatorService.
+Command line invocation:
+    [-[SimDeviceType initWithBundle:error:]:241] ERROR : Error Domain=com.apple.CoreSimulator.SimError Code=402 "Unable to determine supported architectures for device type (/Library/Developer/CoreSimulator/Profiles/DeviceTypes/Apple Vision Pro (at 2732x2048).simdevicetype/Contents/Resources/profile.plist)" UserInfo={NSLocalizedDescription=Unable to determine supported architectures for device type (/Library/Developer/CoreSimulator/Profiles/DeviceTypes/Apple Vision Pro (at 2732x2048).simdevicetype/Contents/Resources/profile.plist)}
+/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -list -project ios/App/App.xcodeproj -scheme App -derivedDataPath ../../work/DerivedData -clonedSourcePackagesDirPath ../../work/SourcePackages
+
+[-[SimDeviceType initWithBundle:error:]:241] ERROR : Error Domain=com.apple.CoreSimulator.SimError Code=402 "Unable to determine supported architectures for device type (/Library/Developer/CoreSimulator/Profiles/DeviceTypes/Apple Vision Pro.simdevicetype/Contents/Resources/profile.plist)" UserInfo={NSLocalizedDescription=Unable to determine supported architectures for device type (/Library/Developer/CoreSimulator/Profiles/DeviceTypes/Apple Vision Pro.simdevicetype/Contents/Resources/profile.plist)}
+2026-10-16 00:25:01.616 xcodebuild[6003:121142] [MT] DVTAssertions: Warning in DVTFrameworks/DVTFoundation/FileTypes/DVTFileDataTypeDetection.m:80
+Details:  detectedTypeIdentifier (com.apple.binary-property-list) does not conform to matchedTypeIdentifier in MagicFileDataTypeDetector extenson com.apple.property-list. When both are specified, this conformance is required unless overridden by setting allowNonInheritance. extension.identifier:Xcode.MagicFileDataTypeDetector.BinaryPlist
+Object:   <DVTFileDataTypeDetectionMagicCache: 0x7f98a340fb20>
+Method:   -initWithExtension:
+Thread:   <_NSMainThread: 0x7f989ff151d0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-10-16 00:25:01.623 xcodebuild[6003:121142] [MT] DVTAssertions: Warning in DVTFrameworks/DVTFoundation/FileTypes/DVTFileDataTypeDetection.m:80
+Details:  detectedTypeIdentifier (com.apple.xml-property-list) does not conform to matchedTypeIdentifier in MagicFileDataTypeDetector extenson com.apple.property-list. When both are specified, this conformance is required unless overridden by setting allowNonInheritance. extension.identifier:Xcode.MagicFileDataTypeDetector.XMLPlist
+Object:   <DVTFileDataTypeDetectionMagicCache: 0x7f980823d340>
+Method:   -initWithExtension:
+Thread:   <_NSMainThread: 0x7f989ff151d0>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+[-[SimServiceContext initWithDeveloperDir:connectionType:error:]:432] WARN  : Unable to discover any Simulator runtimes. Developer Directory is /Applications/Xcode.app/Contents/Developer.
+[-[SimDiskImageManager init]:175] ERROR : Could not kickstart simdiskimaged; SimDiskImageManager services will not be available: Error Domain=NSPOSIXErrorDomain Code=53 "Software caused connection abort" UserInfo={NSLocalizedDescription=Error returned in reply from CoreSimulatorService: Connection invalid}
+[-[SimDiskImageManager _onQueue_checkConnection:]:239] ERROR : simdiskimaged returned error (invalid), marking disconnected.
+[-[SimServiceContext initWithDeveloperDir:connectionType:error:]_block_invoke:468] ERROR : Could not get list of trusted mount directories: Error Domain=com.apple.CoreSimulator.SimError Code=410 "The service used to manage runtime disk images (simdiskimaged) crashed or is not responding" UserInfo={NSLocalizedDescription=The service used to manage runtime disk images (simdiskimaged) crashed or is not responding}
+[-[SimDiskImageManager _onQueue_checkConnection:]:239] ERROR : simdiskimaged returned error (invalid), marking disconnected.
+[-[SimServiceContext sendRequest:reply:error:]:1771] ERROR : Unable to deliver request ({
+    request = "notification_subscription";
+    "set_path" = "/FOLIA_USER/Library/Developer/CoreSimulator/Devices";
+}) because we are not connected to CoreSimulatorService.
+2026-10-16 00:25:01.782 xcodebuild[6003:121233] Error Domain=NSPOSIXErrorDomain Code=61 "Connection refused" UserInfo={NSLocalizedDescription=CoreSimulatorService connection became invalid.  Simulator services will no longer be available.}
+[-[SimServiceContext sendRequest:reply:error:]:1771] ERROR : Unable to deliver request ({
+    request = "notification_subscription";
+    "set_path" = "/FOLIA_USER/Library/Developer/CoreSimulator/Devices";
+}) because we are not connected to CoreSimulatorService.
+2026-10-16 00:25:01.783 xcodebuild[6003:121149] Error Domain=NSPOSIXErrorDomain Code=61 "Connection refused" UserInfo={NSLocalizedDescription=CoreSimulatorService connection became invalid.  Simulator services will no longer be available.}
+2026-10-16 00:25:01.783 xcodebuild[6003:121233]  iOSSimulator: [SimServiceContext defaultDeviceSetWithError:] returned nil (Error Domain=NSPOSIXErrorDomain Code=61 "Connection refused" UserInfo={NSLocalizedFailureReason=Failed to subscribe to notifications from CoreSimulatorService., NSLocalizedDescription=Failed to initialize simulator device set., NSUnderlyingError=0x7f9808426ff0 {Error Domain=NSPOSIXErrorDomain Code=61 "Connection refused" UserInfo={NSLocalizedDescription=CoreSimulatorService connection became invalid.  Simulator services will no longer be available.}}}). Simulator device support disabled.
+2026-10-16 00:25:01.784 xcodebuild[6003:121149]  IDESimulatorAvailability: startObservingSimulatorUpdates() FAILED to register SimDeviceSet observer
+Resolve Package Graph
+
+Fetching from https://github.com/ionic-team/capacitor-swift-pm.git
+
+Creating working copy of package ‘capacitor-swift-pm’
+
+Checking out 8.5.3 of package ‘capacitor-swift-pm’
+
+[-[SimDeviceType initWithBundle:error:]:241] ERROR : Error Domain=com.apple.CoreSimulator.SimError Code=402 "Unable to determine supported architectures for device type (/Library/Developer/CoreSimulator/Profiles/DeviceTypes/Apple Vision Pro (at 2732x2048).simdevicetype/Contents/Resources/profile.plist)" UserInfo={NSLocalizedDescription=Unable to determine supported architectures for device type (/Library/Developer/CoreSimulator/Profiles/DeviceTypes/Apple Vision Pro (at 2732x2048).simdevicetype/Contents/Resources/profile.plist)}
+[-[SimDeviceType initWithBundle:error:]:241] ERROR : Error Domain=com.apple.CoreSimulator.SimError Code=402 "Unable to determine supported architectures for device type (/Library/Developer/CoreSimulator/Profiles/DeviceTypes/Apple Vision Pro.simdevicetype/Contents/Resources/profile.plist)" UserInfo={NSLocalizedDescription=Unable to determine supported architectures for device type (/Library/Developer/CoreSimulator/Profiles/DeviceTypes/Apple Vision Pro.simdevicetype/Contents/Resources/profile.plist)}
+
+Resolved source packages:
+  capacitor-swift-pm: https://github.com/ionic-team/capacitor-swift-pm.git @ 8.5.3
+  CapApp-SPM: /FOLIA_SOURCE/ios/App/CapApp-SPM @ local
+
+2026-10-16 00:32:53.200 xcodebuild[6003:121142] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+Information about project "App":
+    Targets:
+        App
+
+    Build Configurations:
+        Debug
+        Release
+
+    If no build configuration is specified and -scheme is not passed then "Release" is used.
+
+    Schemes:
+        App
+        CapApp-SPM
+

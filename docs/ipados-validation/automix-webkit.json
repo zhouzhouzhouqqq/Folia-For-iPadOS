@@ -1,0 +1,43 @@
+{
+  "engine": "macOS Playwright WebKit, synthetic native bridge; not iPad/WKWebView",
+  "results": [
+    "original transition panel",
+    "model download/import/remove",
+    "capability changes",
+    "landscape/portrait no overflow",
+    "one AudioContext and two HTMLMediaElement decks with original crossfade graph"
+  ],
+  "graph": {
+    "scheduled": true,
+    "context": "running",
+    "paused": [
+      false,
+      false
+    ],
+    "samples": [
+      0.03517027546535868,
+      0.09131458130972311,
+      0.10791562591259309
+    ],
+    "final": [
+      6.123234262925839e-17,
+      1
+    ]
+  },
+  "calls": [
+    "status",
+    "addListener",
+    "status",
+    "addListener",
+    "status",
+    "removeListener",
+    "downloadModel",
+    "status",
+    "importModel",
+    "status",
+    "removeModel",
+    "status"
+  ],
+  "errors": [],
+  "external": []
+}

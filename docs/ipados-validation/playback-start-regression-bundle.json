@@ -1,0 +1,13 @@
+{
+  "phase": "Playback startup nonblocking regression fix 2026-10-16",
+  "bundledAssetCount": 1866,
+  "distAssetsMatchSyncedResources": true,
+  "compiledAppIncludesCurrentResources": true,
+  "remoteServerUrl": false,
+  "generatedPwaWorkerInIosBundle": false,
+  "indexSha256": "1eda9d2d2103d3b7e33c9e7bab0b1f14e2fe558e06f9a2840799fe0f23025b1c",
+  "architecture": "arm64",
+  "signedForInstallation": false,
+  "deviceForegroundRevalidation": "pending user update; reported tracks visible but loading or silent",
+  "deviceBackgroundRevalidation": "pending user update; previous background/lock failed immediately"
+}

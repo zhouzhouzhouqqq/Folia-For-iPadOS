@@ -1,0 +1,178 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphoneos26.5 -destination generic/platform=iOS -derivedDataPath ../../work/DerivedData -clonedSourcePackagesDirPath ../../work/SourcePackages -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO build
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+    SDKROOT = iphoneos26.5
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  capacitor-swift-pm: https://github.com/ionic-team/capacitor-swift-pm.git @ 8.5.3
+  FoliaAutomixRuntime: /FOLIA_SOURCE/ios/FoliaAutomixRuntime @ local
+  CapApp-SPM: /FOLIA_SOURCE/ios/App/CapApp-SPM @ local
+
+2026-10-16 19:27:57.350 xcodebuild[32092:319646] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (9 targets)
+    Target 'App' in project 'App'
+        ➜ Explicit dependency on target 'CapApp-SPM' in project 'CapApp-SPM'
+        ➜ Explicit dependency on target 'FoliaAutomixRuntime' in project 'FoliaAutomixRuntime'
+    Target 'FoliaAutomixRuntime' in project 'FoliaAutomixRuntime'
+        ➜ Explicit dependency on target 'FoliaAutomixRuntime' in project 'FoliaAutomixRuntime'
+        ➜ Explicit dependency on target 'FoliaAutomixRuntime_FoliaAutomixRuntime' in project 'FoliaAutomixRuntime'
+        ➜ Explicit dependency on target 'FoliaORTC' in project 'FoliaAutomixRuntime'
+    Target 'FoliaAutomixRuntime' in project 'FoliaAutomixRuntime'
+        ➜ Explicit dependency on target 'FoliaAutomixRuntime_FoliaAutomixRuntime' in project 'FoliaAutomixRuntime'
+        ➜ Explicit dependency on target 'FoliaORTC' in project 'FoliaAutomixRuntime'
+    Target 'FoliaORTC' in project 'FoliaAutomixRuntime' (no dependencies)
+    Target 'FoliaAutomixRuntime_FoliaAutomixRuntime' in project 'FoliaAutomixRuntime' (no dependencies)
+    Target 'CapApp-SPM' in project 'CapApp-SPM'
+        ➜ Explicit dependency on target 'CapApp-SPM' in project 'CapApp-SPM'
+        ➜ Explicit dependency on target 'Capacitor' in project 'capacitor-swift-pm'
+        ➜ Explicit dependency on target 'Cordova' in project 'capacitor-swift-pm'
+    Target 'CapApp-SPM' in project 'CapApp-SPM'
+        ➜ Explicit dependency on target 'Capacitor' in project 'capacitor-swift-pm'
+        ➜ Explicit dependency on target 'Cordova' in project 'capacitor-swift-pm'
+    Target 'Cordova' in project 'capacitor-swift-pm' (no dependencies)
+    Target 'Capacitor' in project 'capacitor-swift-pm' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -x c++ -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 6e08134c6b207489969ff1acbba133f8
+Build description path: /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/XCBuildData/6e08134c6b207489969ff1acbba133f8.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk /FOLIA_WORKSPACE/work/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F73-32daed1954a7d5dd0789fcaf2a9bb78b.sdkstatcache
+    cd /FOLIA_SOURCE/ios/App/App.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -o /FOLIA_WORKSPACE/work/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F73-32daed1954a7d5dd0789fcaf2a9bb78b.sdkstatcache
+
+ProcessInfoPlistFile /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/FoliaAutomixRuntime_FoliaAutomixRuntime.bundle/Info.plist /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/FoliaAutomixRuntime.build/Debug-iphoneos/FoliaAutomixRuntime_FoliaAutomixRuntime.build/empty-FoliaAutomixRuntime_FoliaAutomixRuntime.plist (in target 'FoliaAutomixRuntime_FoliaAutomixRuntime' from project 'FoliaAutomixRuntime')
+    cd /FOLIA_SOURCE/ios/FoliaAutomixRuntime
+    builtin-infoPlistUtility /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/FoliaAutomixRuntime.build/Debug-iphoneos/FoliaAutomixRuntime_FoliaAutomixRuntime.build/empty-FoliaAutomixRuntime_FoliaAutomixRuntime.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphoneos -requiredArchitecture arm64 -o /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/FoliaAutomixRuntime_FoliaAutomixRuntime.bundle/Info.plist
+
+SwiftDriver App normal arm64 com.apple.xcode.tools.swift.compiler (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name App -Onone @/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/GeneratedModuleMaps-iphoneos/FoliaORTC.modulemap -D COCOAPODS -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -target arm64-apple-ios18.6 -g -module-cache-path /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /FOLIA_WORKSPACE/work/DerivedData/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -c -j16 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /FOLIA_WORKSPACE/work/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F73-32daed1954a7d5dd0789fcaf2a9bb78b.sdkstatcache -output-file-map /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex -sdk-module-cache-path /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.swiftmodule -validate-clang-modules-once -clang-build-session-file /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App_const_extract_protocols.json -Xcc -iquote -Xcc /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-generated-files.hmap -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-own-target-headers.hmap -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App-0ca3007d900a678c2b4d53418799ee3d-VFS-iphoneos/all-product-headers.yaml -Xcc -iquote -Xcc /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-project-headers.hmap -Xcc -I/FOLIA_SOURCE/ios/FoliaAutomixRuntime/Sources/FoliaORTC/include -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/include -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/DerivedSources-normal/arm64 -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/DerivedSources/arm64 -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App-Swift.h -working-directory /FOLIA_SOURCE/ios/App -experimental-emit-module-separately -disable-cmo
+
+CpResource /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/capacitor.config.json /FOLIA_SOURCE/ios/App/App/capacitor.config.json (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /FOLIA_SOURCE/ios/App/App/capacitor.config.json /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app
+
+ProcessInfoPlistFile /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/Info.plist /FOLIA_SOURCE/ios/App/App/Info.plist (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-infoPlistUtility /FOLIA_SOURCE/ios/App/App/Info.plist -producttype com.apple.product-type.application -genpkginfo /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/PkgInfo -expandbuildsettings -format binary -platform iphoneos -scanforprivacyfile /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/FoliaAutomixRuntime_FoliaAutomixRuntime.bundle -scanforprivacyfile /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/Frameworks/Capacitor.framework -scanforprivacyfile /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/Frameworks/Cordova.framework -scanforprivacyfile /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/Frameworks/onnxruntime.framework -requiredArchitecture arm64 -o /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/Info.plist
+
+CpResource /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/config.xml /FOLIA_SOURCE/ios/App/App/config.xml (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /FOLIA_SOURCE/ios/App/App/config.xml /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app
+
+CpResource /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/public /FOLIA_SOURCE/ios/App/App/public (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /FOLIA_SOURCE/ios/App/App/public /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app
+
+SwiftCompile normal arm64 Compiling\ SceneDelegate.swift /FOLIA_SOURCE/ios/App/App/SceneDelegate.swift (in target 'App' from project 'App')
+SwiftCompile normal arm64 /FOLIA_SOURCE/ios/App/App/SceneDelegate.swift (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ App (in target 'App' from project 'App')
+EmitSwiftModule normal arm64 (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    
+
+SwiftCompile normal arm64 Compiling\ FoliaDevicePlugin.swift /FOLIA_SOURCE/ios/App/App/FoliaDevicePlugin.swift (in target 'App' from project 'App')
+SwiftCompile normal arm64 /FOLIA_SOURCE/ios/App/App/FoliaDevicePlugin.swift (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling SceneDelegate.swift (in target 'App' from project 'App')
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for App (in target 'App' from project 'App')
+
+SwiftDriver\ Compilation\ Requirements App normal arm64 com.apple.xcode.tools.swift.compiler (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name App -Onone @/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/GeneratedModuleMaps-iphoneos/FoliaORTC.modulemap -D COCOAPODS -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -target arm64-apple-ios18.6 -g -module-cache-path /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /FOLIA_WORKSPACE/work/DerivedData/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -c -j16 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /FOLIA_WORKSPACE/work/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F73-32daed1954a7d5dd0789fcaf2a9bb78b.sdkstatcache -output-file-map /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex -sdk-module-cache-path /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.swiftmodule -validate-clang-modules-once -clang-build-session-file /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App_const_extract_protocols.json -Xcc -iquote -Xcc /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-generated-files.hmap -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-own-target-headers.hmap -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App-0ca3007d900a678c2b4d53418799ee3d-VFS-iphoneos/all-product-headers.yaml -Xcc -iquote -Xcc /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-project-headers.hmap -Xcc -I/FOLIA_SOURCE/ios/FoliaAutomixRuntime/Sources/FoliaORTC/include -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/include -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/DerivedSources-normal/arm64 -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/DerivedSources/arm64 -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App-Swift.h -working-directory /FOLIA_SOURCE/ios/App -experimental-emit-module-separately -disable-cmo
+
+Copy /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.swiftmodule/arm64-apple-ios.swiftmodule /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.swiftmodule (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.swiftmodule /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.swiftmodule/arm64-apple-ios.swiftmodule
+
+Copy /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.swiftmodule/arm64-apple-ios.abi.json /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.abi.json (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.abi.json /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.swiftmodule/arm64-apple-ios.abi.json
+
+Copy /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.swiftsourceinfo (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.swiftsourceinfo /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling FoliaDevicePlugin.swift (in target 'App' from project 'App')
+
+SwiftCompile normal arm64 Compiling\ FoliaRecording.swift /FOLIA_SOURCE/ios/App/App/FoliaRecording.swift (in target 'App' from project 'App')
+
+SwiftCompile normal arm64 /FOLIA_SOURCE/ios/App/App/FoliaRecording.swift (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    
+
+SwiftCompile normal arm64 Compiling\ FoliaBridgeViewController.swift /FOLIA_SOURCE/ios/App/App/FoliaBridgeViewController.swift (in target 'App' from project 'App')
+
+SwiftCompile normal arm64 /FOLIA_SOURCE/ios/App/App/FoliaBridgeViewController.swift (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling FoliaBridgeViewController.swift (in target 'App' from project 'App')
+
+SwiftDriverJobDiscovery normal arm64 Compiling FoliaRecording.swift (in target 'App' from project 'App')
+
+SwiftDriver\ Compilation App normal arm64 com.apple.xcode.tools.swift.compiler (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name App -Onone @/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/GeneratedModuleMaps-iphoneos/FoliaORTC.modulemap -D COCOAPODS -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -target arm64-apple-ios18.6 -g -module-cache-path /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /FOLIA_WORKSPACE/work/DerivedData/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -c -j16 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /FOLIA_WORKSPACE/work/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F73-32daed1954a7d5dd0789fcaf2a9bb78b.sdkstatcache -output-file-map /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex -sdk-module-cache-path /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.swiftmodule -validate-clang-modules-once -clang-build-session-file /FOLIA_WORKSPACE/work/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App_const_extract_protocols.json -Xcc -iquote -Xcc /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-generated-files.hmap -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-own-target-headers.hmap -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App-0ca3007d900a678c2b4d53418799ee3d-VFS-iphoneos/all-product-headers.yaml -Xcc -iquote -Xcc /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-project-headers.hmap -Xcc -I/FOLIA_SOURCE/ios/FoliaAutomixRuntime/Sources/FoliaORTC/include -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/include -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/DerivedSources-normal/arm64 -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/DerivedSources/arm64 -Xcc -I/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App-Swift.h -working-directory /FOLIA_SOURCE/ios/App -experimental-emit-module-separately -disable-cmo
+
+Ld /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/App.debug.dylib normal (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios18.6 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -O0 -L/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos -L/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -F/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos -F/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -filelist /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.LinkFileList -install_name @rpath/App.debug.dylib -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -Xlinker -rpath -Xlinker @executable_path/Frameworks -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.swiftmodule @/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App-linker-args.resp -Wl,-no_warn_duplicate_libraries -lc++ -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -framework Accelerate -framework Foundation -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -framework Capacitor -framework Capacitor -framework Cordova -framework Cordova -framework onnxruntime -o /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/App.debug.dylib -Xlinker -add_ast_path -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/CapApp-SPM.build/Debug-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp_SPM.swiftmodule @/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/CapApp-SPM.build/Debug-iphoneos/CapApp-SPM.build/Objects-normal/arm64/CapApp_SPM-linker-args.resp -Xlinker -add_ast_path -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/FoliaAutomixRuntime.build/Debug-iphoneos/FoliaAutomixRuntime.build/Objects-normal/arm64/FoliaAutomixRuntime.swiftmodule @/FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/FoliaAutomixRuntime.build/Debug-iphoneos/FoliaAutomixRuntime.build/Objects-normal/arm64/FoliaAutomixRuntime-linker-args.resp
+
+ConstructStubExecutorLinkFileList /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-ExecutorLinkFileList-normal-arm64.txt (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    construct-stub-executor-link-file-list /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/App.debug.dylib /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'App' from project 'App')
+
+Ld /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/App normal (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios18.6 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -O0 -L/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -F/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -F/FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/PackageFrameworks -Xlinker -rpath -Xlinker @executable_path/Frameworks -rdynamic -Xlinker -no_deduplicate -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App-ExecutorLinkFileList-normal-arm64.txt /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/App.debug.dylib -o /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/App
+
+CopySwiftLibs /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/App.debug.dylib --scan-folder /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/Frameworks --scan-folder /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/PlugIns --scan-folder /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/SystemExtensions --scan-folder /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/Extensions --platform iphoneos --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+Ignoring --strip-bitcode because --sign was not passed
+
+ExtractAppIntentsMetadata (in target 'App' from project 'App')
+    cd /FOLIA_SOURCE/ios/App
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name App --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk --xcode-version 17F42 --platform-family iOS --deployment-target 18.6 --bundle-identifier org.folia.personal --output /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app --target-triple arm64-apple-ios18.6 --binary-file /FOLIA_WORKSPACE/work/DerivedData/Build/Products/Debug-iphoneos/App.app/App --dependency-file /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App_dependency_info.dat --stringsdata-file /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.SwiftFileList --metadata-file-list /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App.DependencyMetadataFileList --static-metadata-file-list /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/App.DependencyStaticMetadataFileList --swift-const-vals-list /FOLIA_WORKSPACE/work/DerivedData/Build/Intermediates.noindex/App.build/Debug-iphoneos/App.build/Objects-normal/arm64/App.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-16 19:28:03.666 appintentsmetadataprocessor[32155:320990] Starting appintentsmetadataprocessor export
+2026-10-16 19:28:03.669 appintentsmetadataprocessor[32155:320990] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+** BUILD SUCCEEDED **
+

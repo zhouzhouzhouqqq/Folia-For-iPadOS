@@ -1,0 +1,1 @@
+PASS: operation allowlist, rejected origin, CORS, logged-out session, encrypted persistence, restart, logout. No upstream requests.

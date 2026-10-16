@@ -1,0 +1,186 @@
+{
+  "package": "@neteasecloudmusicapienhanced/api",
+  "version": "4.41.1",
+  "routes": [
+    {
+      "route": "/album",
+      "module": "album",
+      "upstreamSha256": "c7a2981784dcfd5f56196f3df3697545238f975c04956a9488bcfd2a328336af"
+    },
+    {
+      "route": "/album/detail/dynamic",
+      "module": "album_detail_dynamic",
+      "upstreamSha256": "64a4c7ff56b4de0fc950ece4d26b5f12d54d6885cd16d1ce4e4dbee50f10e63c"
+    },
+    {
+      "route": "/album/sub",
+      "module": "album_sub",
+      "upstreamSha256": "96aa0cd0d4abc345774a33439d4133a8a01e98183e9df2a01cd41fc16c9379e1"
+    },
+    {
+      "route": "/album/sublist",
+      "module": "album_sublist",
+      "upstreamSha256": "f1144eaa094304e7509e509d19fa69c5cf25dfaf04328513a89f284438bad779"
+    },
+    {
+      "route": "/artist/album",
+      "module": "artist_album",
+      "upstreamSha256": "1db0660a631daa9ba64d82b2ab21c75fce7ddf3191e23d3a440ec4e9cc93c6c6"
+    },
+    {
+      "route": "/artist/detail",
+      "module": "artist_detail",
+      "upstreamSha256": "14948fcfea9d7e7cb6b443576c5c0ce5221218a336fccd34081566ce9274fe95"
+    },
+    {
+      "route": "/artist/songs",
+      "module": "artist_songs",
+      "upstreamSha256": "d8a99a25e18e7d11b66828920b2bf716ab2fce0a1d30f8ebd418f2d42ad8580e"
+    },
+    {
+      "route": "/artist/top/song",
+      "module": "artist_top_song",
+      "upstreamSha256": "2be6bf821627e67d851b0ed75ef5faf18be7ce7a9883df66e6b4fd9da8dbee5e"
+    },
+    {
+      "route": "/cloud/lyric/get",
+      "module": "cloud_lyric_get",
+      "upstreamSha256": "589733567c1353036b7d99365258379f9fb510edba20a0704690955ad50b71b4"
+    },
+    {
+      "route": "/cloudsearch",
+      "module": "cloudsearch",
+      "upstreamSha256": "2c831a3a86413c2747b92970041387fcdb934aba5aabf9a6c2f91816ade80657"
+    },
+    {
+      "route": "/fm_trash",
+      "module": "fm_trash",
+      "upstreamSha256": "38e183c952311259410ebe08ee5c07529f1e5bf7f3a2d7a1785bf71ccc2bb299"
+    },
+    {
+      "route": "/history/recommend/songs",
+      "module": "history_recommend_songs",
+      "upstreamSha256": "65e801e29d07bcee1dd68f1d28d64bb8b8affb72b68f6bee34781b0bdd2c9939"
+    },
+    {
+      "route": "/history/recommend/songs/detail",
+      "module": "history_recommend_songs_detail",
+      "upstreamSha256": "75c997da1ae4c02a4505a63e436cdad1ed24db107cdea9c905bf8bd1823f481b"
+    },
+    {
+      "route": "/like",
+      "module": "like",
+      "upstreamSha256": "475a4f8880ce2fac8c5521533b6e93c045657fe783be2de4bb104bb3de5043d4"
+    },
+    {
+      "route": "/likelist",
+      "module": "likelist",
+      "upstreamSha256": "127011717cdf38e00d5e5ec83b191ccd73e6e7a05171fa618c33d27532b582c9"
+    },
+    {
+      "route": "/login/qr/key",
+      "module": "login_qr_key",
+      "upstreamSha256": "7065aecd94a73a73231e154b6d4086b93866d580a17bd0cddd009d9679f863aa"
+    },
+    {
+      "route": "/login/status",
+      "module": "login_status",
+      "upstreamSha256": "9f69e7bc09e8f7db393b16741b724b72ca8dc6d480e9e76b93e4250f59eb65ff"
+    },
+    {
+      "route": "/logout",
+      "module": "logout",
+      "upstreamSha256": "1a7ed147663b99427afdb6f93ea6e2f2a9fd66aba01f4fad071e05ad911fda70"
+    },
+    {
+      "route": "/lyric/new",
+      "module": "lyric_new",
+      "upstreamSha256": "08a3613292d69ff8cb16b5b650543fc1465464488f97f1732b7e436bfc53ffd3"
+    },
+    {
+      "route": "/personal/fm/mode",
+      "module": "personal_fm_mode",
+      "upstreamSha256": "a47988091edc1da3054905184db044cab6fc7cd4f3ab2a397326d7ae7d0bfb46"
+    },
+    {
+      "route": "/personal_fm",
+      "module": "personal_fm",
+      "upstreamSha256": "9d8ff490dd1dc42c209748ce59b678a5d22de73a7f40864aff28332da93e3e4d"
+    },
+    {
+      "route": "/personalized",
+      "module": "personalized",
+      "upstreamSha256": "9c272a44dad27d0f18cbb2d169de58b03bf8f2ad3ed8e9cd336a58273c0ec0ec"
+    },
+    {
+      "route": "/playlist/detail",
+      "module": "playlist_detail",
+      "upstreamSha256": "24016c435f942e9debd49053cd0d74fa5117f02db8062258583a10ddfe5af6e2"
+    },
+    {
+      "route": "/playlist/detail/dynamic",
+      "module": "playlist_detail_dynamic",
+      "upstreamSha256": "20a21bdd4f3361f45879a7be8df580d6de012c49a7f249f5eba568b7daa9a0d9"
+    },
+    {
+      "route": "/playlist/subscribe",
+      "module": "playlist_subscribe",
+      "upstreamSha256": "1541d0d2ba4062bf51517c9b4a3d9e95682e701688fa2cc2a93f794858f3a089"
+    },
+    {
+      "route": "/playlist/track/all",
+      "module": "playlist_track_all",
+      "upstreamSha256": "787aecddc2d29e7a0523974ad78e470b6e647b7d0687697d6cdba0565aca2dfe"
+    },
+    {
+      "route": "/playlist/tracks",
+      "module": "playlist_tracks",
+      "upstreamSha256": "882688ccb3053cf93910d1ab8d80ebacb7e89309145191fcee747b4b12714a8c"
+    },
+    {
+      "route": "/recommend/songs",
+      "module": "recommend_songs",
+      "upstreamSha256": "2a09b5ca8f0609c4d0efcac5c10ef49e6d457361ce3134b04f75b0e09edd35b2"
+    },
+    {
+      "route": "/recommend/songs/dislike",
+      "module": "recommend_songs_dislike",
+      "upstreamSha256": "59fe44e57718ccb14c4be0c28d2b25922f5ac184a8be3b7d980fccaf1c135248"
+    },
+    {
+      "route": "/song/chorus",
+      "module": "song_chorus",
+      "upstreamSha256": "b64973dcd8b76ec886ed7c553aa3239576a1d68dabbe9318a14050d60ba5612c"
+    },
+    {
+      "route": "/song/copyright/rcmd",
+      "module": "song_copyright_rcmd",
+      "upstreamSha256": "f1beafc26a8ac3da681286c0fbc7d4af3de5000267636e4abac7216446666b62"
+    },
+    {
+      "route": "/song/detail",
+      "module": "song_detail",
+      "upstreamSha256": "a85e79d888667b645301597a8c755fc468d62be0506fa94ca98e551bf4ee58a9"
+    },
+    {
+      "route": "/user/account",
+      "module": "user_account",
+      "upstreamSha256": "2fa3cb37934066edcdc5b528f0a346dbf446a03f6af74ef8e1ce280124ddb388"
+    },
+    {
+      "route": "/user/cloud",
+      "module": "user_cloud",
+      "upstreamSha256": "079cb0f67cde59aa25b14e9f7fce74e4a27b7c3f7364d5919d7abffc05a5c292"
+    },
+    {
+      "route": "/user/cloud/detail",
+      "module": "user_cloud_detail",
+      "upstreamSha256": "c3badd83ad8ce450ae7d0823eb8ca38c8b9a69d7bdfd49efe7ed31221113e3f5"
+    },
+    {
+      "route": "/user/playlist",
+      "module": "user_playlist",
+      "upstreamSha256": "8f67866eb8ac7306f326511bda66e8b18583d74396ffba2d16ebf52f6166bbb3"
+    }
+  ]
+}

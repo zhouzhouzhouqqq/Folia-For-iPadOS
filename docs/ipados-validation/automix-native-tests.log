@@ -1,0 +1,51 @@
+warning: /FOLIA_USER/Library/org.swift.swiftpm/configuration is not accessible or not writable, disabling user-level cache features.
+warning: /FOLIA_USER/Library/org.swift.swiftpm/security is not accessible or not writable, disabling user-level cache features.
+Building for debugging...
+[0/10] /FOLIA_WORKSPACE/work/AutomixRuntimeProbe/.build/x86_64-apple-macosx/debug/FoliaAutomixRuntimePackageTests.derived/runner.swift
+[0/10] Write sources
+[0/10] Copying ORT-LICENSE
+[4/10] Write sources
+[5/10] Copying onnxruntime.framework
+[6/10] Write swift-version--58304C5D6DBC2206.txt
+[7/10] Compiling FoliaORTC FoliaORTC.cpp
+[9/15] Compiling FoliaAutomixRuntime NativeHTDemucs.swift
+[10/15] Compiling FoliaAutomixRuntime ModelSession.swift
+[11/15] Compiling FoliaAutomixRuntime HTDemucsFFT.swift
+[12/15] Emitting module FoliaAutomixRuntime
+[13/15] Compiling FoliaAutomixRuntime resource_bundle_accessor.swift
+[14/22] Compiling FoliaAutomixRuntimeTests RuntimeTests.swift
+[15/22] Compiling FoliaAutomixRuntimeTests NativeStorageTests.swift
+[16/22] Emitting module FoliaAutomixRuntimeTests
+[17/22] Compiling FoliaAutomixRuntimeTests AutomixModelStore.swift
+[18/22] Compiling FoliaAutomixRuntimeTests AutomixDownload.swift
+[19/22] Compiling FoliaAutomixRuntimeTests AutomixModelManifest.swift
+[20/22] Compiling FoliaAutomixRuntimeTests AutomixInference.swift
+[21/24] Compiling FoliaAutomixRuntimePackageTests runner.swift
+[22/24] Emitting module FoliaAutomixRuntimePackageTests
+[22/24] Write Objects.LinkFileList
+[23/24] Linking FoliaAutomixRuntimePackageTests
+Build complete! (18.06s)
+Test Suite 'All tests' started at 2026-10-16 16:57:14.281.
+Test Suite 'All tests' passed at 2026-10-16 16:57:14.283.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.002) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: x86_64-apple-macos14.0
+◇ Suite NativeStorageTests started.
+◇ Suite RuntimeTests started.
+◇ Test fftRoundTripAndFiniteShapes() started.
+◇ Test tensorBoundsCleanupAndSymlinks() started.
+✔ Test tensorBoundsCleanupAndSymlinks() passed after 0.012 seconds.
+◇ Test corruptOrUnknownModelsNeverBecomeAvailable() started.
+✔ Test corruptOrUnknownModelsNeverBecomeAvailable() passed after 0.002 seconds.
+◇ Test verifiedModelInstallAndRestart() started.
+✔ Test verifiedModelInstallAndRestart() passed after 0.530 seconds.
+✔ Suite NativeStorageTests passed after 0.545 seconds.
+✔ Test fftRoundTripAndFiniteShapes() passed after 5.836 seconds.
+◇ Test rejectedShapesAndInputs() started.
+✔ Test rejectedShapesAndInputs() passed after 0.001 seconds.
+◇ Test originalModelsSyntheticParity() started.
+Native synthetic inference completed: 30s; host process peak RSS 1986125824 bytes (not iPad memory).
+✔ Test originalModelsSyntheticParity() passed after 87.594 seconds.
+✔ Suite RuntimeTests passed after 93.432 seconds.
+✔ Test run with 6 tests in 2 suites passed after 93.432 seconds.

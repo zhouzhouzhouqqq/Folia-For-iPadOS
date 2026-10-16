@@ -1,0 +1,33 @@
+warning: /FOLIA_USER/Library/org.swift.swiftpm/configuration is not accessible or not writable, disabling user-level cache features.
+warning: /FOLIA_USER/Library/org.swift.swiftpm/security is not accessible or not writable, disabling user-level cache features.
+[0/1] Planning build
+Building for debugging...
+[0/4] Write sources
+[2/4] Write swift-version--58304C5D6DBC2206.txt
+[4/7] Compiling FoliaAutomixRuntime NativeHTDemucs.swift
+[5/7] Emitting module FoliaAutomixRuntime
+[6/7] Compiling FoliaAutomixRuntime ModelSession.swift
+[7/15] Compiling FoliaAutomixRuntimeTests AutomixDownload.swift
+[8/15] Compiling FoliaAutomixRuntimeTests AutomixModelManifest.swift
+[9/15] Compiling FoliaAutomixRuntimeTests RuntimeTests.swift
+[10/15] Compiling FoliaAutomixRuntimeTests NativeStorageTests.swift
+[11/15] Emitting module FoliaAutomixRuntimeTests
+[12/15] Compiling FoliaAutomixRuntimeTests AutomixInference.swift
+[13/15] Compiling FoliaAutomixRuntimeTests AutomixModelStore.swift
+[13/15] Write Objects.LinkFileList
+[14/15] Linking FoliaAutomixRuntimePackageTests
+Build complete! (3.89s)
+Test Suite 'Selected tests' started at 2026-10-16 17:05:14.505.
+Test Suite 'FoliaAutomixRuntimePackageTests.xctest' started at 2026-10-16 17:05:14.506.
+Test Suite 'FoliaAutomixRuntimePackageTests.xctest' passed at 2026-10-16 17:05:14.506.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'Selected tests' passed at 2026-10-16 17:05:14.506.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.002) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: x86_64-apple-macos14.0
+◇ Suite RuntimeTests started.
+◇ Test rejectedShapesAndInputs() started.
+✔ Test rejectedShapesAndInputs() passed after 0.002 seconds.
+✔ Suite RuntimeTests passed after 0.002 seconds.
+✔ Test run with 1 test in 1 suite passed after 0.002 seconds.

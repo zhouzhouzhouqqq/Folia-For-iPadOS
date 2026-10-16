@@ -1,0 +1,19 @@
+{
+  "syntheticOnly": true,
+  "referenceRuntime": "1.23.2",
+  "nativeRuntime": "1.24.2",
+  "sampleRate": 44100,
+  "seconds": 30.0,
+  "beat": {
+    "maxAbs": 0.0,
+    "snrDB": 341.6772234052726
+  },
+  "stft": {
+    "maxAbs": 4.547473508864641e-13,
+    "snrDB": 277.0222707510023
+  },
+  "stems": {
+    "maxAbs": 3.8642610888928175e-08,
+    "snrDB": 99.4865647991179
+  }
+}

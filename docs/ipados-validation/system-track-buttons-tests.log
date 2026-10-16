@@ -1,0 +1,14 @@
+npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> folia-major@0.7.19 test:unit
+> vitest run -c vitest.config.ts test/unit/playback test/unit/automix test/unit/ipados/nativeMediaSessionOwnership.test.ts test/unit/ipados/webMediaSession.test.ts test/unit/utils/mediaSessionSync.test.ts
+
+
+ RUN  v4.1.11 /FOLIA_SOURCE
+
+
+ Test Files  51 passed (51)
+      Tests  845 passed (845)
+   Start at  19:46:45
+   Duration  9.61s (transform 26.98s, setup 0ms, import 50.47s, tests 13.01s, environment 2.68s)
+

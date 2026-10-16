@@ -1,0 +1,39 @@
+# Optional personal-server example. Replace hostname, certificate paths and upstreams locally.
+# Load map/log_format in nginx http context; do not add this to the iOS application.
+map $http_upgrade $folia_connection_upgrade {
+    default upgrade;
+    '' close;
+}
+log_format folia_no_query '$remote_addr $request_method $uri $status';
+server {
+    listen 443 ssl;
+    server_name folia.example.invalid;
+    ssl_certificate /REPLACE/fullchain.pem;
+    ssl_certificate_key /REPLACE/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    access_log /var/log/nginx/folia-access.log folia_no_query;
+    # Apply your own VPN/firewall/auth policy; CORS is not access control.
+    location / {
+        if ($request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin 'capacitor://localhost' always;
+            add_header Access-Control-Allow-Credentials 'true' always;
+            add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS, PUT, PATCH, DELETE' always;
+            add_header Access-Control-Allow-Headers 'Content-Type, X-QQ-Session, X-Folia-Bodian-Session, Authorization, KG-Rec, KG-RC, KG-CLIENTTIMEMS, mid, x-router' always;
+            return 204;
+        }
+        proxy_pass http://127.0.0.1:18080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $folia_connection_upgrade;
+        proxy_hide_header Access-Control-Allow-Origin;
+        proxy_hide_header Access-Control-Allow-Credentials;
+        add_header Access-Control-Allow-Origin 'capacitor://localhost' always;
+        add_header Access-Control-Allow-Credentials 'true' always;
+        add_header Vary Origin always;
+    }
+}
+# Bodian can use a separate hostname with the same TLS/access policy and
+# proxy_pass http://127.0.0.1:4305 instead. Companion WSS services need their own upstream port.

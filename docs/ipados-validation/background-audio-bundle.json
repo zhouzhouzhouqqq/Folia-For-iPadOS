@@ -1,0 +1,12 @@
+{
+  "phase": "Background WebKit playback session fix 2026-10-16",
+  "bundledAssetCount": 1866,
+  "distAssetsMatchSyncedResources": true,
+  "compiledAppIncludesCurrentResources": true,
+  "remoteServerUrl": false,
+  "generatedPwaWorkerInIosBundle": false,
+  "indexSha256": "812f6d4829a6411c70e5e2ef35120cf80b921cc035a7b48748a40e5ff2484170",
+  "architecture": "arm64",
+  "signedForInstallation": false,
+  "deviceBackgroundRevalidation": "pending user update; previous build failed immediately on background/lock"
+}

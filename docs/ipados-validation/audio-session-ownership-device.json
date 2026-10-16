@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-16",
+  "device": "iPad Air 11-inch (M4)",
+  "os": "iPadOS 27.0.1",
+  "scope": "Playback DOM, audio-context references, bundled build identity and audio-session events only; no account/cookie/token/local-file data read.",
+  "installedBootstrap": {
+    "file": "bootstrap-CJy9qeml.js",
+    "sha256": "7e0cc7be7573fcf3e7bd24d715cbd1533e07e4649075c27ce2d014238bd8ccb9",
+    "matchesPreviousLocalBuild": true
+  },
+  "initial": {
+    "playButtonDisabled": false,
+    "playButtonHitTest": true,
+    "sourceKind": "blob",
+    "readyState": 4,
+    "networkState": 1,
+    "mediaError": null,
+    "paused": true,
+    "audioContext": "suspended",
+    "webAudioSessionType": "playback"
+  },
+  "traceExcerptRelativeMs": [
+    {
+      "ms": 0,
+      "event": "context",
+      "state": "running"
+    },
+    {
+      "ms": 15,
+      "event": "play",
+      "paused": false
+    },
+    {
+      "ms": 16,
+      "event": "playing",
+      "paused": false
+    },
+    {
+      "ms": 24,
+      "event": "pause",
+      "paused": true,
+      "mediaError": null
+    },
+    {
+      "ms": 24,
+      "event": "context",
+      "state": "interrupted"
+    },
+    {
+      "ms": 1572,
+      "event": "hostAudioInterruption",
+      "began": true,
+      "shouldResume": false
+    },
+    {
+      "ms": 1572,
+      "event": "hostAudioInterruption",
+      "began": true,
+      "shouldResume": false
+    }
+  ],
+  "additionalObservation": "Repeated playing/pause/context-interrupted/host-began cycles after subsequent user taps. No media decoding error.",
+  "interpretation": "Supports conflicting host/WebKit audio-focus ownership and confirms native host-interruption feedback into transport. Exclusive causal attribution needs post-install A/B validation.",
+  "temporaryObserversRemoved": true,
+  "signedOrInstalledByAgent": false,
+  "newVersionForeground": "pending installation",
+  "newVersionBackground": "pending installation"
+}

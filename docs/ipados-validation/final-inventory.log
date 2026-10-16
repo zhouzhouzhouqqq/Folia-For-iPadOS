@@ -1,0 +1,6 @@
+npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> folia-major@0.7.19 ios:audit
+> node dev/ipados/visual-inventory.mjs
+
+Inventoried 14 lyric renderers and 6 backgrounds; no modes excluded.

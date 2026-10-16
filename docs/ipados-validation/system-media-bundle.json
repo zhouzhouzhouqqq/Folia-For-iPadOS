@@ -1,0 +1,19 @@
+{
+  "allBundledSourceFilesMatch": true,
+  "fileCount": 1867,
+  "syncedPublicMatch": true,
+  "compiledAppPublicMatch": true,
+  "remoteServerURL": false,
+  "iosServiceWorker": false,
+  "productionProbeEntry": false,
+  "staleGeneratedDuplicatesPreservedOutsideDist": [
+    "sw 2.js",
+    "workbox-dcde9eb3 2.js",
+    "folia-cover-sw 2.js",
+    "icon.svg 2.bak"
+  ],
+  "mediaSessionAssets": [
+    "assets/bootstrap-DwWKc8Cz.js"
+  ],
+  "scope": "Local unsigned arm64 App bundle. Not device playback or OS remote event validation."
+}

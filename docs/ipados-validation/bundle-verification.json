@@ -1,0 +1,17 @@
+{
+  "appId": "org.folia.personal",
+  "capacitor": "8.5.3",
+  "remoteServerUrl": false,
+  "bundledAssetCount": 1864,
+  "distAssetsMatchSyncedResources": true,
+  "additionalCapacitorGeneratedFiles": [
+    "cordova.js",
+    "cordova_plugins.js"
+  ],
+  "compiledAppIncludesCurrentResources": true,
+  "generatedPwaWorkerInIosBundle": false,
+  "indexSha256": "e9b7701af1c52885557be39d7ad0cc707659573588f0f5a47fa6dd9d960704f3",
+  "architecture": "Non-fat file: /FOLIA_SOURCE/../../work/DerivedData/Build/Products/Debug-iphoneos/App.app/App is architecture: arm64",
+  "signedForInstallation": false,
+  "deviceRuntimeTested": false
+}

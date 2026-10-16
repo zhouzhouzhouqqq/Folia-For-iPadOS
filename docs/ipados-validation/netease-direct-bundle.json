@@ -1,0 +1,16 @@
+{
+  "phase": "NetEase device-direct 2026-10-16",
+  "bundledAssetCount": 1866,
+  "distAssetsMatchSyncedResources": true,
+  "compiledAppIncludesCurrentResources": true,
+  "remoteServerUrl": false,
+  "generatedPwaWorkerInIosBundle": false,
+  "indexSha256": "3ce64cdd0078b43fe254538423b85ac9b16c33d87b0cfe4067bbcfed3b8dc85e",
+  "architecture": "arm64",
+  "signedForInstallation": false,
+  "newDeviceRuntimeTested": false,
+  "additionalCapacitorGeneratedFiles": [
+    "cordova.js",
+    "cordova_plugins.js"
+  ]
+}

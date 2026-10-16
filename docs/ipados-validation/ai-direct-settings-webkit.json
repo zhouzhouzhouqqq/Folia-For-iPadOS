@@ -1,0 +1,27 @@
+{
+  "engine": "Playwright macOS WebKit, synthetic Capacitor bridge; not physical iPad",
+  "results": [
+    "load",
+    "save",
+    "clear password after save",
+    "explicit hello test",
+    "original theme pipeline with synthetic response",
+    "unsaved test blocked",
+    "clear",
+    "landscape/portrait no overflow"
+  ],
+  "calls": [
+    "getSettings",
+    "getSettings",
+    "saveSettings",
+    "getSettings",
+    "request",
+    "getSettings",
+    "getSettings",
+    "request",
+    "clearSettings",
+    "getSettings"
+  ],
+  "errors": [],
+  "external": []
+}

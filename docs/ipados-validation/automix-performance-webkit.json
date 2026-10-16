@@ -1,0 +1,15 @@
+{
+  "engine": "macOS Playwright WebKit; synthetic native file bridge; not iPad performance",
+  "result": {
+    "samplesPerChannel": 1323000,
+    "channels": 6,
+    "distinctBuffers": 1,
+    "backingBytes": 31752000,
+    "avoidedDuplicateBytes": 31752000,
+    "validationAndViewsMs": 178,
+    "animationFramesDuringValidation": 7,
+    "oldViewsSurviveLaterInference": true
+  },
+  "errors": [],
+  "external": []
+}

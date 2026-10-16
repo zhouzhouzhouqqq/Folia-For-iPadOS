@@ -1,0 +1,31 @@
+[0/1] Planning build
+Building for production...
+[0/2] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (0.59s)
+Test Suite 'All tests' started at 2026-10-16 17:40:21.590.
+Test Suite 'All tests' passed at 2026-10-16 17:40:21.597.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.007) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: x86_64-apple-macos14.0
+◇ Suite RuntimeTests started.
+◇ Suite NativeStorageTests started.
+◇ Test tensorBoundsCleanupAndSymlinks() started.
+◇ Test fftRoundTripAndFiniteShapes() started.
+✔ Test tensorBoundsCleanupAndSymlinks() passed after 0.013 seconds.
+◇ Test systemAliasForRootIsAcceptedButJobAliasIsRejected() started.
+✔ Test systemAliasForRootIsAcceptedButJobAliasIsRejected() passed after 0.005 seconds.
+◇ Test corruptOrUnknownModelsNeverBecomeAvailable() started.
+✔ Test corruptOrUnknownModelsNeverBecomeAvailable() passed after 0.006 seconds.
+◇ Test verifiedModelInstallAndRestart() started.
+✔ Test fftRoundTripAndFiniteShapes() passed after 0.706 seconds.
+◇ Test rejectedShapesAndInputs() started.
+✔ Test rejectedShapesAndInputs() passed after 0.001 seconds.
+◇ Test originalModelsSyntheticParity() started.
+✔ Test originalModelsSyntheticParity() passed after 0.001 seconds.
+◇ Test borrowedOutputsReleaseAfterThrowingConsumer() started.
+✔ Test verifiedModelInstallAndRestart() passed after 2.188 seconds.
+✔ Suite NativeStorageTests passed after 2.216 seconds.
+✔ Test borrowedOutputsReleaseAfterThrowingConsumer() passed after 5.435 seconds.
+✔ Suite RuntimeTests passed after 6.145 seconds.
+✔ Test run with 8 tests in 2 suites passed after 6.146 seconds.

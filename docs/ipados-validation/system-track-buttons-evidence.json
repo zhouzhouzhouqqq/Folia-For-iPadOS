@@ -1,0 +1,14 @@
+{
+  "userReported": "System panel still showed -10/+10 seconds, no previous/next track buttons.",
+  "upstreamSource": "https://github.com/WebKit/WebKit/blob/main/Source/WebCore/Modules/mediasession/MediaSession.cpp",
+  "upstreamSourceSHA256": "e259b9ff98c83e2d0dcca0429cbd4a5c92d91b9877b56172aa76579e869e380b",
+  "observedSourceMapping": {
+    "seekbackward": "SkipBackwardCommand",
+    "seekforward": "SkipForwardCommand",
+    "previoustrack": "PreviousTrackCommand",
+    "nexttrack": "NextTrackCommand"
+  },
+  "publicIOSSDK": "iPhoneOS26.5.sdk/MediaPlayer.framework/Headers/MPRemoteCommandCenter.h",
+  "physicalDeviceInspection": "NoDeviceConnectedError; no new device state or OS command/layout validation.",
+  "limitation": "Upstream main is source evidence, not proof of the exact device WebKit implementation."
+}

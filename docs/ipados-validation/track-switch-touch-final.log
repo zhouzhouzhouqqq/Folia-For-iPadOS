@@ -1,0 +1,16 @@
+npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] npm warn Unknown env config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] (node:20061) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:20075) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 5:56:46 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  1 test/component/trackTitleNavigatorTouch.spec.ts:6:1 › touch playback exposes both 44px switches without hovering and respects queue boundaries (14.4s)
+[WebServer] 5:56:57 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  2 test/component/trackTitleNavigatorTouch.spec.ts:43:1 › native iPad keeps switches visible even when the primary pointer can hover (9.2s)
+
+  2 passed (29.3s)

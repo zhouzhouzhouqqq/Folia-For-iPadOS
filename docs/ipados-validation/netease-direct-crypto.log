@@ -1,0 +1,3 @@
+PASS: Swift EAPI/WEAPI/RSA/X25519/HMAC/AES-GCM/XEAPI envelope/gzip/form match independent desktop/Node oracles.
+Probe binary: /FOLIA_WORKSPACE/work/netease-direct/core-probe
+PASS: native cookie persistence/restoration/logout/expiry, QR-only retry, mutation non-replay, path/Watchman guards, concurrent preparation, HTTPS host allowlist and redirect rejection.

@@ -1,0 +1,17 @@
+{
+  "project" : {
+    "configurations" : [
+      "Debug",
+      "Release"
+    ],
+    "name" : "App",
+    "schemes" : [
+      "App",
+      "CapApp-SPM",
+      "FoliaAutomixRuntime"
+    ],
+    "targets" : [
+      "App"
+    ]
+  }
+}

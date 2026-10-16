@@ -1,0 +1,31 @@
+npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] npm warn Unknown env config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+[WebServer] (node:19008) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 8 tests using 1 worker
+
+(node:19036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 5:53:25 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  1 test/component/trackTitleNavigator.spec.ts:56:1 › 箭头可命中：文字层不得吞掉指针事件 (16.4s)
+[WebServer] 5:53:35 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  2 test/component/trackTitleNavigator.spec.ts:76:1 › 悬浮感应区预览相邻曲名，移开还原 (9.5s)
+[WebServer] 5:53:46 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  3 test/component/trackTitleNavigator.spec.ts:93:1 › 仅展开播放条不播入场动画（StrictMode 下 effect 会跑两次） (11.6s)
+[WebServer] 5:53:57 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  4 test/component/trackTitleNavigator.spec.ts:105:1 › 点箭头切歌时不闪回旧曲名 (11.6s)
+[WebServer] 5:54:07 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  5 test/component/trackTitleNavigator.spec.ts:137:1 › 切歌确认窗口：先亮新曲名，指针未动则窗口结束后恢复预览 (10.7s)
+[WebServer] 5:54:18 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+[WebServer] 5:54:21 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  6 test/component/trackTitleNavigator.spec.ts:155:1 › 实验室开关开启时箭头常驻，不再依赖悬浮 (12.0s)
+(node:19209) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] 5:54:32 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  7 test/component/trackTitleNavigatorTouch.spec.ts:6:1 › touch playback exposes both 44px switches without hovering and respects queue boundaries (10.3s)
+[WebServer] 5:54:42 PM [vite] (client) [console.warn] Service Worker registration blocked by Playwright
+  ✓  8 test/component/trackTitleNavigatorTouch.spec.ts:43:1 › native iPad keeps switches visible even when the primary pointer can hover (8.0s)
+
+  8 passed (1.7m)

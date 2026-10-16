@@ -1,0 +1,1 @@
+PASS: native AI HTTPS validation, endpoint-bound keys, metadata privacy, persistence, native authorization, redaction, revision, cancellation, redirect rejection and response limits (mock transport, no real Keychain/network).

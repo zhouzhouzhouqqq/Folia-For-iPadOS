@@ -1,0 +1,27 @@
+npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> folia-major@0.7.19 test:unit
+> vitest run -c vitest.config.ts test/unit/ipados test/unit/mod-system test/unit/playback/playbackTransportController.test.ts test/unit/onlineMusic/qqTransport.test.ts test/unit/onlineMusic/kugouTransport.test.ts test/unit/onlineMusic/bodianTransport.test.ts test/unit/services/localCoverAssetUrl.test.ts test/unit/services/localCoverAssetService.test.ts test/unit/services/localCoverRuntime.test.ts test/unit/services/localMusicService.test.ts test/unit/services/playbackGraph.test.ts test/unit/utils/mediaSessionSync.test.ts test/unit/services/nowPlayingProvider.test.ts test/unit/hooks/nowPlayingClock.test.ts test/unit/playercap test/unit/services/localPlaylistFileService.test.ts test/unit/command-palette/commandRegistryContract.test.ts
+
+
+ RUN  v4.1.11 /FOLIA_SOURCE
+
+Error: Could not parse CSS stylesheet
+    at exports.createStylesheet (/FOLIA_SOURCE/node_modules/jsdom/lib/jsdom/living/helpers/stylesheets.js:37:21)
+    at HTMLStyleElementImpl._updateAStyleBlock (/FOLIA_SOURCE/node_modules/jsdom/lib/jsdom/living/nodes/HTMLStyleElement-impl.js:68:5)
+    at HTMLStyleElementImpl._attach (/FOLIA_SOURCE/node_modules/jsdom/lib/jsdom/living/nodes/HTMLStyleElement-impl.js:19:12)
+    at HTMLHeadElementImpl._insert (/FOLIA_SOURCE/node_modules/jsdom/lib/jsdom/living/nodes/Node-impl.js:837:14)
+    at HTMLHeadElementImpl._preInsert (/FOLIA_SOURCE/node_modules/jsdom/lib/jsdom/living/nodes/Node-impl.js:758:10)
+    at HTMLHeadElementImpl._append (/FOLIA_SOURCE/node_modules/jsdom/lib/jsdom/living/nodes/Node-impl.js:864:17)
+    at HTMLHeadElementImpl.appendChild (/FOLIA_SOURCE/node_modules/jsdom/lib/jsdom/living/nodes/Node-impl.js:600:17)
+    at HTMLHeadElement.appendChild (/FOLIA_SOURCE/node_modules/jsdom/lib/jsdom/living/generated/Node.js:411:60)
+    at Object.onAdd (/FOLIA_SOURCE/src/mods/folium/registries/styles.ts:32:23)
+    at Object.register (/FOLIA_SOURCE/src/mods/folium/registry.ts:88:21) @layer folium-mods {
+[data-folium-part="progress.fill"] { background: red; }
+}
+
+ Test Files  58 passed (58)
+      Tests  665 passed (665)
+   Start at  01:13:46
+   Duration  28.67s (transform 92.85s, setup 0ms, import 166.19s, tests 58.14s, environment 47.22s)
+

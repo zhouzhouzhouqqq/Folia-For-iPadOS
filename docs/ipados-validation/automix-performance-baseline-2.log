@@ -1,0 +1,16 @@
+[0/1] Planning build
+Test Suite 'Selected tests' started at 2026-10-16 17:34:53.936.
+Test Suite 'FoliaAutomixRuntimePackageTests.xctest' started at 2026-10-16 17:34:53.938.
+Test Suite 'FoliaAutomixRuntimePackageTests.xctest' passed at 2026-10-16 17:34:53.938.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'Selected tests' passed at 2026-10-16 17:34:53.938.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.003) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: x86_64-apple-macos14.0
+◇ Suite RuntimeTests started.
+◇ Test originalModelsSyntheticParity() started.
+Native synthetic inference completed: 30s; host process peak RSS 2124943360 bytes (not iPad memory).
+✔ Test originalModelsSyntheticParity() passed after 30.976 seconds.
+✔ Suite RuntimeTests passed after 30.977 seconds.
+✔ Test run with 1 test in 1 suite passed after 30.977 seconds.

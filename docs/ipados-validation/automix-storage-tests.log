@@ -1,0 +1,35 @@
+warning: /FOLIA_USER/Library/org.swift.swiftpm/configuration is not accessible or not writable, disabling user-level cache features.
+warning: /FOLIA_USER/Library/org.swift.swiftpm/security is not accessible or not writable, disabling user-level cache features.
+[0/1] Planning build
+Building for debugging...
+[0/3] Write sources
+[1/3] Write swift-version--58304C5D6DBC2206.txt
+[3/9] Compiling FoliaAutomixRuntimeTests NativeStorageTests.swift
+[4/9] Compiling FoliaAutomixRuntimeTests AutomixInference.swift
+[5/9] Compiling FoliaAutomixRuntimeTests AutomixModelManifest.swift
+[6/9] Compiling FoliaAutomixRuntimeTests AutomixModelStore.swift
+[7/9] Compiling FoliaAutomixRuntimeTests AutomixDownload.swift
+[8/9] Emitting module FoliaAutomixRuntimeTests
+[8/10] Write Objects.LinkFileList
+[9/10] Linking FoliaAutomixRuntimePackageTests
+Build complete! (2.39s)
+Test Suite 'Selected tests' started at 2026-10-16 17:10:35.649.
+Test Suite 'FoliaAutomixRuntimePackageTests.xctest' started at 2026-10-16 17:10:35.650.
+Test Suite 'FoliaAutomixRuntimePackageTests.xctest' passed at 2026-10-16 17:10:35.650.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'Selected tests' passed at 2026-10-16 17:10:35.650.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: x86_64-apple-macos14.0
+◇ Suite NativeStorageTests started.
+◇ Test tensorBoundsCleanupAndSymlinks() started.
+✔ Test tensorBoundsCleanupAndSymlinks() passed after 0.009 seconds.
+◇ Test systemAliasForRootIsAcceptedButJobAliasIsRejected() started.
+✔ Test systemAliasForRootIsAcceptedButJobAliasIsRejected() passed after 0.003 seconds.
+◇ Test corruptOrUnknownModelsNeverBecomeAvailable() started.
+✔ Test corruptOrUnknownModelsNeverBecomeAvailable() passed after 0.002 seconds.
+◇ Test verifiedModelInstallAndRestart() started.
+✔ Test verifiedModelInstallAndRestart() passed after 0.558 seconds.
+✔ Suite NativeStorageTests passed after 0.575 seconds.
+✔ Test run with 4 tests in 1 suite passed after 0.575 seconds.

@@ -1,0 +1,40 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+browserType.launch: Target page, context or browser has been closed
+Browser logs:
+
+<launching> /FOLIA_WORKSPACE/work/browsers/webkit-2359/pw_run.sh --inspector-pipe --headless --no-startup-window
+<launched> pid=7318
+[pid=7318][err] /FOLIA_WORKSPACE/work/browsers/webkit-2359/pw_run.sh: line 7:  7324 Abort trap: 6           DYLD_FRAMEWORK_PATH="$DYLIB_PATH" DYLD_LIBRARY_PATH="$DYLIB_PATH" "$PLAYWRIGHT" "$@"
+Call log:
+[2m  - <launching> /FOLIA_WORKSPACE/work/browsers/webkit-2359/pw_run.sh --inspector-pipe --headless --no-startup-window[22m
+[2m  - <launched> pid=7318[22m
+[2m  - [pid=7318][err] /FOLIA_WORKSPACE/work/browsers/webkit-2359/pw_run.sh: line 7:  7324 Abort trap: 6           DYLD_FRAMEWORK_PATH="$DYLIB_PATH" DYLD_LIBRARY_PATH="$DYLIB_PATH" "$PLAYWRIGHT" "$@"[22m
+[2m  - [pid=7318] <gracefully close start>[22m
+[2m  - [pid=7318] <kill>[22m
+[2m  - [pid=7318] <will force kill>[22m
+[2m  - [pid=7318] exception while trying to kill process: Error: kill EPERM[22m
+[2m  - [pid=7318] <process did exit: exitCode=134, signal=null>[22m
+[2m  - [pid=7318] starting temporary directories cleanup[22m
+[2m  - [pid=7318] finished temporary directories cleanup[22m
+[2m  - [pid=7318] <gracefully close end>[22m
+
+    at /FOLIA_SOURCE/dev/ipados/webkit-smoke.mjs:14:30 {
+  log: [
+    '  - <launching> /FOLIA_WORKSPACE/work/browsers/webkit-2359/pw_run.sh --inspector-pipe --headless --no-startup-window',
+    '  - <launched> pid=7318',
+    '  - [pid=7318][err] /FOLIA_WORKSPACE/work/browsers/webkit-2359/pw_run.sh: line 7:  7324 Abort trap: 6           DYLD_FRAMEWORK_PATH="$DYLIB_PATH" DYLD_LIBRARY_PATH="$DYLIB_PATH" "$PLAYWRIGHT" "$@"',
+    '  - [pid=7318] <gracefully close start>',
+    '  - [pid=7318] <kill>',
+    '  - [pid=7318] <will force kill>',
+    '  - [pid=7318] exception while trying to kill process: Error: kill EPERM',
+    '  - [pid=7318] <process did exit: exitCode=134, signal=null>',
+    '  - [pid=7318] starting temporary directories cleanup',
+    '  - [pid=7318] finished temporary directories cleanup',
+    '  - [pid=7318] <gracefully close end>'
+  ]
+}
+
+Node.js v24.19.0

@@ -1,0 +1,25 @@
+[0/1] Planning build
+Building for production...
+[0/4] Write sources
+[1/4] Write swift-version--58304C5D6DBC2206.txt
+[2/4] Compiling FoliaORTC FoliaORTC.cpp
+[4/5] Compiling FoliaAutomixRuntime HTDemucsFFT.swift
+[5/7] Compiling FoliaAutomixRuntimeTests AutomixDownload.swift
+[5/7] Write Objects.LinkFileList
+[6/7] Linking FoliaAutomixRuntimePackageTests
+Build complete! (14.73s)
+Test Suite 'Selected tests' started at 2026-10-16 17:37:17.405.
+Test Suite 'FoliaAutomixRuntimePackageTests.xctest' started at 2026-10-16 17:37:17.408.
+Test Suite 'FoliaAutomixRuntimePackageTests.xctest' passed at 2026-10-16 17:37:17.408.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'Selected tests' passed at 2026-10-16 17:37:17.408.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.002) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: x86_64-apple-macos14.0
+◇ Suite RuntimeTests started.
+◇ Test originalModelsSyntheticParity() started.
+Native synthetic inference completed: 30s; host process peak RSS 1966731264 bytes (not iPad memory).
+✔ Test originalModelsSyntheticParity() passed after 26.834 seconds.
+✔ Suite RuntimeTests passed after 26.834 seconds.
+✔ Test run with 1 test in 1 suite passed after 26.835 seconds.

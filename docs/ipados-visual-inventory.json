@@ -1,0 +1,4680 @@
+{
+  "baseline": "35db05ccef6065e868fab14f49b433c8344e9ca1",
+  "modes": [
+    {
+      "kind": "lyrics",
+      "id": "cadenza",
+      "entry": "src/components/visualizer/cadenza/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/cadenza/VisualizerCadenza.tsx",
+          "sha256": "5d91e0def0023db1761dc160fc6a4ffccc0b0d4925a3b1f723e6cd04cdfc9559",
+          "imports": [
+            "react",
+            "framer-motion",
+            "react-i18next",
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "../colorMix",
+            "../../../utils/glowBlurQuantize",
+            "../runtime",
+            "../definition",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "../subtitleFontSizes",
+            "./cadenzaTypes",
+            "./cadenzaOverlayNodes",
+            "./cadenzaEnvelopes",
+            "./cadenzaPreparedState"
+          ],
+          "parameters": [
+            "fontScale",
+            "glowIntensity",
+            "motionAmount",
+            "widthRatio"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/cadenza/cadenzaEnvelopes.ts",
+          "sha256": "fe9341a7ab03fc83dd930adf23ffa3420f1ab6f34a0b57831ba4f7b1672a60c8",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/renderHints",
+            "../colorMix",
+            "./cadenzaTypes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cadenza/cadenzaFragments.ts",
+          "sha256": "0a0b966147f5250d09cef42a2586803f44bd12ca71d95b4c77470c50f6548472",
+          "imports": [
+            "@chenglou/pretext",
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../wordColoring",
+            "./cadenzaTypes",
+            "./cadenzaEnvelopes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cadenza/cadenzaOverlayNodes.ts",
+          "sha256": "509501baa04adbc736f2cef49c5bda89c53706f0949e6ea0c90d00be13af3fd3",
+          "imports": [
+            "./cadenzaTypes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cadenza/cadenzaPlacements.ts",
+          "sha256": "b94b37f196cd74f934dd08c4b3b6bddc79a8f65541c92e9c5f2b60ff8a79e4d7",
+          "imports": [
+            "@chenglou/pretext",
+            "../../../types",
+            "./cadenzaTypes",
+            "./cadenzaEnvelopes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cadenza/cadenzaPreparedState.ts",
+          "sha256": "cd08554c3b9a1b72b2d0a2b2b130714e77833e0b13751ebedc14711edc3d9f2f",
+          "imports": [
+            "@chenglou/pretext",
+            "../../../types",
+            "../../../utils/fontStacks",
+            "./cadenzaTypes",
+            "./cadenzaEnvelopes",
+            "./cadenzaFragments",
+            "./cadenzaPlacements"
+          ],
+          "parameters": [
+            "fontScale",
+            "widthRatio"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/cadenza/cadenzaTypes.ts",
+          "sha256": "270c30c7643e5b808990fb4cbd24555602d1ce69256a90d8defa6f3ff30852cd",
+          "imports": [
+            "@chenglou/pretext",
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/renderHints"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cadenza/entry.tsx",
+          "sha256": "abe5d276c66d9eea65087a85134bb326cbe4169bc7e13e0b8bb03024fd085fe1",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cadenza/tuning.ts",
+          "sha256": "92277fb6b5db097f20bd39b99809d80412a6ab990ed7ac17b9948fec92553674",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "cappella",
+      "entry": "src/components/visualizer/cappella/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/cappella/CappellaBubbleParts.tsx",
+          "sha256": "4be2fabfe5fb48ef358551441fade413ecf63ee66efdaf553a9c4cc881ca184a",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../types",
+            "./cappellaTypes",
+            "./cappellaConstants",
+            "./cappellaReveal",
+            "./cappellaMessageLayout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/CappellaMessageRow.tsx",
+          "sha256": "377c933af7f5ada461486443ddcf154110f3b8f39de6fd47a99bed5ef875ab81",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../types",
+            "../../../utils/fontStacks",
+            "../colorMix",
+            "./avatarImages",
+            "./cappellaTypes",
+            "./cappellaConstants",
+            "./cappellaReveal",
+            "./cappellaMessageLayout",
+            "./cappellaBubbleMetrics",
+            "./CappellaBubbleParts"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/VisualizerCappella.tsx",
+          "sha256": "1568abfb380d9ccbb9ab34671c0c13575309af6603f08ba31b3ec2f3e564e7b8",
+          "imports": [
+            "react",
+            "framer-motion",
+            "react-i18next",
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "../runtime",
+            "../definition",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "./emoImages",
+            "./cappellaTypes",
+            "./cappellaConstants",
+            "./cappellaIntensity",
+            "./cappellaMessages",
+            "./cappellaMessageLayout",
+            "./cappellaBubbleMetrics",
+            "./CappellaMessageRow"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/avatarImages.ts",
+          "sha256": "a983b5f45af1ecd722ddf5d53739920310b92ba2af7b12647934854f2b31a4be",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/cappellaBubbleMetrics.ts",
+          "sha256": "c9f4e64d900e8232b7d270502fecb9a0e35102ddab4e6a3b5462340478bb602d",
+          "imports": [
+            "@chenglou/pretext",
+            "../../../types",
+            "../../../utils/fontStacks",
+            "./cappellaTypes",
+            "./cappellaConstants",
+            "./cappellaReveal",
+            "../textMeasureCache"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/cappellaConstants.ts",
+          "sha256": "e7b4a9fe1d5e59ed8c03af840dec2728580cde760409bb2d50529e95dd91f0d5",
+          "imports": [
+            "@chenglou/pretext",
+            "../runtime"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/cappellaIntensity.ts",
+          "sha256": "cfd8b7f4e0fbfa3860ec8811592ede86193746038f334a28ee6366c7ec061da6",
+          "imports": [
+            "../../../types",
+            "./cappellaTypes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/cappellaMessageLayout.ts",
+          "sha256": "8d167ee50cdde2b76499f94485e0a3bd77ba6d62eae0989719dbd16a49eab105",
+          "imports": [
+            "../../../types",
+            "../colorMix",
+            "./cappellaTypes",
+            "./cappellaConstants",
+            "./cappellaBubbleMetrics"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/cappellaMessageSenders.ts",
+          "sha256": "7a083a3d73b037ced1397a5a3179a8def9feb09a57a57f62556635d0786f68ab",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/cappellaMessages.ts",
+          "sha256": "9035dbaac78117c1c98881df720750a29c6a4cc306411c7e81a17ea9c23d2a79",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "./cappellaMessageSenders",
+            "./cappellaTypes",
+            "./cappellaConstants"
+          ],
+          "parameters": [
+            "sequencing",
+            "showEmoMessages"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/cappella/cappellaReveal.ts",
+          "sha256": "1f55d6092c1dac35cfac4e06f074a4dc6a7353e4e58b21225eb262b58573001a",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "./cappellaTypes",
+            "./cappellaConstants"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/cappellaTypes.ts",
+          "sha256": "113512648ced44ce80b3c9428a7fd874fbe5864c2fa4b4aed9cc41cb69a38ce8",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/emoImages.ts",
+          "sha256": "e24aac4fe38c1c329e592030f64a20c317d3ca5ba3420cbcd5bff2063ad35c4c",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/entry.tsx",
+          "sha256": "04cd827c5be7297f27f304b991dba43c1550cf2ca74a293affedaf2045a58135",
+          "imports": [
+            "react",
+            "../definition",
+            "../settingsPanels"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/cappella/tuning.ts",
+          "sha256": "59d6855851134829fab37aa33d3585329a5dee3b038d729177a0bc6fe144401f",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "claddagh",
+      "entry": "src/components/visualizer/claddagh/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/claddagh/CladdaghRingLine.tsx",
+          "sha256": "97e706c1eb805dac0a9c221e5568acadb6fd4e4b24cb43f60208723354f32c63",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/fontStacks",
+            "../colorMix",
+            "../../../utils/glowBlurQuantize",
+            "../wordColoring",
+            "./claddaghTimeline",
+            "./claddaghLayout",
+            "./claddaghGlow"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/claddagh/VisualizerCladdagh.tsx",
+          "sha256": "4813a2d647fce8d88c77bc74ba83245fa5e5ae192add631f2f8886825df02888",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/fontStacks",
+            "../definition",
+            "../runtime",
+            "../colorMix",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "./claddaghTimeline",
+            "./claddaghLayout",
+            "./CladdaghRingLine"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/claddagh/claddaghGlow.ts",
+          "sha256": "8862b06fc1f9e9d83f8b576cb9688198c5588e66873250a0b6760eaf165b4372",
+          "imports": [
+            "../colorMix",
+            "./claddaghTimeline"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/claddagh/claddaghLayout.ts",
+          "sha256": "449c2b3639e587b4f8e73d86636edb39d363ed9561d76fa9214ca2456c5ff681",
+          "imports": [
+            "@chenglou/pretext",
+            "./claddaghTimeline",
+            "../textMeasureCache"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/claddagh/claddaghTimeline.ts",
+          "sha256": "5644935db8e637784b6fde640cecb85299f5015b40ed507a017aff38255d9ae4",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/claddagh/entry.tsx",
+          "sha256": "d4d6bc5391406c9d0737121114f4cac159d8d67f0df9a011862a0a46f2368da5",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition",
+            "../settingsPanels"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/claddagh/tuning.ts",
+          "sha256": "ac5d7bf35090c3c8567dc528f6154ca93e76e6832be410f8ff5757e4bf08cf92",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "classic",
+      "entry": "src/components/visualizer/classic/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/classic/Visualizer.tsx",
+          "sha256": "4d5c9dd71a4c0fdfd9f1a081c7b1cfc85951139d0b99401dfdc42eb0e49a8698",
+          "imports": [
+            "react",
+            "framer-motion",
+            "react-i18next",
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "../runtime",
+            "../definition",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "../subtitleFontSizes",
+            "../../../utils/lyrics/cjkSemanticLayout",
+            "../../../utils/fontStacks",
+            "../wordColoring",
+            "../GlowWord",
+            "../glowWordTiming",
+            "../glowWordVariants"
+          ],
+          "parameters": [
+            "alignSelf",
+            "breathingFloatMultiplier",
+            "enableWordRotation",
+            "marginRight",
+            "useLegacyLayout",
+            "wordSpacing"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/classic/entry.tsx",
+          "sha256": "d258f109d876ad0570e9b83ee1a77eaab76e505145c1e3130d29e15352ef67fb",
+          "imports": [
+            "react",
+            "../definition",
+            "../settingsPanels"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/classic/tuning.ts",
+          "sha256": "83d3c71127ad5653c045bb0fd3cb3381973d8428ee43d11c79b9c7312fd7de3e",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "diorama",
+      "entry": "src/components/visualizer/diorama/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/diorama/CameraRig.tsx",
+          "sha256": "86d9fd1e5ef829b62650cec6c5fb7eb5a9db8154b75d9fcab6caea515fc448f4",
+          "imports": [
+            "react",
+            "@react-three/fiber",
+            "framer-motion",
+            "three",
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/renderHints",
+            "./cameraPath",
+            "./dioramaSequencer",
+            "./dioramaTransition"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/DioramaActiveUnitPlanes.tsx",
+          "sha256": "23b7713e41f04a1fccbeff5ce9cde1eff3e586c35c13082b286259407df0e1b6",
+          "imports": [
+            "react",
+            "three",
+            "./dioramaSceneConstants",
+            "./dioramaSceneTypes",
+            "./dioramaSceneFrame"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/DioramaBackgroundParticleSettings.tsx",
+          "sha256": "dc68722d5e5cd8999b382d3838f3d4034af035c1431ca4c8f299affd870f71f4",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../types",
+            "../colorMix",
+            "./DioramaSettingsToggle"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/DioramaEffectSettings.tsx",
+          "sha256": "c6e7d0fee0e79ce9ca398533cd4ea94c7c6265bf677483f7aa605d39ba5258cd",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../types",
+            "../colorMix",
+            "./DioramaSettingsToggle"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/DioramaGeometrySettings.tsx",
+          "sha256": "c0e1be9a22b74624046634d8d7ded5e76d382e9bffb08082dc09c348d95c96be",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../types",
+            "../colorMix",
+            "./DioramaParticleAppearanceSettings",
+            "./DioramaSettingsToggle"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/DioramaParticleAppearanceSettings.tsx",
+          "sha256": "016e6f0ab419b59922c0e41472e8d5bd84d8b216cfc00a19fab7751b10931deb",
+          "imports": [
+            "react",
+            "../../../types",
+            "../colorMix",
+            "./DioramaSettingsToggle"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/DioramaParticleField.tsx",
+          "sha256": "6b23bd8046b89cdfa109b7f8c13f318117f9e22a7c9772a64c8f32011c3add67",
+          "imports": [
+            "react",
+            "@react-three/fiber",
+            "framer-motion",
+            "three",
+            "../../../types",
+            "./cameraPath",
+            "./dioramaGeometry",
+            "./dioramaParticleCorridor",
+            "./dioramaParticleModel",
+            "./dioramaParticleMaterials"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/DioramaScene.tsx",
+          "sha256": "6c23b198ce146efeda436ccbc82c9e7d173303280fe65544157be32939a6b241",
+          "imports": [
+            "react",
+            "@react-three/fiber",
+            "framer-motion",
+            "three",
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/fontStacks",
+            "./dioramaKeywordColor",
+            "./cameraPath",
+            "./dioramaSequencer",
+            "./dioramaTextRaster",
+            "./DioramaParticleField",
+            "./dioramaMoteField",
+            "./dioramaSceneConstants",
+            "./dioramaSceneUnits",
+            "./dioramaSceneTypes",
+            "./dioramaSceneLayout",
+            "./dioramaLineRasterCache",
+            "./dioramaSceneFrame",
+            "./DioramaActiveUnitPlanes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/DioramaSettingsToggle.tsx",
+          "sha256": "5837a129b2b9e8a943d2798a99dd4c3247b7d8f0979f598398a4841f575c2b88",
+          "imports": [
+            "react",
+            "../../../types",
+            "../colorMix"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/VisualizerDiorama.tsx",
+          "sha256": "1aebd2fb629ac5a6f7671f841d0dcf9108034df8ae0aad370c3dcf45e425d320",
+          "imports": [
+            "react",
+            "@react-three/fiber",
+            "framer-motion",
+            "react-i18next",
+            "../../../types",
+            "../../../utils/lyrics/parserCore",
+            "../runtime",
+            "../definition",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "../subtitleFontSizes",
+            "./CameraRig",
+            "./DioramaScene",
+            "./cameraPath",
+            "./dioramaSequencer",
+            "./dioramaTransition",
+            "lyrics still loading"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/cameraPath.ts",
+          "sha256": "71adb1bcb6b7c099a147848065004d48de1d3fa2f45122681cd2fb50d0ce3e76",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaGeometry.ts",
+          "sha256": "76357aef11c05502c031a32c7be64aa5141cfb999c40144b5c737850056b537c",
+          "imports": [
+            "../../../types",
+            "./cameraPath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaKeywordColor.ts",
+          "sha256": "10a6d0c629690723eccd8c43fc4daa5e00bb2e2902455bedc38b018f7f0caf3e",
+          "imports": [
+            "three",
+            "../../../types",
+            "../wordColoring",
+            "./dioramaParticleMaterials"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaLineRasterCache.ts",
+          "sha256": "67a838c1c3f589ddcae58c459db740b9896279473ea323eb5f1c981b02fc87d9",
+          "imports": [
+            "./dioramaTextRaster",
+            "./dioramaSceneConstants",
+            "./dioramaSceneTypes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaMoteField.ts",
+          "sha256": "0babd748a65c04586cadca8c5f8494d7e350d6e59327f14923b9e49c968445a5",
+          "imports": [
+            "../../../types",
+            "./cameraPath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaParticleCorridor.ts",
+          "sha256": "385d1256a50c07f83082a69953c939a17de5f4d96adbce239b5b48118917bbf4",
+          "imports": [
+            "./cameraPath",
+            "./dioramaMoteField",
+            "./dioramaSequencer"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaParticleMaterials.ts",
+          "sha256": "8dd90ee9568d56936e8f92bf254f46289b6c4e3e50112796f693777139dff08f",
+          "imports": [
+            "three",
+            "./dioramaParticleModel",
+            "./dioramaParticleShaders"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaParticleModel.ts",
+          "sha256": "3d6a3637c106c6ececfcda7748b253bac64d308b8b06e5e9572166488d41934d",
+          "imports": [
+            "three",
+            "../../../types",
+            "./cameraPath",
+            "./dioramaGeometry",
+            "./dioramaParticleCorridor",
+            "./dioramaParticleSurfaces"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaParticleShaders.ts",
+          "sha256": "9e6bcc8287a6e3de4aed34def937fe87c4400aded887d58485c60e30a1e079f2",
+          "imports": [
+            "./cameraPath",
+            "./dioramaParticleModel"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaParticleSurfaces.ts",
+          "sha256": "d4f77613c4a321c1957c4d92fa889269aa7a66e1103eccf1f2138d223d434e17",
+          "imports": [
+            "./dioramaGeometry"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaSceneConstants.ts",
+          "sha256": "9809b495e1ef33f358c6868b68c701549603a24799715acf68cc83afd43cc002",
+          "imports": [
+            "registered on the glyph"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaSceneFrame.ts",
+          "sha256": "a8ce636da24cb1f0261f65dbf6bdc78b78dadbae7fb0e8659e5e318399f43b1b",
+          "imports": [
+            "three",
+            "./cameraPath",
+            "./dioramaSequencer",
+            "./dioramaTextRaster",
+            "./dioramaMoteField",
+            "./dioramaSceneConstants",
+            "./dioramaSceneUnits",
+            "./dioramaSceneTypes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaSceneLayout.ts",
+          "sha256": "e4bc621e11dd034f382d8b795521de57481e10484ce060cb0ee2b08cdcb4e219",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "./cameraPath",
+            "./dioramaSequencer",
+            "./dioramaGeometry",
+            "./dioramaTextRaster",
+            "./dioramaParticleCorridor",
+            "./dioramaSceneConstants",
+            "./dioramaSceneUnits",
+            "./dioramaSceneTypes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaSceneTypes.ts",
+          "sha256": "3fd50fac7881e7e3a7516fc6e7893dda3a3a3eed0d6e6d27776dc2988c17313c",
+          "imports": [
+            "three",
+            "../../../types",
+            "./cameraPath",
+            "./dioramaTextRaster"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaSceneUnits.ts",
+          "sha256": "303ead0e85c5e4a8ee665857fcb6b42fdfcf390a661d1a8b5fa4e3946d49b81b",
+          "imports": [
+            "three",
+            "./cameraPath",
+            "./dioramaSceneConstants"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaSequencer.ts",
+          "sha256": "840b37e72c0947daa238a91e15efee1436cb66aef1da6655dd9db809a19b0efa",
+          "imports": [
+            "../../../types",
+            "./cameraPath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaTextRaster.ts",
+          "sha256": "085bc682dbe3e15ba08cede13108063b4ff1cf0a4a79b35be35be56722a41d28",
+          "imports": [
+            "three"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaTransition.ts",
+          "sha256": "aa5cdc1e3a4b2255d557e6a15216abd1aa55a2b2b78d83e748fba34a8a5ecea1",
+          "imports": [
+            "./cameraPath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/entry.tsx",
+          "sha256": "ec27fbbfb4a88f62d036979e09605bc01730dc1a5b6e4ad7c45734e5ecb89e7c",
+          "imports": [
+            "react",
+            "../definition",
+            "../settingsPanels"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/tuning.ts",
+          "sha256": "eef536579e8b6b83510497f91838eae197d98e755a86e6c789a79715463ac634",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "fume",
+      "entry": "src/components/visualizer/fume/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/fume/VisualizerFume.tsx",
+          "sha256": "b942008a2836fe89c3edbc5dbdb35fbbe62399b489264a869906482b30c276e0",
+          "imports": [
+            "react",
+            "framer-motion",
+            "lucide-react",
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "../colorMix",
+            "../definition",
+            "../FumeBackground",
+            "../runtime",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "./fumeTypes",
+            "./fumeCameraStep",
+            "./fumeMath",
+            "./fumeTextStyle",
+            "./fumeArticleLayout",
+            "./fumeCamera",
+            "./fumeStage",
+            "./useFumeCanvasStage"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/entry.tsx",
+          "sha256": "3811d528366e225209fd98b424a4db51b111e4d1c09b0588c4322c67abebeb4a",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition",
+            "../settingsPanels"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeArticleLayout.ts",
+          "sha256": "067cdb80da2ae922b08f9fe6ff2001663f33c8d771741a603e166849f0866df8",
+          "imports": [
+            "../../../types",
+            "../../../utils/fontStacks",
+            "../../../utils/lyrics/renderHints",
+            "./fumeTypes",
+            "./fumeMath",
+            "./fumeReveal",
+            "./fumeTextMeasure"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeBlockFrame.ts",
+          "sha256": "e475a08c46d48a3a5003b04be01bf2e3e57b7a726d92aa37443a6070a0b504e3",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "../colorMix",
+            "./fumeTypes",
+            "./fumeMath",
+            "./fumeReveal",
+            "./fumeTextStyle"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeCamera.ts",
+          "sha256": "99715b80e122e1a9580cdca98a05990ef39b6acc6eea2b7b158c3bfeab117c66",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "./fumeTypes",
+            "./fumeMath",
+            "./fumeReveal",
+            "./fumeTextMeasure"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeCameraStep.ts",
+          "sha256": "91b25847c754d4764f4903fda4df66b424d0548f315959f88833a3d1ebb02460",
+          "imports": [
+            "../../../types",
+            "../FumeBackground",
+            "./fumeTypes",
+            "./fumeMath",
+            "./fumeReveal",
+            "./fumeCamera"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeCanvasText.ts",
+          "sha256": "b922a5612946527f755dfac284ebb42640c9da6cef043a8c470bb007f09996e1",
+          "imports": [
+            "../../../types",
+            "../../../utils/fontStacks",
+            "../colorMix",
+            "../../../utils/glowBlurQuantize",
+            "./fumeTypes",
+            "./fumeBlockFrame",
+            "./fumeMath",
+            "./fumeReveal",
+            "./fumeTextStyle",
+            "./fumeTextMeasure"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeLiveRaster.ts",
+          "sha256": "903ea97c9853795519f454f622eedd24b9842ee2bb73fd194b8c7e4d6af9fbdc",
+          "imports": [
+            "./fumeTypes",
+            "./fumeBlockFrame",
+            "./fumeCanvasText"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeMath.ts",
+          "sha256": "165b7ac7394d453f06340d0a9f0a2c27306bda5799a64a6bb4a68386e1278674",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeReveal.ts",
+          "sha256": "365a693be5a6b92f43d22d4f31d073489cb0993c843a6fed85b59ae893a0644e",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/renderHints",
+            "./fumeTypes",
+            "./fumeMath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeStage.ts",
+          "sha256": "bbffc340d8c0d901c982ced2e0c5f63b2e8ef63e818efc8bb9b00fc9bd94c7ec",
+          "imports": [
+            "framer-motion",
+            "../../../types",
+            "../FumeBackground",
+            "./fumeCameraStep",
+            "./fumeTypes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeTextMeasure.ts",
+          "sha256": "16a555c9e72aaeea27acdec903fb7b5edcce2e9132feb97dfe61984f56d19cdb",
+          "imports": [
+            "@chenglou/pretext",
+            "../../../types",
+            "../../../utils/fontStacks",
+            "./fumeTypes",
+            "./fumeMath",
+            "../textMeasureCache"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeTextStyle.ts",
+          "sha256": "2e2ddaad132672f71084bf8342f7d5e8bae5419521c55e28eef5fef737ffebde",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "../wordColoring",
+            "./fumeMath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/fumeTypes.ts",
+          "sha256": "5732b59daae54fdf20c5953dd92885ef5c498d06c91912836688b9e2be281b90",
+          "imports": [
+            "@chenglou/pretext",
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/tuning.ts",
+          "sha256": "97849748cc7e5b1f78a360bda622de520294c5392df5ec967edcd059099e6533",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/useFumeCanvasStage.ts",
+          "sha256": "6d4468457d35b836def3f745e703fed8fd25bf78893cc85c0db1778893f9dbf9",
+          "imports": [
+            "react",
+            "../FumeBackground",
+            "../../../utils/glowBlurQuantize",
+            "./fumeTypes",
+            "./fumeCameraStep",
+            "./fumeBlockFrame",
+            "./fumeMath",
+            "./fumeCanvasText",
+            "./fumeLiveRaster",
+            "./fumeStage"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "lumiere",
+      "entry": "src/components/visualizer/lumiere/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/lumiere/LumiereSettingsPanel.tsx",
+          "sha256": "62681a23798c5069e0c603de831e61734a97866911fe1a6a8cf2e079a504bc1e",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition",
+            "../VisualizerPresetGroup",
+            "../tempera/TemperaSettingsControls"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/VisualizerLumiere.tsx",
+          "sha256": "cfee85afa6d65cb65e3de5192bca8ad8c18ba75d14b634cda3bb37949c6e31ef",
+          "imports": [
+            "react",
+            "react-i18next",
+            "../../../types",
+            "../../../types",
+            "../../../services/lucideIconResolver",
+            "../../../utils/fontStacks",
+            "../../../utils/lyrics/renderHints",
+            "../definition",
+            "../pixiRuntimeHost",
+            "../runtime",
+            "../songHandover",
+            "../subtitleFontSizes",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "./createLumierePixiRuntime",
+            "./lumiereProgram",
+            "./lumiereRuntimeTuning"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/catalog.ts",
+          "sha256": "2db28796e6c78039e7e2d68ed0e393ed2a2c612021e6a686b8faa26a0a56a17c",
+          "imports": [
+            "./rigs/astral",
+            "./rigs/botany",
+            "./rigs/caustic",
+            "./rigs/lattice",
+            "./rigs/motes",
+            "./rigs/optics",
+            "./rigs/prism",
+            "./rigs/stage",
+            "./rigs/wave",
+            "./rigs/zenith",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/color.ts",
+          "sha256": "bb5f7e61638226bb13f8db6dc37abc823f2fb05f67e033c836b5b49d5c26b2b9",
+          "imports": [
+            "../colorMix"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/createLumierePixiRuntime.ts",
+          "sha256": "a4eeec1fbff2746a104efae11f23c34b5dd350ffe781f096a3025ede3681bd22",
+          "imports": [
+            "framer-motion",
+            "pixi.js",
+            "../../../types",
+            "../loadPixi",
+            "../pixiSceneCache",
+            "./lumiereAudio",
+            "./lumiereProgram",
+            "./lumiereRuntimeTuning",
+            "./lumiereSceneFrames",
+            "./lumiereSceneEntry",
+            "./lumiereCreditsLayer",
+            "./lumiereDarkField",
+            "../pixiSongSwap",
+            "./overlay",
+            "./light/sprites",
+            "./types"
+          ],
+          "parameters": [
+            "overlayFrame",
+            "renderQuality",
+            "textOnly",
+            "themeColorMix"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/lumiere/credits.ts",
+          "sha256": "df5473e735a921de831e36b0593a1fa4954b772cf3cbea237f75fcca8a41a153",
+          "imports": [
+            "../../../types",
+            "./lumiereRandom",
+            "../../../utils/fontStacks",
+            "./lumiereKernel",
+            "./color",
+            "./light/bloomFilter",
+            "./light/lightFieldShader",
+            "./light/motes",
+            "./light/rig",
+            "./light/sprites",
+            "./lineart/lineArt",
+            "./lineart/recipes",
+            "./rigs/base",
+            "./scene",
+            "./text/lyricWindow",
+            "./types"
+          ],
+          "parameters": [
+            "bloom",
+            "fogDensity",
+            "fogOctaves",
+            "hideTrails",
+            "lightIntensity",
+            "lineArt",
+            "moteAmount",
+            "textBloom",
+            "textOnly",
+            "themeColorMix",
+            "unlitOpacity"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/lumiere/entry.tsx",
+          "sha256": "38bc18cc32c14a7a0ad23b2627617aec6ae94fd1dc7769ff68a32c6547a20153",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition",
+            "./LumiereSettingsPanel"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/light/bloomFilter.ts",
+          "sha256": "e737b4d854a7e52609351475125c7e8c2fe436a213d3a4646225131dd093189c",
+          "imports": [
+            "pixi.js",
+            "../../pixiFilterVertex"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/light/crossBurst.ts",
+          "sha256": "0be1c9eea60e16093a071f90c81f28fc178e35e36d4e64f5e36e5133934468bc",
+          "imports": [
+            "pixi.js",
+            "../lumiereRandom",
+            "../color",
+            "../types",
+            "./sprites"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/light/lightFieldShader.ts",
+          "sha256": "a13b82f626aa6b1b5c96af662c6b6be413fbb882ed15681be7d4552445bd11d8",
+          "imports": [
+            "pixi.js",
+            "./rig"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/light/motes.ts",
+          "sha256": "71bb740c1e31920ab6390f9390e68292fcb8ea7d9016ff7a24ba1a7675ccc011",
+          "imports": [
+            "pixi.js",
+            "../lumiereRandom",
+            "./rig"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/light/rig.ts",
+          "sha256": "c099f7d1629d755f80c02c8b6c7fc843a6bc3428b8716fea529e15558586991f",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/light/sprites.ts",
+          "sha256": "0bd326214dce0503289b246c72567b020886cf590b83a25ab2fd056bd0f24156",
+          "imports": [
+            "pixi.js"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/light/starfall.ts",
+          "sha256": "2dacf1d91044dca0a73721fea12011c1f9faecc56f02d1a675e1f7bf3a8a0de1",
+          "imports": [
+            "pixi.js",
+            "../lumiereRandom",
+            "./rig"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lineart/diagrams.ts",
+          "sha256": "ddc9dd7afbf96d9e02d3e50a44c057399a52d04723e887e16f3c3a65923e9b42",
+          "imports": [
+            "./lineArt",
+            "./recipes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lineart/iconPaths.ts",
+          "sha256": "e84b2e904905c762736c180e3bc05af379e9dbb11a6c7935225bab6dcc66cb1d",
+          "imports": [
+            "lucide-react",
+            "../../../../services/lucideIconResolver",
+            "./lineArt"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lineart/lineArt.ts",
+          "sha256": "a0d0400978b53af0b32778943d01ab76ea4ac433e39be0fd7c8f852a8f9c1322",
+          "imports": [
+            "pixi.js",
+            "../light/rig"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lineart/recipes.ts",
+          "sha256": "d62bba30df5b56c283ff13135a9861805b4599785fa581a4dcf433ffc6f5438b",
+          "imports": [
+            "./lineArt"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lineart/themeIcons.ts",
+          "sha256": "1221095dfc722d16fde72683f05bf1f771ec3a45c289348f95e35c0204551874",
+          "imports": [
+            "./lineArt",
+            "./iconPaths",
+            "../../../../services/lucideIconResolver",
+            "../lumiereRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereAudio.ts",
+          "sha256": "757837b44a270448711fcaf78c39da70f8629d5a6a2f3bf19d0e1309246a65c7",
+          "imports": [
+            "framer-motion",
+            "../../../types",
+            "./lumiereKernel"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereCreditsLayer.ts",
+          "sha256": "0d4a81726d0164b428101ef3e2fc47a14a88dec61574395442505a9961097764",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "./credits",
+            "./lumiereKernel",
+            "./lumiereProgram",
+            "./lumiereSceneEntry",
+            "./light/sprites",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereDarkField.ts",
+          "sha256": "5da462deba397a844f70811f8876c46f425de52e021683660e39b6608f021f3a",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "./color"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereGroupFilters.ts",
+          "sha256": "e69ce3a541978ff80933eb9be94a063ad79e4561a113aa0e23ecb6f3f9352703",
+          "imports": [
+            "pixi.js",
+            "./light/bloomFilter",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereKernel.ts",
+          "sha256": "7acfb583fc8bf1145430ea99c1e96332865ef0d1a5422798a626f89cbe39712b",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereProgram.ts",
+          "sha256": "a970af5d8ffce9d8cc8166428bcd40dc03429a138d9c92a3d53b3d362e9c2581",
+          "imports": [
+            "../../../types",
+            "./lumiereKernel",
+            "./lumiereStructure",
+            "./lumiereSeamless",
+            "./lumiereTransitions",
+            "./program"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereRandom.ts",
+          "sha256": "3f882e630fd1531efaefbe1c8ac01e4e425a52548a23a4dde6c49756b5c1fb47",
+          "imports": [
+            "../visualizerSeedHash"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereRuntimeTuning.ts",
+          "sha256": "85e15cf2be25fb0e863006bce0ac6fa4ab8d7890ac76f17662980aa16abe8165",
+          "imports": [
+            "../../../types",
+            "../pixiTextureBudget",
+            "./lumiereProgram",
+            "./types"
+          ],
+          "parameters": [
+            "audioResponse",
+            "bloom",
+            "darkField",
+            "decay",
+            "echo",
+            "fogDensity",
+            "fogOctaves",
+            "frontBokeh",
+            "hideTrails",
+            "keywordColors",
+            "lightIntensity",
+            "lineArt",
+            "moteAmount",
+            "overlayFrame",
+            "renderQuality",
+            "seamlessTransitions",
+            "textBloom",
+            "textOnly",
+            "themeColorMix",
+            "themeIcons",
+            "trails",
+            "unlitOpacity",
+            "windowNeighbors"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereSceneEntry.ts",
+          "sha256": "0992b93f59d5217e4c0878551c97eb2496bce5db139856dfc565f70d7e5cba27",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "./lumiereGroupFilters",
+            "./lumiereKernel",
+            "./lumiereProgram",
+            "./lumiereUnit",
+            "./light/sprites",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereSceneFrames.ts",
+          "sha256": "ebbadcfe512fec8ece665c9ec109ce303732718479086c5ccc6c8d58e60f4ec7",
+          "imports": [
+            "./lumiereProgram",
+            "./lumiereTransitions"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereSeamless.ts",
+          "sha256": "955245e8443c1c40493f5f4af389b56a1c8038fb6c50854e5b12cd16e741a454",
+          "imports": [
+            "./program"
+          ],
+          "parameters": [
+            "seamlessTransitions"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereStructure.ts",
+          "sha256": "fc646fcf0c52770a315741c157c7e705ca64a34da35e6119aaf3db8a003d6d9a",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "../../../utils/lyrics/wordSegmentation",
+            "./lumiereKernel"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereTransitions.ts",
+          "sha256": "165b7568e813592f6cbc8fd823bc1d667fd70705e7edc3f55d7ecc5af5ae7451",
+          "imports": [
+            "./program",
+            "./program"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereUnit.ts",
+          "sha256": "98158febd32d665e08b87e8ceec55602b0642b1b60c52c7e4e872667f3d0f53a",
+          "imports": [
+            "../../../types",
+            "./catalog",
+            "./lumiereKernel",
+            "./light/sprites",
+            "./program",
+            "./scene",
+            "./text/lyricWindow",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/lumiereUnitLayout.ts",
+          "sha256": "3b3e1fe4fc21fb8c05bcba5129c072ed15938e5c8f7e81e61a8e2b955adca7d1",
+          "imports": [
+            "../../../types",
+            "./lumiereKernel",
+            "./program",
+            "./text/lyricWindow",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/overlay.ts",
+          "sha256": "43f5402e98d34ea395ef5f4e9d067b29f1f7fa5fd9e392f842dae46263649499",
+          "imports": [
+            "../../../types",
+            "./color",
+            "./scene",
+            "./text/lineWrap"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/program.ts",
+          "sha256": "1f7f38e736382ea938a9c5d1aa5717b4eee785f243ea3d48f5e16a6daa31a2f6",
+          "imports": [
+            "../../../types",
+            "./lumiereRandom",
+            "./lumiereKernel",
+            "./catalog"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/astral.ts",
+          "sha256": "cf8cf84a1393f2d5bb54c78afc935b17595fb6b33543c446f63bd39927a86546",
+          "imports": [
+            "../lineart/diagrams",
+            "../lineart/recipes",
+            "../light/rig",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/base.ts",
+          "sha256": "fce9f5eb819c7211961b0abb5dc3caa7b6844b57fe3efb565502eccf096eb1a3",
+          "imports": [
+            "../lineart/lineArt",
+            "../lineart/recipes",
+            "../light/motes",
+            "../light/rig",
+            "../light/starfall",
+            "../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/botany.ts",
+          "sha256": "74f3d52172724ff0ac1bce3a2095287348321c7b3ff0d1e2c012c7db54476137",
+          "imports": [
+            "../lineart/diagrams",
+            "../lineart/recipes",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/caustic.ts",
+          "sha256": "6bd1d238d94658601af5603c5d08549fa07829d9573febea0294f1da771c0394",
+          "imports": [
+            "../lineart/diagrams",
+            "../lineart/recipes",
+            "../light/rig",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/lattice.ts",
+          "sha256": "f83a357a3706be77addc98d746b332c80e71526b1dd22f28b30185b823b413e2",
+          "imports": [
+            "../lineart/diagrams",
+            "../lineart/recipes",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/motes.ts",
+          "sha256": "215315550046e8802042e15ca9e67c22e0847f33542d25aad9771f79dd44cfcd",
+          "imports": [
+            "../lineart/diagrams",
+            "../lineart/recipes",
+            "../light/motes",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/optics.ts",
+          "sha256": "f10aee0e148d07e7a8843f5fa5097b6c764e0e3551451f1a13bc996d10f2790a",
+          "imports": [
+            "../lineart/diagrams",
+            "../lineart/lineArt",
+            "../lineart/recipes",
+            "../light/rig",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/prism.ts",
+          "sha256": "075acd7d2427e9b23c43ff4f3bc07077ea8236f921b4330dc65bb660e2b749d3",
+          "imports": [
+            "../lineart/diagrams",
+            "../lineart/recipes",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/stage.ts",
+          "sha256": "3c50940e18e2538e629f90262adaa1b7c2e92acad9be9037400d8bd65a6ba6c6",
+          "imports": [
+            "../lineart/diagrams",
+            "../lineart/lineArt",
+            "../lineart/recipes",
+            "../light/rig",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/wave.ts",
+          "sha256": "0bd2255059fef4726f0446eb25cfab5f1ab5f5d3ffa10db0593d3cec6419f5c5",
+          "imports": [
+            "../lineart/diagrams",
+            "../lineart/recipes",
+            "../light/rig",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/rigs/zenith.ts",
+          "sha256": "c0d463f6fffd4d195429e8d90e646d2092574c00f3cb7cd56a526a2c325fd28d",
+          "imports": [
+            "../lineart/recipes",
+            "../types",
+            "./base"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/scene.ts",
+          "sha256": "df6c5a809114b284a6cb650c7ad3f45bfd81dace99cb604720e26f640b6b0f80",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "./lumiereRandom",
+            "../../../utils/fontStacks",
+            "./lumiereKernel",
+            "./light/bloomFilter",
+            "./light/crossBurst",
+            "./light/lightFieldShader",
+            "./light/motes",
+            "./light/rig",
+            "./light/starfall",
+            "./light/sprites",
+            "./lineart/lineArt",
+            "./lineart/themeIcons",
+            "./text/keywordColors",
+            "./text/lyricEcho",
+            "./text/lyricWindow",
+            "./color",
+            "./lumiereUnitLayout",
+            "./program",
+            "./types"
+          ],
+          "parameters": [
+            "audioResponse",
+            "bloom",
+            "decay",
+            "echo",
+            "fogDensity",
+            "fogOctaves",
+            "frontBokeh",
+            "hideTrails",
+            "keywordColors",
+            "lightIntensity",
+            "lineArt",
+            "moteAmount",
+            "textBloom",
+            "textOnly",
+            "themeColorMix",
+            "themeIcons",
+            "trails",
+            "unlitOpacity",
+            "windowNeighbors"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/glyphLine.ts",
+          "sha256": "1a12a6f10d6646af1132914cac9229d397d60c8d050dccc163170110f0f43ec8",
+          "imports": [
+            "pixi.js",
+            "../../../../utils/lyrics/graphemeTiming"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/keywordColors.ts",
+          "sha256": "022d38a46e9f9e40fed6ae0e30b1744f0b9a3f15769c96622adba79ba3d0497a",
+          "imports": [
+            "../../../../types",
+            "../../../../utils/lyrics/graphemeTiming",
+            "../../colorMix",
+            "../../wordColoring",
+            "../color"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/lineClearance.ts",
+          "sha256": "7188b062e7b09f6784d9cd03729812bdc74b6e7f9bca21cc47e07717fdc28dad",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/lineWrap.ts",
+          "sha256": "5cec00d382b442c134cb36f1b4114eed1ee5c77d1ae6cb6a8feb1c9e2561005b",
+          "imports": [
+            "@chenglou/pretext",
+            "@chenglou/pretext/rich-inline",
+            "./glyphLine",
+            "./wordStyle"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/lyricEcho.ts",
+          "sha256": "07afdfb60ccaa88dcf225fe5f2e369904a5d1230938ea6c3df86c1a22bd0fd95",
+          "imports": [
+            "pixi.js",
+            "../../../../types",
+            "../lumiereRandom",
+            "../light/rig",
+            "../../../../utils/lyrics/graphemeTiming",
+            "./glyphLine",
+            "./reveal",
+            "./wordStyle",
+            "../../wordColoring",
+            "../color",
+            "./keywordColors"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/lyricWindow.ts",
+          "sha256": "e098a883e1f2092a3686943fde612a96984695b459837e17c09342e7dd06d4c9",
+          "imports": [
+            "pixi.js",
+            "../../../../types",
+            "../light/rig",
+            "../light/sprites",
+            "../color",
+            "./lineWrap",
+            "./reveal",
+            "./wordStyle",
+            "./windowLines",
+            "../../wordColoring",
+            "./keywordColors",
+            "./windowTypes",
+            "./windowTiming",
+            "./windowLineStore",
+            "./windowGeometry",
+            "./windowProtection",
+            "./windowTypes",
+            "./windowTiming",
+            "./windowSlots",
+            "./windowLines"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/reveal.ts",
+          "sha256": "dcc9c409960de921213f777c8dbc4023515088ef8f392a19927c424f1a3ac71b",
+          "imports": [
+            "../../../../types",
+            "../../../../utils/lyrics/graphemeTiming"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/windowGeometry.ts",
+          "sha256": "03867a6b4ef638cd3d973c9c72d78d6328b5303e87a30ca99c55b4542a7a0b95",
+          "imports": [
+            "./lineWrap",
+            "./lineClearance",
+            "./windowLines",
+            "./lyricWindow",
+            "./windowTypes",
+            "./windowTiming",
+            "./windowSlots"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/windowLineStore.ts",
+          "sha256": "3dca9fab12f8b8fbdd5409f30cda7c4d4f47474e84d54e7594f25b4fa32d13d1",
+          "imports": [
+            "pixi.js",
+            "../lumiereRandom",
+            "../color",
+            "./keywordColors",
+            "./windowLines",
+            "./windowTiming",
+            "./windowSlots",
+            "./lyricWindow",
+            "./lineWrap",
+            "../../wordColoring"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/windowLines.ts",
+          "sha256": "216583878909299b8555948920812a1f128457417683499978333b8995753e19",
+          "imports": [
+            "pixi.js",
+            "../../../../types",
+            "../../../../utils/lyrics/graphemeTiming",
+            "../../wordColoring",
+            "../color",
+            "../light/sprites",
+            "./glyphLine",
+            "./keywordColors",
+            "./lineWrap",
+            "./reveal",
+            "./wordStyle"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/windowProtection.ts",
+          "sha256": "aa4c3531f26c524b474f2d5b0cfdd77ddc451ea6eba0cc8f86189db0ceac3904",
+          "imports": [
+            "../../../../types",
+            "./lineClearance",
+            "./windowLines",
+            "./windowTypes",
+            "./windowTiming"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/windowSlots.ts",
+          "sha256": "6915619401805680bd29eb03350a5bae470fa0c81d34a773b1498cf33b42a917",
+          "imports": [
+            "./windowLines",
+            "./windowTypes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/windowTiming.ts",
+          "sha256": "36984e1beb73e601667d7b9a5df93634df3eada64797bcc6c2c94643dfe6b8d5",
+          "imports": [
+            "../../../../types",
+            "./reveal",
+            "./windowLines",
+            "./windowTypes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/windowTypes.ts",
+          "sha256": "b78bc97d24bf9d167aa333196ca3113da51b7b783a1a553edbd947989cd89635",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/text/wordStyle.ts",
+          "sha256": "30039c93756773c012eca38598666d79233cfc8afbf0349fb6eed10219c07261",
+          "imports": [
+            "../../../../types",
+            "../lumiereRandom",
+            "../../../../utils/lyrics/graphemeTiming",
+            "../../../../utils/lyrics/wordSegmentation"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/lumiere/tuning.ts",
+          "sha256": "a4f611186cf24e24f0a2dad3c9b6f497c1974c93987fd25e1aa06f4ac8855009",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": [
+            "ts"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/lumiere/types.ts",
+          "sha256": "6a5e11bac04d05f1b511ee6c33fa7e00c72f098311b98cd56b4fa4794a0a6d93",
+          "imports": [
+            "./lumiereKernel",
+            "./lineart/lineArt",
+            "./light/motes",
+            "./light/rig",
+            "./light/starfall",
+            "./text/lyricWindow"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "monet",
+      "entry": "src/components/visualizer/monet/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/monet/AudioOverlay.tsx",
+          "sha256": "6a2d7b5ae3b8406036de40d5a980569a57bd6cba088b8de3f02920c6613298aa",
+          "imports": [
+            "react",
+            "../../../types",
+            "../colorMix"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/MonetFloatingDecor.tsx",
+          "sha256": "eb01a31d7f5d36a19638b7734bbae96ba4f5b7ebcd61529450b049cb3b3dd786",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../types",
+            "../colorMix",
+            "../../../hooks/useLucideIcons",
+            "../../../services/lucideIconResolver"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/MonetLyricsRail.tsx",
+          "sha256": "8c1f88ce06499b5e35590d443017a123b68a2fb4bb108d1365b69403a80a3752",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../types",
+            "../../../utils/fontStacks",
+            "../../../utils/lyrics/subtitleTrackStyle",
+            "../../../hooks/useFontsEpoch",
+            "../wordColoring",
+            "./monetLyricsModel",
+            "./monetRailLayout",
+            "./useMonetRailSize",
+            "./MonetRailLine"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/MonetPortraitImage.tsx",
+          "sha256": "3857dbca7d4a1f6b84f9f498dc9a94a5495b10a0b52eb6330e0163cd192efc74",
+          "imports": [
+            "react",
+            "framer-motion",
+            "./monetPortraitCrossfade"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/MonetRailLine.tsx",
+          "sha256": "ae99ebb65180edc61780dd38012637cd9e9810746ae22157a432f02658af33ce",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../types",
+            "../../../utils/lyrics/subtitleTrackStyle",
+            "../colorMix",
+            "../wordColoring",
+            "./monetRailLayout",
+            "./monetRailMasks",
+            "./MonetRailTokens"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/MonetRailTokens.tsx",
+          "sha256": "7dac14d1751efae8f42ad0498a003726f225e56f9fbead2e4df70b409653ef9d",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/renderHints",
+            "../colorMix",
+            "./monetLyricMotion",
+            "../wordColoring",
+            "./monetLyricsModel",
+            "./monetRailLayout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/MonetSettingsPanel.tsx",
+          "sha256": "85d4c56637e4758f57cb29bd9b14c478760c40e6f61a6bf9523e70c06e1a0fe9",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../types",
+            "../colorMix",
+            "../definition"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/VisualizerMonet.tsx",
+          "sha256": "6ff885ae955f13ab1141d3eb7b9ad829e9231e635d9fe6ceb868fefd4805f8df",
+          "imports": [
+            "react",
+            "react-i18next",
+            "framer-motion",
+            "lucide-react",
+            "../../../hooks/useElementWidth",
+            "../../../types",
+            "../colorMix",
+            "../definition",
+            "../runtime",
+            "../VisualizerShell",
+            "../../../utils/lyrics/renderHints",
+            "../../../utils/fontStacks",
+            "../../../utils/lyrics/alternateText",
+            "./AudioOverlay",
+            "./MonetFloatingDecor",
+            "./MonetLyricsRail",
+            "./MonetPortraitImage",
+            "./monetLyricsModel",
+            "./monetLyricsModel"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/entry.tsx",
+          "sha256": "b6c1d1e632cc279518a82cd62f78154cd3090e2e8049d9132cafe7f83c4060af",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition",
+            "./MonetSettingsPanel"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/monetBackgroundPipeline.ts",
+          "sha256": "101b8d9fecc668b62e5b754a861951140dbf92df4c98e50162332ef1050aebb1",
+          "imports": [
+            "../colorMix",
+            "../../../types"
+          ],
+          "parameters": [
+            "backgroundBlurPx",
+            "backgroundGrayscale",
+            "backgroundOverlayOpacity",
+            "backgroundSaturation",
+            "backgroundSource",
+            "backgroundStreaksEnabled",
+            "backgroundWash",
+            "backgroundWashColorMode",
+            "backgroundWashCustomColor"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/monet/monetLyricMotion.ts",
+          "sha256": "660203bcd3d743976959c72bdf705790efac4d0de22bd5351e42bda41cb9c657",
+          "imports": [
+            "../../../utils/lyrics/graphemeTiming"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/monetLyricsModel.ts",
+          "sha256": "5dba25f9db4230df41f5e4a0a46049ff0f2a8b242551e7da4d7ac0d87e985c3b",
+          "imports": [
+            "@chenglou/pretext",
+            "@chenglou/pretext/rich-inline",
+            "../../../types",
+            "../../../utils/lyrics/alternateText",
+            "../../../utils/lyrics/subtitleTrackStyle",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/renderHints",
+            "../textMeasureCache",
+            "../wordColoring"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/monetPortraitCrossfade.ts",
+          "sha256": "f7c6a9c63dc97853a85bf1d7dbe2a846e19bb1bd65254c7ff2a85a5635a7ae76",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/monetRailLayout.ts",
+          "sha256": "e483a909747fca148158951011a474d3da73e61b5f291c1a2f6d00f572511226",
+          "imports": [
+            "../../../types",
+            "../colorMix",
+            "../wordColoring",
+            "./monetLyricMotion",
+            "./monetLyricsModel",
+            "../textMeasureCache"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/monetRailMasks.ts",
+          "sha256": "104150707d58a1d0f7485458db6b8de6b5a55dfe67a880da27355dbd77c58583",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/tuning.ts",
+          "sha256": "3711eeaf52456674ddc465be25e9b794c8595ec577701256287293f836226502",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/useMonetRailSize.ts",
+          "sha256": "53f95d9a7276f55b55efc3d2257a7cac1b8b85d1bec5f33d45a6d7ef5b1ff439",
+          "imports": [
+            "react",
+            "./monetRailLayout"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "partita",
+      "entry": "src/components/visualizer/partita/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/partita/PartitaChunk.tsx",
+          "sha256": "28c6144569a8bb6fc06df2369a8accdbd479a999fd032ad9ca4ade3778e8e2bf",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../types",
+            "../GlowWord",
+            "../glowWordTiming",
+            "./partitaLayout"
+          ],
+          "parameters": [
+            "alignSelf",
+            "id",
+            "marginBottom",
+            "rotate",
+            "scale",
+            "x",
+            "y"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/partita/VisualizerPartita.tsx",
+          "sha256": "370d920a899d1d57404f9fc314db9ebaa0606f9a429d5eb32d483224fc51b06d",
+          "imports": [
+            "react",
+            "framer-motion",
+            "react-i18next",
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "../runtime",
+            "../definition",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "../glowWordVariants",
+            "../glowWordTiming",
+            "./partitaLayout",
+            "./PartitaChunk"
+          ],
+          "parameters": [
+            "id"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/partita/entry.tsx",
+          "sha256": "9ed441cc2f04fb095a5ef90bae51ae7f836c0af29264cae7f28a949db50c8e80",
+          "imports": [
+            "react",
+            "../definition",
+            "../settingsPanels"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/partita/partitaLayout.ts",
+          "sha256": "7ff77ee2537bbf68a09ccc5ff7c5e6eb8ad571d1b49538e0f8a91ff901aeb8a4",
+          "imports": [
+            "react",
+            "../../../types",
+            "../../../utils/lyrics/cjkSemanticLayout",
+            "../../../utils/lyrics/wordSegmentation",
+            "../runtime",
+            "../wordColoring",
+            "../textMeasureCache"
+          ],
+          "parameters": [
+            "showGuideLines",
+            "staggerMax",
+            "staggerMin",
+            "useSemanticLayout"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/partita/tuning.ts",
+          "sha256": "0a8d024f6155bb00f20280e18d7aa52582c7f88635b90524850c2f59a247922d",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "pendolo",
+      "entry": "src/components/visualizer/pendolo/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/pendolo/PendoloActiveLyricSweep.tsx",
+          "sha256": "c54a40d6ce52146c1c31f94bb1ca8934dea519e317bd0ee9c01409daa1ff85f3",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../types",
+            "../colorMix",
+            "../../../utils/lyrics/graphemeTiming",
+            "../monet/monetLyricsModel",
+            "./pendoloTextLayout",
+            "../wordColoring",
+            "./pendoloColorRuns"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/PendoloClockworkCanvas.tsx",
+          "sha256": "221e0f9ec75e6b71cbd8dc22ded234ba9b395d36145a8760bf793da03e9fdfb9",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../colorMix",
+            "./pendoloClockworkDraw2d",
+            "./pendoloClockworkMotion",
+            "./pendoloMotionProfile",
+            "./pendoloClockworkScene",
+            "./pendoloClockworkWebGL"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/PendoloRotatingLine.tsx",
+          "sha256": "4e5d952088c103b5d7f968813b5cf47a841889db311eed31e59fce551a9af531",
+          "imports": [
+            "react",
+            "framer-motion",
+            "./pendoloTimeline"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/PendoloSettingsPanel.tsx",
+          "sha256": "1e5885bbac1fce7f7d0bb773aeaf125cfaa71382b39f2a01e975dacb112de0b3",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition",
+            "../VisualizerPresetGroup"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/VisualizerPendolo.tsx",
+          "sha256": "313aee1e9dc460f49f8bb1cc732aeaa1b5fe946ac99431782f8e190d0be8ea47",
+          "imports": [
+            "react",
+            "framer-motion",
+            "lucide-react",
+            "../../../types",
+            "../colorMix",
+            "../../../hooks/useLucideIcons",
+            "../../../services/lucideIconResolver",
+            "../definition",
+            "../VisualizerShell",
+            "./PendoloClockworkCanvas",
+            "../../../utils/fontStacks",
+            "../../../utils/lyrics/alternateText",
+            "./pendoloGeometry",
+            "./PendoloActiveLyricSweep",
+            "./pendoloTextLayout",
+            "./pendoloSubtitleTracks",
+            "./pendoloMotionProfile",
+            "./pendoloTimeline",
+            "./PendoloRotatingLine"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/entry.tsx",
+          "sha256": "88f1d961c4167540daa8a92b5fdcf24942cf9b6ba926e29fa254e3809b83e9a9",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition",
+            "./PendoloSettingsPanel"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloClockworkDraw2d.ts",
+          "sha256": "fbe916ea842cd099fd23d5c3e7e9152466a77774d2555d315e78276ab27366e4",
+          "imports": [
+            "../colorMix",
+            "./pendoloClockworkScene"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloClockworkMeshes.ts",
+          "sha256": "cef8888f9cb65139c085717113378a2ddb01a4db9276eb4dd6bbb63bc73a93b1",
+          "imports": [
+            "../colorMix",
+            "./pendoloClockworkScene"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloClockworkMotion.ts",
+          "sha256": "ec47e1a8c36aee3c0fa9b3ed241925798b2047cebb9201f161234cae65c573c9",
+          "imports": [
+            "./pendoloMotionProfile"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloClockworkScene.ts",
+          "sha256": "6a422a269f32758a43f4614b0b43a4dd65937741339bc08cee1c980a61558960",
+          "imports": [
+            "../colorMix"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloClockworkWebGL.ts",
+          "sha256": "24f894bd8c4236dc9c824ce2f6e338a325ea6faeaac74cf9fc9c443a08edfd4e",
+          "imports": [
+            "../colorMix",
+            "./pendoloClockworkMeshes",
+            "./pendoloClockworkScene"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloColorRuns.ts",
+          "sha256": "1c5b5b3607e0702470a14d52be98990bc8ce47a15de9caaf06e5391e62b7ef5f",
+          "imports": [
+            "../../../utils/lyrics/graphemeTiming"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloGeometry.ts",
+          "sha256": "896e277de978909cb46f9c1b53e91c6fff3158fbd6b599feeb54fc36c587d14d",
+          "imports": [
+            "@chenglou/pretext",
+            "../../../types"
+          ],
+          "parameters": [
+            "activeScale",
+            "arcAngleDeg",
+            "arcRadius",
+            "wheelCenterX",
+            "wheelCenterY"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloMotionProfile.ts",
+          "sha256": "cf8cd1afcb0e9c22e8229fb405b8eccdf2da6042962943c2bc9f6bf01e9f1200",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloSubtitleTracks.ts",
+          "sha256": "197bf82eb05e44fd650c21242087a604781822d6bec6b9f8a9baa0624a09a909",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/alternateText",
+            "../../../utils/lyrics/subtitleTrackStyle"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloTextLayout.ts",
+          "sha256": "f4aab6b5f8edc823cffba77cd756eabaa41e8975c5cb4379d55347ad37772e8c",
+          "imports": [
+            "@chenglou/pretext",
+            "../../../utils/lyrics/graphemeTiming"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloTimeline.ts",
+          "sha256": "1eee502dd0a2f42da279195b3e4ba7e57b67448eedc2f1635117ec005f4240f6",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/tuning.ts",
+          "sha256": "45111f1d6211fc81b501d64a708623f5de8196bb2dd28d0009ae3c6ca6f48dd3",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": [
+            "ts"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "sonnet",
+      "entry": "src/components/visualizer/sonnet/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/sonnet/SonnetSettingsControls.tsx",
+          "sha256": "76c03987fbbca4dab5094e0fe4d838fc50b429bb6fe5fbdc01488380c60b8fdf",
+          "imports": [
+            "react"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/SonnetSettingsPanel.tsx",
+          "sha256": "46e65c886c10bfce03ac64d7f2f40c9a9a1b91556875a7c2b457c0709452aa7b",
+          "imports": [
+            "react",
+            "../../../types",
+            "../colorMix",
+            "../definition",
+            "../VisualizerPresetGroup",
+            "./SonnetSettingsControls"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/VisualizerSonnet.tsx",
+          "sha256": "f04c4277b1bf6ed9dac7b6c2015dc8eb1dd8c60c76ae97024b630e7cc65ee172",
+          "imports": [
+            "react",
+            "framer-motion",
+            "react-i18next",
+            "../../../types",
+            "../../../types",
+            "../../../utils/fontStacks",
+            "../../../utils/lyrics/renderHints",
+            "../definition",
+            "../pixiRuntimeHost",
+            "../runtime",
+            "../songHandover",
+            "@/mods/folium/registries/tunings",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "./createSonnetPixiRuntime",
+            "./sonnetProgram"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/createSonnetPixiRuntime.ts",
+          "sha256": "bd2ba0608d63762ce32437ed9c9c1da17dcf5bedd64218caf517a67a56a8de59",
+          "imports": [
+            "framer-motion",
+            "../../../types",
+            "./types",
+            "./sonnetProgram",
+            "./sonnetSceneBuilder",
+            "../pixiTextureBudget",
+            "./sonnetPixiResources",
+            "./sonnetCredits",
+            "../loadPixi",
+            "../pixiSceneCache",
+            "./sonnetDebug",
+            "./sonnetShotFrame",
+            "./sonnetSceneFrame",
+            "./sonnetFrameOverlay",
+            "./sonnetOutroBlur",
+            "./sonnetIconTextures"
+          ],
+          "parameters": [
+            "enableTransitions",
+            "showOnlyText",
+            "textureResolution"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/sonnet/entry.tsx",
+          "sha256": "49da120d3c525d48bc0a8c6ac222db431d3f1645cc7828e591b49798b4dea261",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition",
+            "./SonnetSettingsPanel"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetAdditionalShotMg.ts",
+          "sha256": "950518fa877b0546c6d8b0e5f3e3683e1bc8d39e9da1e1c09cc233e52af018e0",
+          "imports": [
+            "./sonnetThemedShotMg",
+            "./sonnetOpenFrameShotMg",
+            "./sonnetExtendedShotMg",
+            "./sonnetShotMgViewport"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetAnimatedGraphics.ts",
+          "sha256": "cf47cb7c22a4c89d3dd0f6853bd34d34364370ed229e352983152caa3aa9001f",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetBackgroundDecor.ts",
+          "sha256": "20fb6fc7df5cd4174df37aae57bb14724b1b939d9a2c46e82de245c9fb11a6f5",
+          "imports": [
+            "./sonnetIcons",
+            "./sonnetRandom",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetBackgroundMgVariants.ts",
+          "sha256": "fc5fdc08c4462924fb77001c32a9a0dd596b5e08aa63b9c2feb0753d05051240",
+          "imports": [
+            "./sonnetAnimatedGraphics",
+            "./sonnetRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetCameraTracking.ts",
+          "sha256": "a461a102987fde096e3fa9fcf0cab8900f411f46a4624c0555650403ddb3e90e",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetCredits.ts",
+          "sha256": "786f25359426db09f18aea1fbcae9bb9465d0c65b5722e2db747083d0eca84c3",
+          "imports": [
+            "../../../types",
+            "../../../utils/fontStacks",
+            "./sonnetMotion"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetDebug.ts",
+          "sha256": "f81c253c779bd5f7e7d1833281ee559711b6aa6f6ee985318c75679726367f57",
+          "imports": [
+            "./sonnetTypographyLayout",
+            "./types",
+            "./sonnetFrameDecor",
+            "./sonnetThemedShotMg",
+            "./sonnetOpenFrameShotMg",
+            "./sonnetAdditionalShotMg",
+            "./sonnetExtendedShotMg",
+            "./sonnetBackgroundMgVariants",
+            "./sonnetBackgroundDecor",
+            "./sonnetFixedGeoVariants"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetExtendedShotMg.ts",
+          "sha256": "1568cf8accb66f51b09d631b88083f34779e410c8d90b3564443315d3f758045",
+          "imports": [
+            "./sonnetAdditionalShotMg",
+            "./sonnetShotMgCelestial",
+            "./sonnetShotMgMarine",
+            "./sonnetShotMgMusic",
+            "./sonnetShotMgCraft",
+            "./sonnetShotMgKinetic"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetFixedGeoVariants.ts",
+          "sha256": "b1502252de38d537867e0cde74c96a7917a9c710f0aab2d608c85fae423a64d0",
+          "imports": [
+            "./sonnetAnimatedGraphics",
+            "./sonnetRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetFrameDecor.ts",
+          "sha256": "a29e58bb880908bd8dd85e6dc6c42e5deea529ce213820183ff44b604df4c7de",
+          "imports": [
+            "../../../types",
+            "./types",
+            "./sonnetRandom",
+            "./sonnetGlyphLayout",
+            "./sonnetMotion",
+            "./sonnetTypographyLayout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetFrameOverlay.ts",
+          "sha256": "d066b926f8937ae5043ee2ab91c518e40282364c60a67b8bccc1896bac3b001c",
+          "imports": [
+            "../../../types",
+            "./sonnetPixiResources"
+          ],
+          "parameters": [
+            "outerFrameMode",
+            "showOnlyText"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetGlitchFilter.ts",
+          "sha256": "f49f33f8649e5251e0ad1ed12f14b743a225934c1943f070fa68e102404f6078",
+          "imports": [
+            "pixi.js",
+            "../pixiFilterVertex"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetGlyphLayout.ts",
+          "sha256": "c6737255202dbd2d51537e7b930b9f57fa706d6279357ebdb03a2be20f1a12e8",
+          "imports": [
+            "./types",
+            "./sonnetTypographyLayout",
+            "../../../utils/lyrics/graphemeTiming"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetGuides.ts",
+          "sha256": "354757540dad85497430acce8199689af969d94a838131470efa888716a9abb5",
+          "imports": [
+            "../../../types",
+            "./types",
+            "./sonnetTypographyLayout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetIconTextures.ts",
+          "sha256": "2efaa6d4ed3793612f74593af4cf4e39b7fbe6e02128c80852c8fcf83523a8d8",
+          "imports": [
+            "../../../types",
+            "./sonnetIcons",
+            "./sonnetTexturePool"
+          ],
+          "parameters": [
+            "showBackgroundDecor",
+            "showOnlyText",
+            "textureResolution"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetIcons.ts",
+          "sha256": "86a40088225ed7b6ead4d2f4040e7465c08d808d89597752ebb0f0b34f2b5f13",
+          "imports": [
+            "react",
+            "react-dom/server",
+            "../../../services/lucideIconResolver"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetLensFilter.ts",
+          "sha256": "c9557cdbfc2d85a32b919d0107ea0b6ae9906ad87f200c76250acec174ef474b",
+          "imports": [
+            "pixi.js",
+            "../pixiFilterVertex"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetMotion.ts",
+          "sha256": "45a699c600d9a38e0327179cd00eda1190409be0b699dcc04dc3eb191f630f41",
+          "imports": [
+            "../../../types",
+            "./types",
+            "./sonnetTypographyLayout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetOpenFrameShotMg.ts",
+          "sha256": "38f49032648f3218ff7f11e04646c50611caaae16a0d0a3000613e53220798ca",
+          "imports": [
+            "./sonnetAdditionalShotMg"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetOutroBlur.ts",
+          "sha256": "70ee7c1b008c449b78c2da7a22dd258009936ccfdd648773cd9b7bebb1b70ea7",
+          "imports": [
+            "./sonnetSceneBuilder"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetPixiResources.ts",
+          "sha256": "d9171c6f46967047d22122834b08e069d453b9ab94a8963c302746a31d03248c",
+          "imports": [
+            "../pixiDisplayResources"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetPostProcess.ts",
+          "sha256": "f4b29607b9547cff4b328c886494675bab4cb2e749ccec3a6d4ac9305a8c2d1f",
+          "imports": [
+            "../../../types",
+            "./sonnetMotion",
+            "./sonnetLensFilter",
+            "./sonnetPrintFilters"
+          ],
+          "parameters": [
+            "postProcessContrast",
+            "postProcessEnabled",
+            "postProcessGrain",
+            "postProcessHalftone",
+            "postProcessLensDispersion",
+            "postProcessLensDistortion",
+            "postProcessRgbShift",
+            "postProcessVignette",
+            "typographyMotion"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetPosterBlocksLayout.ts",
+          "sha256": "9e58443110c9f126d32c1e88d2adbcb3abd74f2640e3d702f99224618b54ae89",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetPrintFilters.ts",
+          "sha256": "f04b60aef792fb6cccad1af35e5476a118d20e4e4be940b5480a113245eac34e",
+          "imports": [
+            "pixi.js",
+            "../pixiFilterVertex"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetProgram.ts",
+          "sha256": "49871d8029679ee4930cd51b425271c7c2b46c06e7dfd4979fd1914930e75004",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/renderHints",
+            "./types",
+            "./types",
+            "./sonnetRandom",
+            "./sonnetSemantic",
+            "./sonnetSemantic"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetRandom.ts",
+          "sha256": "6eae502cd707606ce117932ff7d29506aef5d8f1f270dd0b2386ecfdb905168d",
+          "imports": [
+            "../visualizerSeedHash"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetSceneBuilder.ts",
+          "sha256": "ba4357694d825d4748e4aa2a1738037a6cd367f2a9b1f468097100430a103f7e",
+          "imports": [
+            "../../../types",
+            "../../../utils/fontStacks",
+            "./types",
+            "./sonnetRandom",
+            "./sonnetShotMg",
+            "./sonnetPostProcess",
+            "./sonnetTypographyLayout",
+            "./sonnetTextViewBuilder",
+            "./sonnetGlitchFilter",
+            "./sonnetDebug",
+            "./sonnetSpatialMgGeometry",
+            "./sonnetBackgroundMgVariants",
+            "./sonnetBackgroundDecor",
+            "./sonnetFixedGeoVariants"
+          ],
+          "parameters": [
+            "enableTransitions",
+            "mgDensity",
+            "outerFrameMode",
+            "showBackgroundDecor",
+            "showBackgroundMg",
+            "showFixedGeo",
+            "showGuide",
+            "showOnlyText"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetSceneFrame.ts",
+          "sha256": "8f2d6c20660370bc0899ffa164e4d68fe7cc5af95166bf4d4604549c3030e1d3",
+          "imports": [
+            "./types",
+            "./sonnetRandom",
+            "./sonnetTransitions",
+            "./sonnetSceneBuilder"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetSemantic.ts",
+          "sha256": "6bec2e32026c031e91a9fea818ad0350d08efd01c0a78d5bb141d3a9cd95baed",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/wordSegmentation",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotFlowLayouts.ts",
+          "sha256": "923678bbb88172ff13caddcc7ef5162c28d09535e346a4829890c54aa7e20637",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotFrame.ts",
+          "sha256": "442e947a35e642b1cb1aac1e58691d13f89313d2824aca74543b692c47335e46",
+          "imports": [
+            "framer-motion",
+            "../../../types",
+            "./sonnetMotion",
+            "./sonnetRandom",
+            "./sonnetSceneBuilder",
+            "./sonnetTypographyLayout",
+            "./sonnetCameraTracking"
+          ],
+          "parameters": [
+            "cameraIntensity",
+            "showBackgroundDecor",
+            "showFixedGeo",
+            "showGiantDecorativeText",
+            "showGuide",
+            "showOnlyText",
+            "typographyMotion"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMg.ts",
+          "sha256": "02464c59101eab0d515e247b63369f5b16d6909afdf15266ff9cbf20e456794d",
+          "imports": [
+            "../../../types",
+            "./types",
+            "./sonnetSpatialMgGeometry",
+            "./sonnetIcons",
+            "./sonnetAdditionalShotMg",
+            "./sonnetAnimatedGraphics",
+            "./sonnetBackgroundMgVariants",
+            "./sonnetBackgroundDecor",
+            "./sonnetFixedGeoVariants",
+            "./sonnetThemedShotMg",
+            "./sonnetShotMgViewport"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgArchitecture.ts",
+          "sha256": "06432ed9084f9a6eba15e5dfeb82a96af3145552e070acfd192a7f941faf9ee6",
+          "imports": [
+            "./sonnetThemedShotMgPrimitives",
+            "./sonnetShotMgViewport"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgBotanical.ts",
+          "sha256": "f8e4d1e90465283551312a1a71a73829deff6112cd759272ddb8e60fb5b28cae",
+          "imports": [
+            "./sonnetThemedShotMgPrimitives"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgCelestial.ts",
+          "sha256": "51ec1ace0e751aba23445cb44d20515036f34c1bbc6440a8df2db1b8d95e66ee",
+          "imports": [
+            "./sonnetAdditionalShotMg",
+            "./sonnetRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgCraft.ts",
+          "sha256": "7f3825f5e84921b97a59c2ab2a01b0690c7b87cc80efab0d88a4a51816c635ba",
+          "imports": [
+            "./sonnetAdditionalShotMg",
+            "./sonnetRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgFlora.ts",
+          "sha256": "29059a4ec1204b498384ad56f30de60bc011f2efc81cb81bb5302458a1e41fdb",
+          "imports": [
+            "./sonnetThemedShotMgPrimitives"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgKinetic.ts",
+          "sha256": "61feea33ca6014556a8221aba8337afcaf22e9217c258daedcebcd7da83ddb2c",
+          "imports": [
+            "./sonnetAdditionalShotMg",
+            "./sonnetRandom",
+            "./sonnetShotMgViewport"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgLandscape.ts",
+          "sha256": "3208e2ec88f8548af05f109928187204686e93fe1c04cabe5a8e7e9d0e6b6794",
+          "imports": [
+            "./sonnetThemedShotMgPrimitives",
+            "./sonnetShotMgViewport"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgMarine.ts",
+          "sha256": "c85c7224b93d47dbfffed1b8a28cb4fb8f61ba1a6dd7ee5af4ead685f2f3e350",
+          "imports": [
+            "./sonnetAdditionalShotMg",
+            "./sonnetRandom",
+            "./sonnetShotMgViewport"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgMusic.ts",
+          "sha256": "0c0d7c85a3a0ce0cb2ba59810b7b8817bfad2244644c69f24431b08acf50d441",
+          "imports": [
+            "./sonnetAdditionalShotMg",
+            "./sonnetRandom",
+            "./sonnetShotMgViewport"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetShotMgViewport.ts",
+          "sha256": "ca38d5ce183a138cdccb3f783649d2f52a26b20697887be452a851513a51cf96",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetSpatialMgGeometry.ts",
+          "sha256": "c3a22d9bb2c56fafb657f2757fa07dbaf7989609d105825b4bbdec6a346b4efe",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetStaffNotation.ts",
+          "sha256": "a325fedf35f9799c47f2d6f6ff51333781745c0eee465a974ec591e76220ecee",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetStaffView.ts",
+          "sha256": "1e04c2ed033586ecd021fde6a4d659266e3d46d401b4dd53404dbf15fc90aa06",
+          "imports": [
+            "../../../types",
+            "./sonnetTextViewBuilder",
+            "./sonnetTypographyLayout",
+            "./sonnetStaffNotation"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetTextFixedGeo.ts",
+          "sha256": "710c6276bdd35ff0772481ed772809f754229c5a3485957a0e8463550620ef50",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetTextViewBuilder.ts",
+          "sha256": "1342e022bd71b9407a0a5ec610c6096dc8a25b50a2267932833bc442c053393a",
+          "imports": [
+            "@chenglou/pretext",
+            "pixi.js/advanced-blend-modes",
+            "../../../types",
+            "./sonnetGlyphLayout",
+            "./sonnetMotion",
+            "./sonnetRandom",
+            "./sonnetStaffView",
+            "./sonnetTextFixedGeo",
+            "./sonnetCameraTracking",
+            "./sonnetGuides",
+            "./sonnetFrameDecor",
+            "./types",
+            "./sonnetTypographyLayout",
+            "./sonnetTypographyRoles"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetTexturePool.ts",
+          "sha256": "560a56509118ef9d044531b172b9c1d5174e083f3231d36b40c91015523e3d43",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetThemedShotMg.ts",
+          "sha256": "caf666b7944e4435f68758c51df47b8b0889f09c7da968370e7c2dedffc93c9a",
+          "imports": [
+            "./sonnetAdditionalShotMg",
+            "./sonnetShotMgArchitecture",
+            "./sonnetShotMgBotanical",
+            "./sonnetShotMgFlora",
+            "./sonnetShotMgLandscape"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetThemedShotMgPrimitives.ts",
+          "sha256": "f6f77e4e58b41ef44954ac9643d39df0ceccc31562094f6b8bda481294091ec0",
+          "imports": [
+            "./sonnetAdditionalShotMg"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetTransitions.ts",
+          "sha256": "50a7e306a6163942371bd36007847ebbd353d4437b47ef90e4a3126f0e193463",
+          "imports": [
+            "./types",
+            "./sonnetMotion"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetTypographyLayout.ts",
+          "sha256": "19b0fc30e9964e46965a4ee470232f8fc6d00ffb246d09981caaad147d95c69b",
+          "imports": [
+            "@chenglou/pretext",
+            "./types",
+            "./sonnetTypographyRoles",
+            "./sonnetPosterBlocksLayout",
+            "./sonnetShotFlowLayouts",
+            "./sonnetRandom",
+            "./sonnetTypographyRoles",
+            "./sonnetTypographyRoles"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetTypographyRoles.ts",
+          "sha256": "5438eb25f23c29b8acfbce4c149dc7a24df97de08f59da31d93e6b942142340b",
+          "imports": [
+            "../../../utils/fontStacks",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/tuning.ts",
+          "sha256": "5409aa7b365859dccb0298393d3f1359fa9892348f6eb7ea7d467e18803cab0b",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": [
+            "ts"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/sonnet/types.ts",
+          "sha256": "21643a8b47c747eb125a7785519e03b48b624f0190af349309fe32fd1f45006c",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "still",
+      "entry": "src/components/visualizer/still/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/still/VisualizerStill.tsx",
+          "sha256": "749f04809e95de7a6aaa11a145c8c535cdb4e364164c1ef40dd7988677e6aded",
+          "imports": [
+            "react",
+            "../../../utils/fontStacks",
+            "../definition",
+            "../VisualizerShell"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/still/entry.tsx",
+          "sha256": "a6b123de8b04a146a9610defd432bea6b4d94978e448c884c081ad635256cda9",
+          "imports": [
+            "react",
+            "../definition"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "tempera",
+      "entry": "src/components/visualizer/tempera/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/tempera/TemperaImageImportMenu.tsx",
+          "sha256": "b8a1cc2a4f2893bf678f2476864cd9b479fdae5969949e092e7486d66e21b371",
+          "imports": [
+            "react",
+            "lucide-react",
+            "i18next",
+            "./temperaDialogTokens"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/TemperaImageLayerControls.tsx",
+          "sha256": "8bc632119a0a5c6eae90f4dc75af33e56eba8b3156ed49938be28f1b73f25c23",
+          "imports": [
+            "../../../services/fileDownload",
+            "react",
+            "react-i18next",
+            "lucide-react",
+            "../../../types",
+            "../../../types",
+            "../../../services/temperaLayerImages",
+            "../../../services/temperaImageArchive",
+            "../../../utils/blobGuards",
+            "../../../stores/useStatusMessageStore",
+            "../../../utils/downloadFileName",
+            "./TemperaImageLayerDialog",
+            "./useTemperaLayerImageThumbnails",
+            ",\n                result.layerImages.length,\n                result.skipped + result.truncated,\n                {\n                    file: file.name,\n                    mode,\n                    skipped: result.skipped,\n                    truncated: result.truncated,\n                },\n            );\n        } catch (error) {\n            if ((error as Error)?.name === "
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/TemperaImageLayerDialog.tsx",
+          "sha256": "8ad62c8e8b9c8fd20011bce54b16226771db178d1cf298dd02d376cda5637478",
+          "imports": [
+            "react",
+            "react-dom",
+            "lucide-react",
+            "i18next",
+            "../../../types",
+            "../../shared/ThemedDialog",
+            "./TemperaImageImportMenu",
+            "./TemperaImagePlacementEditor",
+            "./TemperaSettingsControls",
+            "./temperaDialogTokens",
+            "./temperaDialogTokens"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/TemperaImagePlacementEditor.tsx",
+          "sha256": "aa073e1d7d83a1c89e46b32c55ff3defa4402cb0b23d0b42c5932620435a6b7d",
+          "imports": [
+            "react",
+            "lucide-react",
+            "i18next",
+            "../../../types",
+            "./temperaRandom",
+            "./temperaImageLayer",
+            "./TemperaSettingsControls",
+            "./temperaDialogTokens"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/TemperaSettingsControls.tsx",
+          "sha256": "04953b95958859fc21a424e41c68c35a3a585d4fb3b717f37385484303d52d60",
+          "imports": [
+            "react"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/TemperaSettingsPanel.tsx",
+          "sha256": "188a57bd91f4c50abdf17d4eadf64abb512aaa87ed06d64f3edae386393ceeee",
+          "imports": [
+            "react",
+            "../../../types",
+            "../colorMix",
+            "../definition",
+            "../VisualizerPresetGroup",
+            "./TemperaSettingsControls",
+            "./TemperaImageLayerControls"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/VisualizerTempera.tsx",
+          "sha256": "6636745047fcbcaaf9c241ff548d8f747c09238caeaf855f1dc2a453f06f8114",
+          "imports": [
+            "react",
+            "react-i18next",
+            "../../../types",
+            "../../../types",
+            "../../../utils/colorExtractor",
+            "../../../services/temperaLayerImages",
+            "../../../utils/fontStacks",
+            "../../../utils/lyrics/renderHints",
+            "../definition",
+            "../pixiRuntimeHost",
+            "../runtime",
+            "../songHandover",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "./createTemperaPixiRuntime",
+            "./temperaProgram"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaApertureCompositions.ts",
+          "sha256": "1f551915f9935acdc7f1429d021cae5d8ddcb36c988ad859bb32f9343f59febc",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaShapes",
+            "../temperaCurves",
+            "./temperaCutout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaBandCompositions.ts",
+          "sha256": "ad056f2cf06f897b146910b457895532de16634342102114894f5bc9a87f1186",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaCharmCompositions.ts",
+          "sha256": "95aab5a917e7debb71d73bd00dc612172c6be63663b4a283707c5b381c7899a5",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaCurves",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaCinemaCompositions.ts",
+          "sha256": "cf9a42c9fba6313acb4cb00abd5c2fe5a205a767e2ccc23135acb220331647a0",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaCorridorCompositions.ts",
+          "sha256": "667d314dff8112a936e74659ba195d39a10831d8eb85f07f14fb691505629654",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaHatch",
+            "../temperaCurves",
+            "../temperaShapes",
+            "./temperaCutout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaCutout.ts",
+          "sha256": "b2a13029b5042c32f4ae0ad3836bf5cb664c410c1adfe652c182169522873005",
+          "imports": [
+            "../temperaCompositionContext",
+            "../temperaHatch",
+            "../temperaCurves",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaFrameCompositions.ts",
+          "sha256": "694583696bffb4eb7ec4b68284b92cf7d048d3dbc9f41d916bc174dec0c97c7d",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaMonogatariCompositions.ts",
+          "sha256": "9a71253fb54ff45aa9b198ac639dc6f7fe55dec47e064b55adb4497bffe955fe",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaMonolithCompositions.ts",
+          "sha256": "67322110ce4d4ad2e308e2d4043873ea3036db97166e52702668ebf7821def39",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaShapes",
+            "./temperaCutout",
+            "./temperaMonolithKit"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaMonolithKit.ts",
+          "sha256": "b98fbc34039fc3d5daa6fc2122595dd39a5fe2be4fd327eeca4ca23b307bd12b",
+          "imports": [
+            "../temperaCompositionContext",
+            "../temperaHatch",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaPosterCompositions.ts",
+          "sha256": "43d46797b9bbc2086517e5d2b03752fc3bbfcb2bd720d1e9a372396d753407fb",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaSignalCompositions.ts",
+          "sha256": "2596468993abb10af402100e246e380c9c9cdbda441db87eaeabebc691ce38cd",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaCurves",
+            "../temperaShapes",
+            "./temperaCutout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaSparseCompositions.ts",
+          "sha256": "515982b85d2ec8d4e2dd0c760b898a56d7f86224d1c023fc2ff1182f1b273aa2",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaSplitCompositions.ts",
+          "sha256": "d9a5054963ee139196358276e4accc3dd8bda8b65d07a6a32cc54a663912f8c6",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/compositions/temperaTerrainCompositions.ts",
+          "sha256": "0781763f5132db265ae852168a48b91a7ae0c7882a6f502edb90830caf881c78",
+          "imports": [
+            "../temperaCompositionContext",
+            "../types",
+            "../temperaRandom",
+            "../temperaHatch",
+            "../temperaCurves",
+            "../temperaShapes",
+            "./temperaCutout",
+            "./temperaMonolithKit"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/createTemperaPixiRuntime.ts",
+          "sha256": "1880b2beab1c33918b93d6e0b405aab0e69b9f145d64e45d4d77a1ebefa44909",
+          "imports": [
+            "framer-motion",
+            "../../../types",
+            "../pixiDisplayResources",
+            "../pixiTextureBudget",
+            "./types",
+            "./temperaProgram",
+            "./temperaSceneBuilder",
+            "../loadPixi",
+            "../pixiSceneCache",
+            "../pixiSongSwap",
+            "./temperaSceneFilters",
+            "./temperaShapes",
+            "./temperaImageTextures",
+            "./temperaOverlay",
+            "./temperaCreditsLayer",
+            "./temperaShotFrame",
+            "./temperaSceneFrame"
+          ],
+          "parameters": [
+            "enableTransitions",
+            "layerImages",
+            "showCornerMarks",
+            "textureResolution"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/tempera/entry.tsx",
+          "sha256": "0638283857a8929f471eb212caa340225a5664987822bbad54a3dd53082b2f30",
+          "imports": [
+            "react",
+            "../../../types",
+            "../definition",
+            "./TemperaSettingsPanel"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaBlocks.ts",
+          "sha256": "1da9b84e73ff5e1e6ff183d30a90602c7c80a54ef7bcdd3bfa9897e4170eee23",
+          "imports": [
+            "./types",
+            "./temperaPalette",
+            "./temperaMotion",
+            "./temperaRandom",
+            "./temperaCompositions"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaCamera.ts",
+          "sha256": "1809de7f1c97fcadbebb70e953b7d6be5f2ba03b53998acba35b83d27e9a6cf5",
+          "imports": [
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaCompositionContext.ts",
+          "sha256": "cd2f67184bfb9cf2bccd1a24ceecaa1736a3fec20e2ecc4398667a4b0f51ee5e",
+          "imports": [
+            "./types",
+            "./temperaPalette",
+            "./temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaCompositions.ts",
+          "sha256": "cac0835c9db378433abd6de52f20f0161deba382b8b964ae9a7fae38199c1395",
+          "imports": [
+            "./temperaCompositionContext",
+            "./types",
+            "./temperaRandom",
+            "./temperaHatch",
+            "./temperaShapes",
+            "./compositions/temperaSplitCompositions",
+            "./compositions/temperaBandCompositions",
+            "./compositions/temperaFrameCompositions",
+            "./compositions/temperaPosterCompositions",
+            "./compositions/temperaSparseCompositions",
+            "./compositions/temperaCinemaCompositions",
+            "./compositions/temperaCharmCompositions",
+            "./compositions/temperaApertureCompositions",
+            "./compositions/temperaSignalCompositions",
+            "./compositions/temperaCorridorCompositions",
+            "./compositions/temperaMonolithCompositions",
+            "./compositions/temperaTerrainCompositions",
+            "./compositions/temperaMonogatariCompositions",
+            "./temperaShotProfiles",
+            "./temperaCompositionContext"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaCreditsLayer.ts",
+          "sha256": "360c60cef780b1abbbb43666a0cc2efaae6d0b6851074cfc8ccfc9b0136ba193",
+          "imports": [
+            "../../../types",
+            "../pixiDisplayResources",
+            "./temperaSceneBuilder",
+            "./temperaPalette",
+            "./temperaMotion",
+            "./temperaShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaCurves.ts",
+          "sha256": "cd99a41af6315c26e8b5b9153f62db789f4f99dbecd787314e3b1d15ad763895",
+          "imports": [
+            "./temperaRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaDialogTokens.ts",
+          "sha256": "c813eb17fe8de9dc32e142504c82932f4f289fca94023a41408b5b9849a646ee",
+          "imports": [
+            "react"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaDifferenceFilter.ts",
+          "sha256": "8186c0e6521caa73d3b7b50faae1ab8661e2732dd57fcda6836b902a3aa45bd1",
+          "imports": [
+            "pixi.js",
+            "../colorMix",
+            "../pixiFilterVertex"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaEnterStyles.ts",
+          "sha256": "425d68e06795599cc5d9d6c19065d36e8832ad60fc1d7eec61be70d80c0b3f3e",
+          "imports": [
+            "./temperaMotionEasing"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaHatch.ts",
+          "sha256": "87651a4b19550f1fb5bcf040a71c5a1d4ab8e91d44d7be8bec5b2a6bfb78e8b8",
+          "imports": [
+            "./temperaRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaImageLayer.ts",
+          "sha256": "373ccae7eff99d4ca1fddc8f3a4a8633d447e7bbb84b8d881b7e0058ba621098",
+          "imports": [
+            "../../../types",
+            "./temperaMotion",
+            "./temperaRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaImageTextures.ts",
+          "sha256": "51ff4d9a23f38b196c5583722f65dd3c4b9639fba926d5cab81a7928684d7ea9",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaLayout.ts",
+          "sha256": "e29033ecfce244d61bca81b3e249f97238aa57c4f2fe161e82d2395c9f2eed04",
+          "imports": [
+            "./types",
+            "./temperaRandom",
+            "./temperaShotProfiles",
+            "./temperaEnterStyles",
+            "./temperaMeasure"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaMeasure.ts",
+          "sha256": "55ce6d3389e1cb40f20029ac0a7736aa1081b2d2b08e036d72e59c05950c3169",
+          "imports": [
+            "@chenglou/pretext",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaMotion.ts",
+          "sha256": "6ec03279608a7625fb999530eab2d443992a0ae076defa666bab322833aa93fc",
+          "imports": [
+            "./temperaMotionEasing",
+            "./temperaEnterStyles"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaMotionEasing.ts",
+          "sha256": "5afddfe6fa1843c582d6547e2edebba74751e8f9d04e44c035af310887219e33",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaOverlay.ts",
+          "sha256": "e255cd08bdd14985d8ce2deae9ab6dcf746726f71a157cccc34169a9effd370f",
+          "imports": [
+            "../../../types",
+            "../pixiDisplayResources"
+          ],
+          "parameters": [
+            "showCornerMarks"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaPalette.ts",
+          "sha256": "179aa111814273dd4ccff6e6911175755f44ad6c06df16f89c35fc27a6f07c24",
+          "imports": [
+            "../../../types",
+            "../colorMix"
+          ],
+          "parameters": [
+            "colorMode"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaProgram.ts",
+          "sha256": "0754f55d095bfa9e33db58fc5f85647374dd045316a0a4caa58876ce4ffe6b42",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/renderHints",
+            "./types",
+            "./types",
+            "./temperaShotProfiles",
+            "./temperaRandom",
+            "../../../utils/lyrics/wordSegmentation",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaRandom.ts",
+          "sha256": "99082be15e1edb2fa05a9dd7c24bc76e6ea66f33708ef7d3b666c1f266bb509b",
+          "imports": [
+            "../visualizerSeedHash",
+            "../visualizerSeedHash"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaSceneBuilder.ts",
+          "sha256": "3b0f52edc13b0d43e090e1a231e05365e0ba0f6c2b636fd86f31c345fda8374a",
+          "imports": [
+            "../../../types",
+            "../../../utils/fontStacks",
+            "../wordColoring",
+            "./types",
+            "./temperaRandom",
+            "./temperaMotion",
+            "./temperaPalette",
+            "./temperaBlocks",
+            "./temperaLayout",
+            "./temperaTextView",
+            "./temperaDifferenceFilter",
+            "./temperaSceneFilters",
+            "./temperaImageLayer",
+            "./temperaHatch",
+            "./temperaShapes",
+            "../sonnet/sonnetPostProcess"
+          ],
+          "parameters": [
+            "enableTransitions",
+            "glyphSettleStretch",
+            "layerImageDepth",
+            "layerImageFrequency",
+            "layerImages",
+            "postProcessContrast",
+            "postProcessEnabled",
+            "postProcessGrain",
+            "postProcessLensDistortion",
+            "postProcessRgbShift",
+            "postProcessVignette",
+            "showBlocks",
+            "showDecor",
+            "textInversion",
+            "textureResolution"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaSceneFilters.ts",
+          "sha256": "9bdb208a365afbc3af10983155ed249cb9111e5546aed68ece5bf12efafce341",
+          "imports": [
+            "../../../types"
+          ],
+          "parameters": [
+            "postProcessTextureCompression"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaSceneFrame.ts",
+          "sha256": "7529749475c747c8606281e762eae51bf6d887419a031b0ee466c8fdfa9a57b5",
+          "imports": [
+            "../../../types",
+            "./types",
+            "./temperaTransitions",
+            "./temperaSceneBuilder"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaShapes.ts",
+          "sha256": "a5ca389c024e9f87cd2c14588cc5fc07cfb188e797e90a19c0640f760b43dfc7",
+          "imports": [
+            "../colorMix",
+            "./temperaCurves",
+            "./temperaHatch"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaShotFrame.ts",
+          "sha256": "9b9872459a443cad3676d4ee27ada2ec5d1e9a2b35a00b821a003e62f1d8f9da",
+          "imports": [
+            "../../../types",
+            "./temperaRandom",
+            "./temperaCamera",
+            "./temperaSceneBuilder",
+            "./temperaMotion"
+          ],
+          "parameters": [
+            "cameraIntensity",
+            "glyphMotion"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaShotProfiles.ts",
+          "sha256": "a1a88ee2a726ae1264574aa7df80197fb2e9db7b941391d214445acb4609fb32",
+          "imports": [
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaTextView.ts",
+          "sha256": "0e2503685fe24017aca9d48fec1dd204006fb35d73d57b5d2c8e741d08e000c8",
+          "imports": [
+            "./temperaLayout",
+            "./temperaPalette",
+            "./types",
+            "./temperaMotion"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/temperaTransitions.ts",
+          "sha256": "dfb30f550937949e4c896c9370d0a10736b6ca3b3ff200ba4670e16e5ee00a2c",
+          "imports": [
+            "./types",
+            "./temperaMotion"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/tuning.ts",
+          "sha256": "3461e4afada58ced44b4d42f6e03adbea0d512762f0ce6c00389afabf7950638",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": [
+            "ts"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/tempera/types.ts",
+          "sha256": "3793646ca33b7d8434d6187ed87c43afe2ce139a9078e04551aeab7ccb876a20",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tempera/useTemperaLayerImageThumbnails.ts",
+          "sha256": "a4f0fb71dfcc7bdd1205e8716fa2fa3a0f89cd9721920fae20a6486e2b84c3a3",
+          "imports": [
+            "react",
+            "../../../types",
+            "../../../services/temperaLayerImages"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
+      "id": "tilt",
+      "entry": "src/components/visualizer/tilt/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/tilt/VisualizerTilt.tsx",
+          "sha256": "a65c494dc5787aea3464fd594bd2b9b4f3f070b3be9cfb0cbdff67b1ec74b846",
+          "imports": [
+            "react",
+            "framer-motion",
+            "react-i18next",
+            "@chenglou/pretext",
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/renderHints",
+            "../../../utils/fontStacks",
+            "../../../utils/lyrics/sentenceLayout",
+            "../definition",
+            "../runtime",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "../subtitleFontSizes"
+          ],
+          "parameters": [
+            "splitProbability",
+            "tiltStyleProbability"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/tilt/entry.tsx",
+          "sha256": "ccfe94ea9cea23c4551fc613958a1dc085eb5c16e4ccb0fc5d3492ab78a0c85c",
+          "imports": [
+            "react",
+            "../definition",
+            "../settingsPanels"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/tilt/tuning.ts",
+          "sha256": "fd65b47061971258d98c7f978c026872ac3d7848bb4ce3b6879f0675468a0fc0",
+          "imports": [
+            "../tuningRegistry"
+          ],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "backgrounds",
+      "id": "common",
+      "entry": "src/components/visualizer/backgrounds/common/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/backgrounds/common/CommonBackgroundSettingsCard.tsx",
+          "sha256": "fbf18b936fc003a5ed0a1d81a206122fdf51f3e30606f235683fcba295a4563e",
+          "imports": [
+            "react",
+            "../../colorMix",
+            "../definition",
+            "../BackgroundToggleRow"
+          ],
+          "parameters": [
+            "common"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/common/FluidBackground.tsx",
+          "sha256": "62baf5d5ee3817987947bbe341376a46bfecc875b65b92ce402f8d9412be5a88",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/common/GeometricBackground.tsx",
+          "sha256": "008b72e4f8d37194df4c53d94b7a14a2a228243860ef2ec548b41afc30938a9b",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../../types",
+            "../../../../hooks/useLucideIcons",
+            "../../../../services/lucideIconResolver"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/common/entry.tsx",
+          "sha256": "20249a70af3810835d34ca604f5f2e0d0a2257aad26033c3fcf7323ee4e5b63d",
+          "imports": [
+            "react",
+            "framer-motion",
+            "lucide-react",
+            "../definition",
+            "../../../shared/QuickControlChip",
+            "./CommonBackgroundSettingsCard",
+            "./FluidBackground",
+            "./GeometricBackground"
+          ],
+          "parameters": [
+            "common"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "backgrounds",
+      "id": "latent",
+      "entry": "src/components/visualizer/backgrounds/latent/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/backgrounds/latent/LatentBackground.tsx",
+          "sha256": "271ed525c2cb3aec56f7d8b35e4d75735baa78142d120840699885c0c32440ac",
+          "imports": [
+            "react",
+            "@paper-design/shaders",
+            "@paper-design/shaders-react",
+            "framer-motion",
+            "../../../../types",
+            "../../../../utils/colorExtractor",
+            "../../../../utils/paperShaderUniforms",
+            "../../../../utils/paperShaderContext"
+          ],
+          "parameters": [
+            "colorSource",
+            "displayMode",
+            "ditheringAudioSpeed",
+            "ditheringOpacity",
+            "ditheringSize",
+            "ditheringSpeed",
+            "enhancedBeatResponse",
+            "meshAudioSpeed",
+            "meshDistortion",
+            "meshSpeed",
+            "meshSwirl",
+            "overlayEnabled",
+            "overlayOpacity"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/latent/LatentBackgroundSettingsCard.tsx",
+          "sha256": "7caf57d0269970b6e93348722505b783fe7135308c3533fea4c2f807ea0ed435",
+          "imports": [
+            "react",
+            "../../../../types",
+            "../../colorMix",
+            "../BackgroundToggleRow"
+          ],
+          "parameters": [
+            "colorSource",
+            "displayMode",
+            "ditheringAudioSpeed",
+            "ditheringOpacity",
+            "ditheringSize",
+            "ditheringSpeed",
+            "dynamicOnlyInPlayer",
+            "enhancedBeatResponse",
+            "meshAudioSpeed",
+            "meshDistortion",
+            "meshSpeed",
+            "meshSwirl",
+            "overlayEnabled",
+            "overlayOpacity"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/latent/entry.tsx",
+          "sha256": "a1cd0d938765dd416bb1aeaaa183cd9547b3f07ee94705479d2c937bf591fba7",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../../types",
+            "./LatentBackground",
+            "./LatentBackgroundSettingsCard",
+            "../definition",
+            "../../../shared/QuickControlChip"
+          ],
+          "parameters": [
+            "displayMode",
+            "latent",
+            "overlayEnabled"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "backgrounds",
+      "id": "monet",
+      "entry": "src/components/visualizer/backgrounds/monet/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/backgrounds/monet/MonetBackgroundLayer.tsx",
+          "sha256": "c9f45d775f57673d7b8c46fe8bf422aa475e0a7923f6dd723ef0c9eb0fc6bd85",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../../types",
+            "../../colorMix",
+            "../../monet/monetBackgroundPipeline",
+            "./monetBackgroundDrift",
+            "../../../../hooks/useReducedMotionFor"
+          ],
+          "parameters": [
+            "backgroundBlurPx",
+            "backgroundDriftEnabled",
+            "backgroundDriftStrength",
+            "backgroundHalfPaneOffsetX",
+            "backgroundLayout",
+            "backgroundOverlayOpacity",
+            "backgroundSource"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/monet/MonetBackgroundSettingsCard.tsx",
+          "sha256": "1b05b0a332c1c5e0465148e293cd5d1f1fdbaa065ee012a12ee1bbf3b11ded73",
+          "imports": [
+            "react",
+            "react-colorful",
+            "lucide-react",
+            "../../../../types",
+            "../../colorMix",
+            "../BackgroundToggleRow"
+          ],
+          "parameters": [
+            "backgroundBlurPx",
+            "backgroundDriftEnabled",
+            "backgroundDriftStrength",
+            "backgroundGrayscale",
+            "backgroundHalfPaneOffsetX",
+            "backgroundLayout",
+            "backgroundOverlayOpacity",
+            "backgroundSaturation",
+            "backgroundSource",
+            "backgroundStreaksEnabled",
+            "backgroundWash",
+            "backgroundWashColorMode",
+            "backgroundWashCustomColor"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/monet/entry.tsx",
+          "sha256": "c98a2e49d42e4169b5ce3c347bd22862cf9b6c5a2b3e1ca4157f1d66c479d656",
+          "imports": [
+            "react",
+            "../../../../types",
+            "./MonetBackgroundSettingsCard",
+            "./MonetBackgroundLayer",
+            "../definition",
+            "../../../shared/QuickControlChip"
+          ],
+          "parameters": [
+            "backgroundLayout",
+            "customImage",
+            "monet",
+            "transparent"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/monet/monetBackgroundDrift.ts",
+          "sha256": "b3f7e7b8940fbccd86d8fe8976e158b1ae02ef6b7add26e42875014127dfaf29",
+          "imports": [],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "backgrounds",
+      "id": "nomand",
+      "entry": "src/components/visualizer/backgrounds/nomand/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/NomandBackgroundEffectPanel.tsx",
+          "sha256": "697dc583a48c8d1242e39910ab1afea45a43a738412ee2a3f9422fbef7f71da6",
+          "imports": [
+            "react",
+            "../../../../types",
+            "../../colorMix"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/NomandBackgroundEffectSettings.tsx",
+          "sha256": "e188ad3658f5776b4c9fb45e19b46bd91c43a4e7648ffe53f0f03205e6ce16ce",
+          "imports": [
+            "react",
+            "../../../../types",
+            "./NomandDitheringSettings",
+            "./NomandFlutedGlassSettings",
+            "./NomandHalftoneDotsSettings",
+            "./NomandLensDistortionSettings",
+            "./NomandPaperTextureSettings",
+            "./NomandBackgroundEffectPanel"
+          ],
+          "parameters": [
+            "effect"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/NomandBackgroundLayer.tsx",
+          "sha256": "48c90d4adfd63cb9135d5b4862f5ae4bc4679fe671a44234ff7fa35643bd877e",
+          "imports": [
+            "react",
+            "@paper-design/shaders-react",
+            "../../../../types",
+            "./nomandShaderAdjustments"
+          ],
+          "parameters": [
+            "colorSteps",
+            "ditheringType",
+            "effect",
+            "flutedGlassBlur",
+            "flutedGlassDistortion",
+            "flutedGlassSize",
+            "halftoneDotsContrast",
+            "halftoneDotsInverted",
+            "halftoneDotsOriginalColors",
+            "halftoneDotsRadius",
+            "halftoneDotsSize",
+            "imageSource",
+            "inverted",
+            "lensDistortionBulge",
+            "lensDistortionDispersion",
+            "lensDistortionSpread",
+            "originalColors",
+            "overlayEnabled",
+            "overlayOpacity",
+            "paperTextureContrast",
+            "paperTextureFiber",
+            "paperTextureRoughness",
+            "size"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/NomandBackgroundSettingsCard.tsx",
+          "sha256": "4b15e0cc45c581c5a057ea99df1af6700e9605972d4ccee79d41e11182dcddcf",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../../types",
+            "../../colorMix",
+            "../BackgroundToggleRow",
+            "./NomandBackgroundEffectSettings"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/NomandDitheringSettings.tsx",
+          "sha256": "b1b586d7d36b2a64f0855b43f1186188b4ba5458f7091950020202d8f55cf861",
+          "imports": [
+            "react",
+            "../../../../types",
+            "../BackgroundToggleRow",
+            "./NomandBackgroundEffectPanel"
+          ],
+          "parameters": [
+            "colorSteps",
+            "ditheringType",
+            "inverted",
+            "originalColors",
+            "size"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/NomandFlutedGlassSettings.tsx",
+          "sha256": "39b24e27e90b5148487f9074613bd16fea90f9cec54d6c8650834e488f3dc1c4",
+          "imports": [
+            "react",
+            "./NomandBackgroundEffectPanel"
+          ],
+          "parameters": [
+            "flutedGlassBlur",
+            "flutedGlassDistortion",
+            "flutedGlassSize"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/NomandHalftoneDotsSettings.tsx",
+          "sha256": "66c2a621c431dff5360ca173862a1fd42829f8be3498c3c20f785e4b2e47b535",
+          "imports": [
+            "react",
+            "../BackgroundToggleRow",
+            "./NomandBackgroundEffectPanel"
+          ],
+          "parameters": [
+            "halftoneDotsContrast",
+            "halftoneDotsInverted",
+            "halftoneDotsOriginalColors",
+            "halftoneDotsRadius",
+            "halftoneDotsSize"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/NomandLensDistortionSettings.tsx",
+          "sha256": "54166ae745e5992d6f7aaf4d20cfb8c7ad049ff265a0707e68a4bf978c59b8d8",
+          "imports": [
+            "react",
+            "./NomandBackgroundEffectPanel"
+          ],
+          "parameters": [
+            "lensDistortionBulge",
+            "lensDistortionDispersion",
+            "lensDistortionSpread"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/NomandPaperTextureSettings.tsx",
+          "sha256": "29e541050c79fece7d751a3969a22258ee22a9591a5536133d994b5672a25e2f",
+          "imports": [
+            "react",
+            "./NomandBackgroundEffectPanel"
+          ],
+          "parameters": [
+            "paperTextureContrast",
+            "paperTextureFiber",
+            "paperTextureRoughness"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/entry.tsx",
+          "sha256": "37d7504268105c217ca084ffd5dd89db37b8e13e0df5f2deb16f77cb07af6485",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../../types",
+            "./NomandBackgroundLayer",
+            "./NomandBackgroundSettingsCard",
+            "../definition",
+            "../../../shared/QuickControlChip"
+          ],
+          "parameters": [
+            "customImage",
+            "nomand",
+            "overlayEnabled"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/nomandShaderAdjustments.ts",
+          "sha256": "3a1371924804a024f9085ffbe2ddfcf0f8946c0536ede9a88db674f47cbd7217",
+          "imports": [],
+          "parameters": []
+        }
+      ]
+    },
+    {
+      "kind": "backgrounds",
+      "id": "sora",
+      "entry": "src/components/visualizer/backgrounds/sora/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/backgrounds/sora/SoraBackground.tsx",
+          "sha256": "d74fe5b329c941d0bda45e20ca7b781668fc302ad23bdf464ecfb290dc1c4657",
+          "imports": [
+            "react",
+            "twgl.js",
+            "../../../../types",
+            "../../colorMix"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/sora/SoraBackgroundSettingsCard.tsx",
+          "sha256": "dc6359d4958f2fdc5f553ad72375c702097b2e35dd93cf66bbcbef6781c460b7",
+          "imports": [
+            "react",
+            "../../../../types",
+            "../../colorMix",
+            "../BackgroundToggleRow"
+          ],
+          "parameters": [
+            "blank"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/sora/entry.tsx",
+          "sha256": "8769d1fb94029ea2d08b1802f493535d1c1a80c8d3d81aa75480a522a84be2ac",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../../types",
+            "./SoraBackground",
+            "./SoraBackgroundSettingsCard",
+            "../definition",
+            "../../../shared/QuickControlChip"
+          ],
+          "parameters": [
+            "blank",
+            "sora"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "backgrounds",
+      "id": "url",
+      "entry": "src/components/visualizer/backgrounds/url/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/backgrounds/url/UrlBackgroundLayer.tsx",
+          "sha256": "29e8ba6e3dcfffba85da5d6fee34f3fd8589488ac551cdf34958c0e7f3c93d37",
+          "imports": [
+            "react",
+            "../../../../types",
+            "../../../../utils/urlBackground"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/url/UrlBackgroundSettingsCard.tsx",
+          "sha256": "79ef880a64918712b1c9c182a6fa08ad6f58582b035195478750bb150bc1fc82",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../../types",
+            "../../colorMix",
+            "../../../../utils/urlBackground"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/url/entry.tsx",
+          "sha256": "860b6913558a38aaffff649c94289232ce548d1d2d0e988075a61a409c9409a5",
+          "imports": [
+            "react",
+            "./UrlBackgroundLayer",
+            "./UrlBackgroundSettingsCard",
+            "../definition"
+          ],
+          "parameters": [
+            "url"
+          ]
+        }
+      ]
+    }
+  ],
+  "parameterDefinitions": [
+    {
+      "source": "src/types.ts",
+      "declaration": "interface ClassicTuning {\n  enableWordRotation: boolean;\n  breathingFloatMultiplier: number;\n  useLegacyLayout?: boolean;\n  wordSpacing?: number;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_CLASSIC_TUNING: ClassicTuning = {\n  enableWordRotation: true,\n  breathingFloatMultiplier: 1,\n  useLegacyLayout: false,\n  wordSpacing: 0.7,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface CadenzaTuning {\n  fontScale: number;\n  widthRatio: number;\n  motionAmount: number;\n  glowIntensity: number;\n  beamIntensity: number;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_CADENZA_TUNING: CadenzaTuning = {\n  fontScale: 1.12,\n  widthRatio: 0.72,\n  motionAmount: 1,\n  glowIntensity: 1,\n  beamIntensity: 0,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface PartitaTuning {\n  showGuideLines: boolean;\n  useSemanticLayout: boolean;\n  staggerMin: number;\n  staggerMax: number;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_PARTITA_TUNING: PartitaTuning = {\n  showGuideLines: true,\n  useSemanticLayout: true,\n  staggerMin: 20,\n  staggerMax: 100,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface FumeTuning {\n  hidePrintSymbols: boolean;\n  disableGeometricBackground: boolean;\n  backgroundObjectOpacity: number;\n  textHoldRatio: number;\n  cameraTrackingMode: 'stepped' | 'smooth';\n  cameraSpeed: number;\n  glowIntensity: number;\n  heroScale: number;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_FUME_TUNING: FumeTuning = {\n  hidePrintSymbols: false,\n  disableGeometricBackground: true,\n  backgroundObjectOpacity: 0.5,\n  textHoldRatio: 1,\n  cameraTrackingMode: 'smooth',\n  cameraSpeed: 1,\n  glowIntensity: 1,\n  heroScale: 1,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface CladdaghTuning {\n  focusScaleRatio: number;\n  radiusScale: number;\n  ellipseTiltDeg: number;\n  showAxisLine: boolean;\n  letterSpacingOffset: number;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_CLADDAGH_TUNING: CladdaghTuning = {\n  focusScaleRatio: 0.65,\n  radiusScale: 1.0,\n  ellipseTiltDeg: 45,\n  showAxisLine: true,\n  letterSpacingOffset: 0,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface CappellaTuning {\n  showEmoMessages: boolean;\n  emojiPackSource: CappellaEmojiPackSource;\n  avatarSource: CappellaAvatarSource;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_CAPPELLA_TUNING: CappellaTuning = {\n  showEmoMessages: true,\n  emojiPackSource: 'builtin',\n  avatarSource: 'cover',\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface TiltTuning {\n  splitProbability: number;\n  tiltStyleProbability: number;\n  colorScheme?: TiltColorScheme;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_TILT_TUNING: TiltTuning = {\n  splitProbability: 0.75,\n  tiltStyleProbability: 0.35,\n  colorScheme: 'default',\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface PendoloTuning {\n  arcRadius: number;\n  arcAngleDeg: number;\n  wheelCenterX: number;\n  wheelCenterY: number;\n  tickSnappiness: number;\n  activeScale: number;\n  showGearDecor: 'none' | 'subtle' | 'full';\n  showCenterGradient?: boolean;\n  showCoverOnWatchFace?: boolean;\n  enableLineGlow?: boolean;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_PENDOLO_TUNING: PendoloTuning = {\n  arcRadius: 0.42,\n  arcAngleDeg: 100,\n  wheelCenterX: 0.0,\n  wheelCenterY: 0.50,\n  tickSnappiness: 2.0,\n  activeScale: 1.25,\n  showGearDecor: 'subtle',\n  showCenterGradient: true,\n  showCoverOnWatchFace: false,\n  enableLineGlow: false,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface SonnetTuning {\n  cameraIntensity: number;\n  typographyMotion: number;\n  mgDensity: number;\n  showOnlyText: boolean;\n  showGuide: boolean;\n  showBackgroundMg: boolean;\n  showFixedGeo: boolean;\n  showGiantDecorativeText: boolean;\n  showBackgroundDecor: boolean;\n  enableTransitions: boolean;\n  outerFrameMode: SonnetOuterFrameMode;\n  textureResolution: number;\n  /** Master switch for the scene-wide post-process stack (grain + contrast). */\n  postProcessEnabled: boolean;\n  /** Film grain amount, 0..1. */\n  postProcessGrain: number;\n  /** Contrast boost, 0..1. */\n  postProcessContrast: number;\n  /** Fixed print-style passes riding the master switch; strength sliders, 0 disables the pass. */\n  postProcessRgbShift: number;\n  postProcessHalftone: number;\n  /** Vignette strength, 0..2 (2 = double the base darkening). */\n  postProcessVignette: number;\n  /** Radial lens curvature amount, 0..2. */\n  postProcessLensDistortion: number;\n  /** Radial chromatic dispersion amount, 0..1. */\n  postProcessLensDispersion: number;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_SONNET_TUNING: SonnetTuning = {\n  cameraIntensity: 1,\n  typographyMotion: 1,\n  mgDensity: 1,\n  showOnlyText: false,\n  showGuide: true,\n  showBackgroundMg: true,\n  showFixedGeo: true,\n  showGiantDecorativeText: true,\n  showBackgroundDecor: true,\n  enableTransitions: true,\n  outerFrameMode: 'full',\n  textureResolution: 1.5,\n  postProcessEnabled: false,\n  postProcessGrain: 0.2,\n  postProcessContrast: 0,\n  postProcessRgbShift: 0,\n  postProcessHalftone: 0,\n  postProcessVignette: 0.85,\n  postProcessLensDistortion: 0.3,\n  postProcessLensDispersion: 0.6,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface TemperaTuning {\n  cameraIntensity: number;\n  /** Per-glyph entrance motion strength, 0..2. */\n  glyphMotion: number;\n  /** Keep each source lyric line in one shot instead of slicing it into half-phrases. */\n  wholeLineLyrics: boolean;\n  /**\n   * 逐字入场时序, 0..1. How much of the way to the shot's lyric end each glyph's entrance\n   * stretches, past its 0.34s floor. 0 gives every glyph the same short window - percussive,\n   * and the shot is fully at rest well before it cuts. 1 lands the whole shot exactly on its\n   * lyric end - continuous, but nothing is ever still. See temperaLayout for the measurements.\n   */\n  glyphSettleStretch: number;\n  /** duo derives blocks from theme hues; mono collapses to a grayscale ink/paper ladder. */\n  colorMode: TemperaColorMode;\n  showBlocks: boolean;\n  showDecor: boolean;\n  /** 边角线框: the two registration marks in the top-left and bottom-right corners. */\n  showCornerMarks: boolean;\n  /**\n   * 文字动态反色: the lyric samples the artwork under it and picks whichever of ink/paper\n   * contrasts more, per pixel. This is how the mode colours type, not a post-process, so it\n   * has its own switch rather than riding `postProcessEnabled`.\n   */\n  textInversion: boolean;\n  /** Pool of user images; each shot picks one. The files themselves live in IndexedDB. */\n  layerImages: TemperaLayerImage[];\n  /** `back` lets the lyric invert against the picture; `front` puts it over the lyric. */\n  layerImageDepth: 'back' | 'front';\n  /** 0..1 chance that a given shot shows an image at all. */\n  layerImageFrequency: number;\n  enableTransitions: boolean;\n  textureResolution: number;\n  /** Master switch for the scene-wide post-process stack (grain + contrast + print passes). */\n  postProcessEnabled: boolean;\n  /**\n   * 后处理纹理压缩: renders the post-process pass at 1x and stretches it onto the canvas\n   * instead of running it at `textureResolution`. Costs sharpness on hatch, screentone and\n   * type; buys back the fill rate a full-resolution full-screen pass costs.\n   */\n  postProcessTextureCompression: boolean;\n  /** Film grain amount, 0..1. */\n  postProcessGrain: number;\n  /** Contrast boost, 0..1. */\n  postProcessContrast: number;\n  /** RGB shift pass strength, 0..1 (0 disables the pass). */\n  postProcessRgbShift: number;\n  /** Vignette strength, 0..2 (2 = double the base darkening). */\n  postProcessVignette: number;\n  /** Radial lens curvature amount, 0..2. */\n  postProcessLensDistortion: number;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_TEMPERA_TUNING: TemperaTuning = {\n  cameraIntensity: 1,\n  glyphMotion: 1,\n  wholeLineLyrics: false,\n  glyphSettleStretch: 0.5,\n  colorMode: 'duo',\n  showBlocks: true,\n  showDecor: true,\n  showCornerMarks: true,\n  textInversion: true,\n  layerImages: [],\n  layerImageDepth: 'back',\n  layerImageFrequency: 0.6,\n  enableTransitions: true,\n  textureResolution: 1.5,\n  postProcessEnabled: true,\n  postProcessTextureCompression: false,\n  postProcessGrain: 0.2,\n  postProcessContrast: 0,\n  postProcessRgbShift: 0,\n  postProcessVignette: 0.85,\n  postProcessLensDistortion: 0.3,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "type LumiereRenderQuality = 'full' | 'balanced' | 'low';"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface LumiereTuning {\n  /** 光强倍率, 0.3..2. */\n  lightIntensity: number;\n  /** 随音乐变亮, 0..2 (0 = 不随音乐变). */\n  audioResponse: number;\n  /** 烟雾浓度, 0..2. */\n  fogDensity: number;\n  /**\n   * 暗场强度, 0..1：光后面铺一层主题背景色压暗的底，压住 folia 的共享背景（0 = 共享背景原样透出）。\n   * 浅色主题保底 0.94（绘光始终在暗场里）。\n   */\n  darkField: number;\n  /** 浮尘数量, 0..2. */\n  moteAmount: number;\n  /** 图形辉光, 0..2. */\n  bloom: number;\n  /** 文字辉光, 0..2. */\n  textBloom: number;\n  /** 未唱字透明度, 0.05..0.6. */\n  unlitOpacity: number;\n  /** 邻行：1 = 上一行 + 当前行，2 = 上一行 + 当前行 + 下一行. */\n  windowNeighbors: 1 | 2;\n  /** 崩解强度, 0..2. */\n  decay: number;\n  /** 背景歌词亮度, 0..2 (0 = 关). */\n  echo: number;\n  /** 烟雾细节（倍频数）, integer 2..6. */\n  fogOctaves: number;\n  /** 线稿. */\n  lineArt: boolean;\n  /** 前景散景. */\n  frontBokeh: boolean;\n  /** 所有换位都走轨迹线. */\n  trails: boolean;\n  /** 隐藏所有歌词换位的轨迹线，保留字的飞行与轨迹过渡. */\n  hideTrails: boolean;\n  /**\n   * 轨迹过渡：段落之间也和段内换镜头一样在同一个光场里交接（整首歌编成一个场景单元），\n   * 没有熄灯 / 闪白 / 拉焦 / 交叉渐变。改它会重新编译程序.\n   */\n  seamlessTransitions: boolean;\n  /** 画框. */\n  overlayFrame: boolean;\n  /**\n   * 仅显示歌词文字：只画歌词与字上的效果（点亮、光晕、闪点、十字爆闪、径迹、追字光斑），\n   * 光场、烟雾、星空、线稿、浮尘、背景歌词、主题图标、画框与片尾卡的光都不画。字的明暗仍按光束算.\n   */\n  textOnly: boolean;\n  /** 关键字着色（主题 wordColors）. */\n  keywordColors: boolean;\n  /** 主题图标（主题 lyricsIcons 画成线稿）. */\n  themeIcons: boolean;\n  /** 主题色占比, 0..1：0 = 香槟金光；越高光色越接近强调色、点亮 / 未唱的字越接近主色 / 次色. */\n  themeColorMix: number;\n  /** 画质. */\n  renderQuality: LumiereRenderQuality;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_LUMIERE_TUNING: LumiereTuning = {\n  lightIntensity: 1,\n  audioResponse: 1,\n  fogDensity: 1,\n  darkField: 0.75,\n  moteAmount: 1,\n  bloom: 1,\n  textBloom: 1,\n  unlitOpacity: 0.22,\n  windowNeighbors: 2,\n  decay: 1,\n  echo: 1,\n  fogOctaves: 5,\n  lineArt: true,\n  frontBokeh: true,\n  trails: true,\n  hideTrails: false,\n  seamlessTransitions: true,\n  overlayFrame: true,\n  textOnly: false,\n  keywordColors: true,\n  themeIcons: true,\n  themeColorMix: 0.3,\n  renderQuality: 'full',\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface DioramaTuning {\n  cameraSpeed: number;\n  motionAmount: number;\n  audioReactivity: number;\n  geometryVisibility: DioramaGeometryVisibility;\n  /** Number of points requested for each formation anchor; the renderer also enforces a global cap. */\n  particleDensity: number;\n  /** Spatial scale multiplier for each complete point-cloud formation. */\n  particleScale: number;\n  /** One soft gradient aura per point-cloud cluster, separate from lyric sung-glow. */\n  particleGlowEnabled: boolean;\n  particleGlowIntensity: number;\n  showParticles: boolean;\n  /** Background dust shell, two INDEPENDENT axes (motes-per-line = the product; field clamps to its cap):\n   *  背景粒子·圆周密度 = motes around each ring, 背景粒子·径向密度 = layers across the shell thickness. */\n  backgroundParticleCircumference: number;\n  backgroundParticleRadial: number;\n  /** 普通辉光跟唱: soft glow on the unit being sung. Independent toggle + strength. */\n  glowEnabled: boolean;\n  glowIntensity: number;\n  /** 灵魂出窍跟唱: a ghost copy of the sung glyph drifts out of the text. Independent toggle + strength. */\n  soulEnabled: boolean;\n  soulIntensity: number;\n  /** 当前字漂移: a plain ON/OFF sub-switch of 灵魂出窍. ON lets the glyph CURRENTLY being sung drift at the\n   *  same 灵魂出窍强度 as every other glyph; OFF holds it perfectly registered (no doubling / reading\n   *  obstruction) until it finishes, after which it detaches and flies like the rest. No strength of its\n   *  own - it borrows soulIntensity. Only has a visible effect when soulEnabled. */\n  soulActiveEnabled: boolean;\n  /** 渐变跟唱: the line's fill progressively deepens with the sung progress. Independent toggle + strength. */\n  gradientEnabled: boolean;\n  gradientIntensity: number;\n  /** 关键字着色: the theme's `wordColors` keywords (written by the AI theme from the song's lyrics) become\n   *  the follow-sing TARGET colour of the units they cover - hidden until the singing reaches them, never\n   *  a resting colour. Same source and matcher as every other visualizer. */\n  keywordColoringEnabled: boolean;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_DIORAMA_TUNING: DioramaTuning = {\n  cameraSpeed: 1,\n  motionAmount: 1,\n  audioReactivity: 1,\n  geometryVisibility: DEFAULT_DIORAMA_GEOMETRY_VISIBILITY,\n  particleDensity: 576,\n  particleScale: 1,\n  particleGlowEnabled: true,\n  particleGlowIntensity: 0.65,\n  showParticles: true,\n  backgroundParticleCircumference: 28,\n  backgroundParticleRadial: 2,\n  glowEnabled: true,\n  glowIntensity: 1,\n  soulEnabled: true,\n  soulIntensity: 1,\n  soulActiveEnabled: false,\n  gradientEnabled: false,\n  gradientIntensity: 1,\n  keywordColoringEnabled: true,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "type NomandBackgroundEffect = 'dithering' | 'fluted-glass' | 'paper-texture' | 'halftone-dots' | 'lens-distortion';"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "type LatentBackgroundDisplayMode = 'dithering' | 'mesh' | 'both';"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface MonetBackgroundTuning {\n  backgroundSource: MonetBackgroundSource;\n  backgroundLayout: MonetBackgroundLayout;\n  backgroundBlurPx: number;\n  backgroundOverlayOpacity: number;\n  backgroundGrayscale: number;\n  backgroundSaturation: number;\n  backgroundWash: number;\n  backgroundHalfPaneOffsetX: number;\n  backgroundWashColorMode: MonetBackgroundWashColorMode;\n  backgroundWashCustomColor: string;\n  /** 整张背景图的缓慢缩放漂移；纯 CSS 合成层动画，不参与背景烘焙。 */\n  backgroundDriftEnabled: boolean;\n  /** 漂移幅度 0..1，同时决定位移距离和为防止露边而预放大的倍率。 */\n  backgroundDriftStrength: number;\n  /** 是否在烘焙的 overlay 里绘制那几条 1px 竖向纹理。 */\n  backgroundStreaksEnabled: boolean;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface NomandBackgroundTuning {\n  imageSource: NomandBackgroundSource;\n  effect: NomandBackgroundEffect;\n  ditheringType: NomandBackgroundDitheringType;\n  size: number;\n  colorSteps: number;\n  originalColors: boolean;\n  inverted: boolean;\n  flutedGlassSize: number;\n  flutedGlassDistortion: number;\n  flutedGlassBlur: number;\n  paperTextureContrast: number;\n  paperTextureRoughness: number;\n  paperTextureFiber: number;\n  halftoneDotsSize: number;\n  halftoneDotsRadius: number;\n  halftoneDotsContrast: number;\n  halftoneDotsOriginalColors: boolean;\n  halftoneDotsInverted: boolean;\n  lensDistortionSpread: number;\n  lensDistortionBulge: number;\n  lensDistortionDispersion: number;\n  overlayEnabled: boolean;\n  overlayOpacity: number;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface LatentBackgroundTuning {\n  displayMode: LatentBackgroundDisplayMode;\n  colorSource: LatentBackgroundColorSource;\n  dynamicOnlyInPlayer: boolean;\n  enhancedBeatResponse: boolean;\n  ditheringSpeed: number;\n  ditheringAudioSpeed: number;\n  ditheringSize: number;\n  ditheringOpacity: number;\n  meshSpeed: number;\n  meshAudioSpeed: number;\n  meshDistortion: number;\n  meshSwirl: number;\n  overlayEnabled: boolean;\n  overlayOpacity: number;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface SoraBackgroundTuning {\n  /** Skips the WebGL starfield and shows a static solid black (night) / white (daylight) frame. */\n  blank: boolean;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "interface MonetTuning {\n  keywordColoringEnabled: boolean;\n  showDescription: boolean;\n  showAudioVisualization: boolean;\n  audioStyle: MonetAudioStyle;\n  fontScale: number;\n  portraitSource: MonetPortraitSource;\n  portraitOffsetX?: number;\n  portraitStyle?: 'square' | 'rectangular';\n  showPortraitDragHanger?: boolean;\n}"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_MONET_BACKGROUND_TUNING: MonetBackgroundTuning = {\n  backgroundSource: 'cover-derived',\n  backgroundLayout: 'full-overlay',\n  backgroundBlurPx: 6,\n  backgroundOverlayOpacity: 0.74,\n  backgroundGrayscale: 0,\n  backgroundSaturation: 1.05,\n  backgroundWash: 0.34,\n  backgroundHalfPaneOffsetX: 0,\n  backgroundWashColorMode: 'theme',\n  backgroundWashCustomColor: '#8fb7ff',\n  backgroundDriftEnabled: true,\n  backgroundDriftStrength: 0.5,\n  backgroundStreaksEnabled: true,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_NOMAND_BACKGROUND_TUNING: NomandBackgroundTuning = {\n  imageSource: 'cover-derived',\n  effect: 'dithering',\n  ditheringType: '8x8',\n  size: 3,\n  colorSteps: 4,\n  originalColors: false,\n  inverted: false,\n  flutedGlassSize: 0.5,\n  flutedGlassDistortion: 0.5,\n  flutedGlassBlur: 0.08,\n  paperTextureContrast: 0.32,\n  paperTextureRoughness: 0.42,\n  paperTextureFiber: 0.3,\n  halftoneDotsSize: 0.5,\n  halftoneDotsRadius: 1.25,\n  halftoneDotsContrast: 0.4,\n  halftoneDotsOriginalColors: false,\n  halftoneDotsInverted: false,\n  lensDistortionSpread: 0.45,\n  lensDistortionBulge: 0.3,\n  lensDistortionDispersion: 0.65,\n  overlayEnabled: true,\n  overlayOpacity: 0.35,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_LATENT_BACKGROUND_TUNING: LatentBackgroundTuning = {\n  displayMode: 'both',\n  colorSource: 'cover-theme',\n  dynamicOnlyInPlayer: true,\n  enhancedBeatResponse: true,\n  ditheringSpeed: 0.1,\n  ditheringAudioSpeed: 1.2,\n  ditheringSize: 2.5,\n  ditheringOpacity: 0.55,\n  meshSpeed: 0.3,\n  meshAudioSpeed: 2,\n  meshDistortion: 0.8,\n  meshSwirl: 0.1,\n  overlayEnabled: true,\n  overlayOpacity: 0.35,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_SORA_BACKGROUND_TUNING: SoraBackgroundTuning = {\n  blank: false,\n};"
+    },
+    {
+      "source": "src/types.ts",
+      "declaration": "const DEFAULT_MONET_TUNING: MonetTuning = {\n  keywordColoringEnabled: true,\n  showDescription: true,\n  showAudioVisualization: true,\n  audioStyle: 'bar',\n  fontScale: 1.2,\n  portraitSource: 'cover',\n  portraitOffsetX: 0,\n  portraitStyle: 'square',\n  showPortraitDragHanger: true,\n};"
+    }
+  ],
+  "temperaShots": [
+    "duo-split",
+    "quad-split",
+    "tri-column",
+    "thirds-stack",
+    "checker-quad",
+    "corner-wedge",
+    "diagonal-halves",
+    "cross-axis",
+    "offset-halves",
+    "stair-blocks",
+    "pillar-gap",
+    "corner-quad",
+    "sliver-stack",
+    "band-strip",
+    "horizon-band",
+    "deep-dive",
+    "tone-ramp",
+    "double-band",
+    "tilt-band",
+    "edge-rails",
+    "gradient-wall",
+    "terrace",
+    "frame-window",
+    "double-frame",
+    "circle-window",
+    "ladder-frame",
+    "corner-brackets",
+    "inset-box",
+    "bracket-pair",
+    "arch-window",
+    "grid-cells",
+    "keyhole",
+    "poster-panel",
+    "diamond-stack",
+    "slash-poster",
+    "arrow-wedge",
+    "edge-bleed",
+    "triangle-mass",
+    "ribbon-cross",
+    "half-disc",
+    "stacked-slabs",
+    "wedge-pair",
+    "quiet-line",
+    "starfield-dots",
+    "ripple-lines",
+    "hair-grid",
+    "margin-rule",
+    "dot-drift",
+    "arc-sweep",
+    "blank-page",
+    "cinema-scope",
+    "cinema-wide",
+    "cinema-academy",
+    "cinema-square",
+    "cinema-portrait",
+    "cinema-tall",
+    "cinema-twin",
+    "bubble-drift",
+    "cloud-window",
+    "heart-burst",
+    "sparkle-field",
+    "petal-arc",
+    "scallop-band",
+    "ribbon-loop",
+    "round-plate",
+    "halo-burst",
+    "s live\n    // background shows in it - see `compositions/temperaCutout.ts`.\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    // Instrument panels: measured geometric decoration around one heavy focal mass.\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    // Corridors: openings cut along the flow vector, so the hand-off between two shots keeps\n    // the same opening moving instead of cutting to a new one.\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    // Brutalist monoliths: one enormous matte solid, cropped by the frame, type on its edge.\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    // The same language read as ground and structure rather than as objects.\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    // Monogatari-style interstitials: one flat field, type as the whole picture.\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    ",
+    ",\n    "
+  ],
+  "sharedSources": [
+    {
+      "path": "src/types.ts",
+      "sha256": "b6c64ebede1dab6c42866039230aa0e4f4202f1c830e6e2c54f271d4bcab1ee5"
+    },
+    {
+      "path": "src/types/visualizerModes.ts",
+      "sha256": "b5c630459cb08b3007767099f67e6f6c73e3f5315c021465b2df0c673b149eb4"
+    },
+    {
+      "path": "src/components/visualizer/registry.tsx",
+      "sha256": "a6637b6709b16bf9e09e2c31d864c1546649346c3db7612f3ae1e0d19403c071"
+    },
+    {
+      "path": "src/components/visualizer/tuningRegistry.ts",
+      "sha256": "10a3dfdcdcc62c79be46f9f07753cec17b70479754bd50955372fe61cb4e02bb"
+    },
+    {
+      "path": "src/components/visualizer/backgrounds/registry.tsx",
+      "sha256": "87f629038d7c65022ef041c9479aaa4bcec58f2502bd268f73c76ee85f48edf4"
+    },
+    {
+      "path": "src/components/visualizer/backgrounds/common/FluidBackground.tsx",
+      "sha256": "62baf5d5ee3817987947bbe341376a46bfecc875b65b92ce402f8d9412be5a88"
+    },
+    {
+      "path": "src/services/customLyricsFont.ts",
+      "sha256": "cf2f1ab897fac5b4f76966052a65a061d5488ceb94a70357ba8079907c37d9e6"
+    },
+    {
+      "path": "src/utils/fontStacks.ts",
+      "sha256": "2f7e3f0a97e73fdc57e9a76a14f06a2cf94648737ae4b14670b00ff1282c702f"
+    },
+    {
+      "path": "src/library/registry.ts",
+      "sha256": "0623807ff0807cc9d2d805ddc0b1e5345b2aca8737d4c9d107f43669368aff4b"
+    }
+  ],
+  "librarySuites": [
+    {
+      "id": "grid",
+      "path": "src/library/suites/grid/entry.ts",
+      "productionAvailable": true,
+      "sha256": "cf53ff3b7d7e460480f61943d72d0ccb7fa307e9488da83a1121c9249c7a0260"
+    },
+    {
+      "id": "bravais",
+      "path": "src/library/suites/bravais/entry.ts",
+      "productionAvailable": true,
+      "sha256": "be6c829fc541f1153da8d69d0cd2d17d4e42947223bf3cdcfd8ebd0af8a461c6"
+    },
+    {
+      "id": "tui",
+      "path": "src/library/suites/tui/entry.ts",
+      "productionAvailable": false,
+      "sha256": "da1948cbdae727579da4f9ad875382e853ce40d23eab0039f4b410ed692e1c1c"
+    }
+  ]
+}
