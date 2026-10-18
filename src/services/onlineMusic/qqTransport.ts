@@ -157,9 +157,13 @@ const tokenFromCookieString = (cookie: string): string => {
 // `Access-Control-Allow-Origin: *`，按规范不允许搭配 credentials。
 const isSameOriginBase = (base: string): boolean => base.startsWith('/');
 
-export const hasQqSession = (): boolean => Boolean(getWebSessionCookie());
+export const isQqDirect = (): boolean => isNativeIOS() && !getWebApiBase();
+export const hasQqSession = (): boolean => Boolean(isQqDirect() ? readProviderSessionValue('qq', 'direct-account') : getWebSessionCookie());
 
-export const clearQqSession = (): void => removeProviderSessionValue('qq', 'cookie');
+export const clearQqSession = (): void => {
+    removeProviderSessionValue('qq', 'cookie');
+    removeProviderSessionValue('qq', 'direct-account');
+};
 
 // 后端的退避时长（qq-music-api 在 429 的响应体里给 retryAfterMs，同时带 Retry-After 头，单位是秒）。
 // 只收非负安全整数，读不出就不给，调用方按普通失败处理。
@@ -262,6 +266,7 @@ const persistConfirmedSession = (operation: QqOperation, body: any): void => {
 export const getQqRemoteApiBase = (): string | null => (getElectronQqPortReader() ? null : getWebApiBase() || null);
 
 export const getQqTransportAvailability = () => {
+    if (isQqDirect()) return { configured: true } as const;
     if (getElectronQqPortReader()) return { configured: true } as const;
     return getWebApiBase()
         ? { configured: true } as const
@@ -316,6 +321,10 @@ export const requestQq = async <T = unknown>(
             `QQMusicApi ${operation} ${isPost ? 'requires' : 'does not take'} a request body`,
             'qq',
         );
+    }
+    if (isQqDirect()) {
+        const { requestQqDirect } = await import('./mobileDirect/qq');
+        return requestQqDirect(operation, params, payload) as Promise<T>;
     }
     const base = await resolveApiBase();
 

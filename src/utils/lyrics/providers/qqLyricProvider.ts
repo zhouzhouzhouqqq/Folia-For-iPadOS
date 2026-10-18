@@ -1,3 +1,5 @@
+import { isNativeIOS } from '../../../platform/capabilities';
+import { createNativeHttp } from '../../../services/onlineMusic/mobileDirect/http';
 import { foliaApiUrl } from '../../../services/nativeConnections';
 // src/utils/lyrics/providers/qqLyricProvider.ts
 
@@ -41,6 +43,12 @@ async function requestQQ(method: string, module: string, param: any): Promise<an
   };
 
   const targetUrl = 'https://u.y.qq.com/cgi-bin/musicu.fcg';
+  if (isNativeIOS()) {
+    const { data } = await createNativeHttp('qq').request({ url: targetUrl, method: 'POST', data: payload,
+      headers: { 'Content-Type': 'application/json', Cookie: 'tmeLoginType=-1;', 'User-Agent': 'okhttp/3.14.9' } });
+    if (data.code !== 0 || data.request?.code !== 0) throw new Error(`QQ Music API error: code ${data.code || data.request?.code}`);
+    return data.request.data;
+  }
   const url = isElectron ? targetUrl : foliaApiUrl(`/api/lyric-proxy?url=${encodeURIComponent(targetUrl)}`);
 
   const response = await fetch(url, {

@@ -48,6 +48,7 @@ with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED, compressleve
         elif relative.startswith('docs/ipados-validation/') and source.suffix in {'.log', '.json'}:
             data = data.replace(str(ROOT).encode(), b'/FOLIA_SOURCE')
             data = data.replace(str(ROOT.parent.parent).encode(), b'/FOLIA_WORKSPACE')
+            data = data.replace(str(Path.home()).encode(), b'/FOLIA_USER')
             for team in personal_teams:
                 data = data.replace(team.encode(), b'PERSONAL_TEAM_REMOVED')
             for bundle in personal_bundles:

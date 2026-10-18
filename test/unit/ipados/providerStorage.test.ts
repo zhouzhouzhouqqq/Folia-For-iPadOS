@@ -21,16 +21,16 @@ describe('native backend account isolation', () => {
         state.base = 'https://one.example/music';
         expect(readProviderSessionValue(provider, 'token')).toBe('private-token');
     });
-    it('isolates device-direct credentials from an explicitly selected remote service', () => {
+    it.each(['netease', 'qq', 'kugou'] as const)('isolates %s device-direct credentials from an explicitly selected remote service', provider => {
         state.base = '';
-        writeProviderSessionValue('netease', 'cookie', 'direct-session');
-        const directCache = getProviderCacheKey('netease', 'account');
+        writeProviderSessionValue(provider, 'cookie', 'direct-session');
+        const directCache = getProviderCacheKey(provider, 'account');
         state.base = 'https://one.example/music';
-        expect(readProviderSessionValue('netease', 'cookie')).toBeNull();
-        expect(getProviderCacheKey('netease', 'account')).not.toBe(directCache);
-        writeProviderSessionValue('netease', 'cookie', 'remote-session');
+        expect(readProviderSessionValue(provider, 'cookie')).toBeNull();
+        expect(getProviderCacheKey(provider, 'account')).not.toBe(directCache);
+        writeProviderSessionValue(provider, 'cookie', 'remote-session');
         state.base = '';
-        expect(readProviderSessionValue('netease', 'cookie')).toBe('direct-session');
+        expect(readProviderSessionValue(provider, 'cookie')).toBe('direct-session');
     });
     it('does not import unscoped legacy credentials on native', () => {
         state.values.set('old-token', 'legacy-secret');

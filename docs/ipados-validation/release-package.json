@@ -1,16 +1,38 @@
 {
-  "file": "Folia-iPadOS-0.7.19-preview.1-unsigned.ipa",
-  "bytes": 18445929,
-  "sha256": "0b03b420346a689369e939e577bb2ce523efa13a43af5528c9358b8d29a272c5",
+  "file": "Folia-iPadOS-0.7.19-preview.2-unsigned.ipa",
+  "bytes": 18642560,
+  "sha256": "c3453d51427ffcc20830e26db6e284d056eec70cff77c6aa68d457b213ce84fb",
   "bundleIdentifier": "org.folia.personal",
   "version": "0.7.19",
-  "minimumOSVersion": "18.6",
+  "minimumOSVersion": "15.6",
   "architecture": "arm64",
   "signing": "Unsigned public build; requires the recipient to sign before installation.",
-  "archive": "Release archive succeeded; App scheme; iphoneos26.5; CODE_SIGNING_ALLOWED=NO",
-  "bundledWebFilesMatched": 1867,
-  "sourceAndNativeBundle": "Public placeholder org.folia.personal",
+  "buildNumber": "2",
+  "bundledWebFilesMatched": 1873,
+  "noRemotePage": true,
+  "noServiceWorker": true,
+  "noProvisioningProfiles": true,
   "newDeviceInstallVerified": false,
   "thirdPartyResigningVerified": false,
-  "backgroundAndSystemButtons": "Pending device validation; see test report"
+  "tag": "ipados-0.7.19-preview.2",
+  "archive": "Release archive succeeded; App scheme; iphoneos26.5; CODE_SIGNING_ALLOWED=NO",
+  "archiveWarnings": [
+    "App Intents metadata extraction skipped: no AppIntents.framework dependency; does not affect declared features."
+  ],
+  "typecheck": "passed",
+  "iosBuildAndCapacitorSync": "passed",
+  "unitTests": {
+    "files": 11,
+    "passed": 310,
+    "initialTimeouts": 3,
+    "retry": "54/54 file retry and 310/310 complete rerun passed without changing timeout or tests"
+  },
+  "privacyScan": {
+    "filesScanned": 3535,
+    "findings": 0
+  },
+  "sourceAndNativeBundle": "Public placeholder org.folia.personal",
+  "backgroundAndSystemButtons": "Pending device validation; see test report",
+  "sourceWhitespaceCheck": "Passed excluding verbatim third-party vendor bundles/licenses; upstream whitespace preserved.",
+  "validationDate": "2026-10-19"
 }

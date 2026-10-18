@@ -1,17 +1,17 @@
 # iPadOS 下载包与自行签名
 
-下载位置：[GitHub Releases](https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS/releases)。本次包为 `ipados-0.7.19-preview.1` 开发预览，基于上游 Folia 0.7.19；不改变上游桌面/Docker 的版本流。
+下载位置：[GitHub Releases](https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS/releases)。本次包为 `ipados-0.7.19-preview.2` 开发预览，基于上游 Folia 0.7.19；不改变上游桌面/Docker 的版本流。
 
 | 文件 | 用途 |
 | --- | --- |
-| `Folia-iPadOS-0.7.19-preview.1-unsigned.ipa` | arm64 iOS Release 构建打包的未签名 IPA，接收者必须自行签名；不是点一下即可安装的公共签名包 |
-| `Folia-iPadOS-0.7.19-preview.1-source.zip` | 对应发布提交的完整源码、Xcode 工程、许可证和文档；不附带依赖、模型权重或个人签名 |
+| `Folia-iPadOS-0.7.19-preview.2-unsigned.ipa` | arm64 iOS Release 构建打包的未签名 IPA，接收者必须自行签名；不是点一下即可安装的公共签名包 |
+| `Folia-iPadOS-0.7.19-preview.2-source.zip` | 对应发布提交的完整源码、Xcode 工程、许可证和文档；不附带依赖、模型权重或个人签名 |
 | `SHA256SUMS.txt` | 两个压缩包的 SHA-256 校验值 |
 | `release-manifest.json` | 对应源码提交、构建与打包验证结果 |
 
 ## IPA 安装
 
-当前 App target 的最低版本为 iPadOS 18.6，构建架构为 arm64。这个目标范围不代表所有设备与系统版本都已验证。IPA 使用公开占位 Bundle ID `org.folia.personal`，不包含开发者证书或 provisioning profile。
+当前 App target 的最低版本为 iPadOS 15.6，构建架构为 arm64。这个目标范围不代表所有设备与系统版本都已验证。IPA 使用公开占位 Bundle ID `org.folia.personal`，不包含开发者证书或 provisioning profile。
 
 下载后，需要使用支持自行签名 IPA 的工具，以自己的 Apple 身份配置唯一 App 标识、重新签名并安装。此预编译 IPA 的第三方重签与安装流程尚未真机验证；不能把未签名 IPA 直接拖入设备当成已签名 App。
 
@@ -28,6 +28,8 @@
 ```sh
 shasum -a 256 -c SHA256SUMS.txt
 ```
+
+本次为开发预览 2，App 版本为 0.7.19、构建号为 2。新增 QQ／酷狗设备直连扫码与 Keychain 会话保存，并记录 Xcode 旧依赖失败状态的恢复步骤；真实账号与后台等验证边界见下文。
 
 IPA 构建使用 Xcode 26.5 / iOS 26.5 SDK、实际 `App` scheme 与 `Release` 配置，禁用代码签名。打包脚本为 `dev/ipados/package-unsigned-ipa.py`，只打包 App，不包含 archive 的 dSYM、构建缓存或本机项目。Capacitor/WKWebView 使用 App 内前端资源，ONNX Runtime 原生库随构建链接；AutoMix 模型权重另由安装者主动下载或导入，不包含在下载包中。
 

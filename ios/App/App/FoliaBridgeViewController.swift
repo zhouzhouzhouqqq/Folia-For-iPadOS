@@ -5,6 +5,7 @@ final class FoliaBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(FoliaDevicePlugin())
         bridge?.registerPluginInstance(FoliaNeteasePlugin())
+        bridge?.registerPluginInstance(FoliaMusicProvidersPlugin())
         bridge?.registerPluginInstance(FoliaAIPlugin())
         bridge?.registerPluginInstance(FoliaAutomixPlugin())
     }

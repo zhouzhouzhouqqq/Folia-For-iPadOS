@@ -1,0 +1,12 @@
+{
+  "command": "xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphoneos26.5 -destination generic/platform=iOS -derivedDataPath ../../work/DerivedData -clonedSourcePackagesDirPath ../../work/SourcePackages -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO build",
+  "exitCode": 0,
+  "result": "BUILD SUCCEEDED",
+  "nativeProviderSources": [
+    "FoliaMusicProvidersPlugin.swift",
+    "ProviderHTTP.swift",
+    "ProviderSecurity.swift"
+  ],
+  "configuration": "Debug arm64 iphoneos26.5, unsigned",
+  "limitations": "No real-account scan, physical iPad installation or Keychain test performed in this run."
+}

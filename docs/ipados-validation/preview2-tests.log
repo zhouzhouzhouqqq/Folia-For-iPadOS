@@ -1,0 +1,41 @@
+npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> folia-major@0.7.19 test:unit
+> vitest run -c vitest.config.ts --maxWorkers=1 --testTimeout=30000 test/unit/ipados/mobileProviderHttp.test.ts test/unit/ipados/mobileProviderState.test.ts test/unit/ipados/mobileKugouProtocol.test.ts test/unit/ipados/mobileQqSessions.test.ts test/unit/ipados/mobileProviderRouting.test.ts test/unit/ipados/providerStorage.test.ts test/unit/onlineMusic/qqTransport.test.ts test/unit/onlineMusic/kugouTransport.test.ts test/unit/onlineMusic/qqProvider.test.ts test/unit/onlineMusic/kugouProvider.test.ts test/unit/onlineMusic/qqLoginMethod.test.ts
+
+
+ RUN  v4.1.11 /FOLIA_WORKSPACE/outputs/github-publish/Folia-For-iPadOS
+
+stderr | test/unit/onlineMusic/qqTransport.test.ts > QQ Music Web transport > keeps HTTP 404 separate from the backend body code
+Capacitor plugin "FoliaDevice" already registered. Cannot register plugins twice.
+
+stderr | test/unit/onlineMusic/qqTransport.test.ts > QQ Music Web transport > keeps HTTP 429 separate from the backend body code
+Capacitor plugin "FoliaDevice" already registered. Cannot register plugins twice.
+
+ ❯ test/unit/onlineMusic/qqTransport.test.ts (54 tests | 3 failed) 101516ms
+     × keeps HTTP 401 separate from the backend body code 30009ms
+     × keeps HTTP 404 separate from the backend body code 30002ms
+     × keeps HTTP 429 separate from the backend body code 30002ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/unit/onlineMusic/qqTransport.test.ts > QQ Music Web transport > keeps HTTP 401 separate from the backend body code
+ FAIL  test/unit/onlineMusic/qqTransport.test.ts > QQ Music Web transport > keeps HTTP 404 separate from the backend body code
+ FAIL  test/unit/onlineMusic/qqTransport.test.ts > QQ Music Web transport > keeps HTTP 429 separate from the backend body code
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/onlineMusic/qqTransport.test.ts:11:34
+      9|
+     10| describe('QQ Music Web transport', () => {
+     11|     it.each([401, 404, 429, 502])('keeps HTTP %s separate from the bac…
+       |                                  ^
+     12|         vi.stubGlobal('fetch', vi.fn(async () => Response.json({ code:…
+     13|         const { requestQq } = await import('@/services/onlineMusic/qqT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed | 10 passed (11)
+      Tests  3 failed | 307 passed (310)
+   Start at  23:44:37
+   Duration  308.62s (transform 284.56s, setup 0ms, import 188.02s, tests 106.43s, environment 2ms)

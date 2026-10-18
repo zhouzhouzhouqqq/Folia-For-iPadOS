@@ -6,7 +6,9 @@
 
 此副本通过源码导出器生成，不包含本机 Git 历史、依赖、模型权重、构建产物或私人签名。Team ID 已移除，Bundle Identifier 恢复为 `org.folia.personal`，安装者需配置自己的标识与签名。本机原工程未更改。原作者的桌面发布、定时任务与自动分诊工作流保存在 `.github/upstream-workflows/`，供参考而不自动执行；没有新增在线部署或后台服务。
 
-后续按用户要求提供 `ipados-0.7.19-preview.1` 开发预览 Release，附件包括未签名 IPA、对应源码 ZIP、SHA-256 校验文件及发布清单。安装与验证边界见 [下载包说明](ipados-release-downloads.md)。
+按用户要求提供 `ipados-0.7.19-preview.2` 开发预览 Release，附件包括未签名 IPA、对应源码 ZIP、SHA-256 校验文件及发布清单。安装与验证边界见 [下载包说明](ipados-release-downloads.md)。
+
+开发预览 2 新增 QQ 音乐／酷狗音乐默认设备直连扫码与安装级 Keychain 会话；匿名上游和实际 Mac WebKit 取码／等待通过，真实账号确认与实体 iPad 保持、歌单／实播仍待验收，详见 [直连指南](ipados-qq-kugou-direct.md)。Xcode 默认依赖与 GUI Build 已验证恢复；公开 IPA 独立执行 Release archive。
 
 代码与验证状态见 [实际测试报告](ipados-test-report.md) 与 [完整功能矩阵](ipados-feature-matrix.md)。最近系统上一曲/下一曲按钮修正已通过 845 项相关测试、macOS WebKit、Web/PWA 构建、Capacitor 同步和 iOS arm64 无签名构建，但控制中心实际图标、后台长播、蓝牙及中断恢复仍待新版真机复验。完整歌词和背景代码保留不等于每种模式已在每台 iPad 上验收。
 

@@ -1,3 +1,4 @@
+import { isKugouDirect } from './kugouTransport';
 import type { SongResult, UnifiedSong } from '../../types';
 import {
     OnlineProviderError,
@@ -1185,7 +1186,7 @@ export const kugouProvider: OnlineMusicProvider = {
                 transport: hasElectronTransport ? 'electron' : 'web',
                 hasWebUserId: Boolean(userId),
             });
-            if (!userId && !hasElectronTransport) return null;
+            if (!userId && !hasElectronTransport && !isKugouDirect()) return null;
             try {
                 const response = await requestKugou('user_detail', { userid: userId || undefined });
                 let user = normalizeUser(response);

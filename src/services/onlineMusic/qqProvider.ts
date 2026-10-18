@@ -17,7 +17,7 @@ import { toSafePlaybackUrl } from '../../utils/appPlaybackHelpers';
 import { fetchQQLyrics, searchQQLyrics } from '../../utils/lyrics/providers/qqLyricProvider';
 import { writeProviderSessionValue } from './providerStorage';
 import { normalizeQqCollection, normalizeQqSong, normalizeQqUser } from './qqNormalize';
-import { clearQqSession, getQqRemoteApiBase, getQqTransportAvailability, hasQqSession, requestQq } from './qqTransport';
+import { clearQqSession, getQqRemoteApiBase, getQqTransportAvailability, isQqDirect, hasQqSession, requestQq } from './qqTransport';
 import { attemptChainDecision, attemptFromError, emptyAttempt, summarizePlaybackAttempts } from './playbackAttempts';
 import { collectLoginBackendDiagnostics } from './loginBackendDiagnostics';
 import { canRunLoginSelfCheck, runLoginSelfCheck } from './loginSelfCheck';
@@ -416,7 +416,7 @@ const noteLoginStatusCheck = (summary: string): void => {
 
 const getLoginStatus = async (): Promise<ProviderUser | null> => {
     // No opaque backend session means the account cannot be authenticated, so the startup request is skipped.
-    if (!hasQqSession()) {
+    if (!hasQqSession() && !isQqDirect()) {
         noteLoginStatusCheck('no backend session stored');
         return null;
     }
@@ -450,7 +450,7 @@ const getLoginStatus = async (): Promise<ProviderUser | null> => {
 };
 
 const logout = async (): Promise<void> => {
-    if (hasQqSession()) {
+    if (hasQqSession() || isQqDirect()) {
         await requestQq('logout').catch(error => {
             console.warn('[QQProvider] logout:error', errorFields(error));
         });

@@ -1,3 +1,57 @@
+## 2026-10-19：开发预览 2 发布验证
+
+公开源码使用占位 Bundle ID `org.folia.personal`、无 Team ID，iOS 构建号提升至 2，桌面与 Docker 版本不变。对同一公开工作树实际执行 `npm run typecheck` 和 `npm run ios:sync` 均 exit 0；后者包含 iOS Vite build、资源复制与 Capacitor Swift Package 更新。项目结构检查确认 App scheme / Release / iphoneos26.5。
+
+QQ／酷狗相关 11 文件、310 项测试最终全部通过，耗时 17.88 秒。首轮有 3 项测试在模块导入时达到 30 秒超时（同期 Vite transform 耗时超过 300 秒），保留失败日志；该文件单独复跑 54/54 通过，随后相同 11 文件全量复跑 310/310 通过，没有放宽 timeout 或修改测试。[最终测试](ipados-validation/preview2-tests-final.log)、[首轮记录](ipados-validation/preview2-tests.log)、[文件复跑](ipados-validation/preview2-tests-retry.log)、[类型检查](ipados-validation/preview2-typecheck.log)、[iOS 同步](ipados-validation/preview2-ios-sync.log)。
+
+公开 Release archive 实际返回 `ARCHIVE SUCCEEDED`，arm64、构建号 2、IPA 18,642,560 字节；1,873 个前端文件与 dist / 同步 public / App 内容逐一 SHA-256 一致，无远程页面、iOS Service Worker 或 provisioning profile。最终 App Info.plist 的 MinimumOSVersion 为 15.6，已按产物修正安装说明；不能视为已测试所有 iPadOS 15.6+ 版本。唯一归档警告为未依赖 AppIntents.framework 而跳过其元数据提取。公开源码 3,535 文件个人签名标识／路径与凭据形态扫描为零。
+
+发布包的实际归档与结构验证见 [发布记录](ipados-validation/release-package.json)。本次发布没有新增真实账号授权、实体 iPad 安装、第三方重签、后台长播或视觉性能验收结果，先前真机待办继续有效。
+
+## 2026-10-18：Xcode 默认依赖目录修复验证
+
+用户截图中的两个本地 package product 缺失已定位到 Xcode 的 GitHub 超时日志，并非本地源码丢失。官方二进制重新下载、默认 `xcodebuild -resolvePackageDependencies` exit 0、默认目录 `-list` exit 0 后，使用 scheme App / Debug / iphoneos26.5 / generic iOS / `CODE_SIGNING_ALLOWED=NO` 构建 exit 0、`BUILD SUCCEEDED`。此轮没有指定自定义 DerivedData 或 SourcePackages，覆盖了此前 CLI 独立缓存与 Xcode GUI 默认缓存的差异。两个包都参与构建，没有移除 AutoMix。
+
+CLI 通过后用户仍反馈 GUI 报错。23:10 GUI 构建日志继续引用 22:37 旧的 GitHub 超时包图；确认无未保存修改，以 `saving yes` 正常关闭并重新打开原工程后，23:14 新 GUI 包图解析成功。23:16 直接通过 Xcode AppleScript 执行工作区 Build（选择已连接 iPad），Xcode 返回 `succeeded`、completed=true、0 errors、0 warnings；对应 GUI build 日志明确 `Build succeeded`，包含 CapApp-SPM / FoliaAutomixRuntime，缺包错误为 0。沿用既有本地签名完成构建，未改 Team/Bundle ID；未执行 Run、设备安装或真实扫码。
+
+[去标识验证记录](ipados-validation/xcode-default-package-recovery.json)。设备安装、启动与真实扫码仍待用户在 Xcode Run 后验证；此次不将 GUI Build 成功等同于设备登录成功。原始本机日志保留在 Xcode 默认 DerivedData / 会话 work 目录，不发布含个人工程元数据的完整构建日志。
+
+## 2026-10-18：QQ / 酷狗扫码登录设备直连验证
+
+实现和使用方法见 [QQ/酷狗指南](ipados-qq-kugou-direct.md)。本轮实际执行：
+
+| 检查 | 结果与范围 |
+|---|---|
+| `npm run typecheck` | 通过，tsc exit 0；[日志](ipados-validation/qq-kugou-typecheck.log) |
+| 聚焦 unit 回归 | 11 文件、310 项通过（`--maxWorkers=1 --testTimeout=30000`）；含两 provider/transport/登录方式、存储分区、新原生 HTTP、会话、签名及直连路由；[日志](ipados-validation/qq-kugou-tests.log) |
+| Swift 共享 HTTPS 核心编译 | `swiftc` 编译 `ProviderHTTP` + `ProviderSecurity` + 匿名 CLI 通过 |
+| 真实匿名上游 CLI | QQ 设备初始化、key、PNG、MQTT等待801；酷狗key、PNG、等待1，均通过；QQ socket Origin使用 `capacitor://localhost`；不保存/打印 QR key 与凭据；[日志](ipados-validation/qq-kugou-anonymous.log) |
+| 实际 Playwright WebKit 匿名测试 | 两家均取码/图片/等待成功；运行实际适配器并桥到同一 Swift HTTPS 核心；页面内存替身不写 Keychain；不是完整 Capacitor App 或实体 iPad；[日志](ipados-validation/qq-kugou-webkit.log) |
+| 原 Web/PWA 构建 | `npm run build -- --outDir ../../work/qq-kugou-web-final-dist` exit 0；前端与 PWA `generateSW` 均完成，204 个预缓存条目，生成 `sw.js` / `workbox-dcde9eb3.js`；保留原有大 chunk / 静态与动态 import 共存提示；[日志](ipados-validation/qq-kugou-web-build.log) |
+| Xcode 结构/SDK | `plutil -lint` 通过，实际 scheme `App`、SDK `iphoneos26.5`，SPM Capacitor 8.5.3 |
+| iOS 前端 / Capacitor 同步 | 标准 `npm run ios:sync` exit 0，包含 QQ/酷狗两家直连 chunk；copy/update/Swift Package 更新通过；[日志](ipados-validation/qq-kugou-ios-sync.log)。先前隔离 iOS 输出也成功，最终已恢复标准 dist |
+| 新原生代码及最终资源无签名设备构建 | `xcodebuild ... -sdk iphoneos26.5 -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO build` exit 0 / BUILD SUCCEEDED；包含三个 MusicProviders Swift 源文件和新版前端；[构建记录](ipados-validation/qq-kugou-ios-build.json) |
+| 本地资源一致性 | iOS 输出、同步 public、编译 App 内 1,873 个源文件逐一 SHA256 相同；无远程 server.url、无 iOS Service Worker，桥日志关闭；[结果](ipados-validation/qq-kugou-bundle.json) |
+
+聚焦测试完整命令：
+
+```bash
+npm run test:unit -- --maxWorkers=1 --testTimeout=30000 \
+  test/unit/ipados/mobileProviderHttp.test.ts \
+  test/unit/ipados/mobileProviderState.test.ts \
+  test/unit/ipados/mobileKugouProtocol.test.ts \
+  test/unit/ipados/mobileQqSessions.test.ts \
+  test/unit/ipados/mobileProviderRouting.test.ts \
+  test/unit/ipados/providerStorage.test.ts \
+  test/unit/onlineMusic/qqTransport.test.ts \
+  test/unit/onlineMusic/kugouTransport.test.ts \
+  test/unit/onlineMusic/qqProvider.test.ts \
+  test/unit/onlineMusic/kugouProvider.test.ts \
+  test/unit/onlineMusic/qqLoginMethod.test.ts
+```
+
+真实账号确认、微信通道、歌单/会员/播放、原生 Keychain 冷启动和实体 iPad 运行均**待真机验证**；没有执行账号写入、外部部署或发布。历史报告下方的“其他源必须配置后端/未迁移 Keychain”不再适用于当前 QQ/酷狗默认设备直连，远程模式规则仍保留。
+
 # iPadOS 实际验证报告
 
 更新：2026-10-16，Asia/Shanghai。基线 `35db05ccef6065e868fab14f49b433c8344e9ca1`，分支 `codex/ipados-self-use`。未提交、推送、部署、发布或使用个人账号；没有上传本地音频/个人文件。

@@ -5,6 +5,7 @@ const config: CapacitorConfig = {
     appId: 'org.folia.personal',
     appName: 'Folia',
     webDir: 'dist',
+    loggingBehavior: 'none', // Native auth bridge payloads must never enter device logs.
     ios: {
         contentInset: 'never',
         backgroundColor: '#09090b',

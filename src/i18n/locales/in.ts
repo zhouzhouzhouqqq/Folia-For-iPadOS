@@ -65,7 +65,7 @@ export default {
     "removeConfirm": "Hapus {{name}} dan data modnya?"
 },
   "nativeConnections": {
-    "neteaseSetupHint": "NetEase terhubung langsung dari perangkat ini. Login QR tidak memerlukan API terpisah atau Mac yang menyala. Kosongkan alamat kecuali ingin memakai layanan jarak jauh sendiri.",
+    "neteaseSetupHint": "NetEase, QQ Music, dan KuGou terhubung langsung dari perangkat ini. Login QR tidak memerlukan API terpisah atau Mac yang menyala. Kosongkan alamat kecuali memakai layanan jarak jauh sendiri.",
     "aiConsent": "Izinkan teks lirik dan judul lagu dikirim ke {{destination}} untuk tema AI/segmentasi? Backend dapat meneruskannya ke penyedia AI yang dikonfigurasi. Audio dan berkas pribadi tidak diunggah. Persetujuan berlaku selama sesi aplikasi ini untuk tujuan tersebut.",
     "nowplaying": "URL HTTPS Now Playing eksternal (opsional)",
     "playercap": "URL HTTPS PlayerCap eksternal (opsional)",

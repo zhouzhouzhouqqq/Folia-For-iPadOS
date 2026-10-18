@@ -1,21 +1,23 @@
 # iPadOS API 配置与服务端部署
 
-**网易云无需部署 API。** 默认由 App 内置设备直连，Swift 替换桌面 Node 请求/加密/会话层，主界面和全部视觉资源仍本地打包。请将网易云远程地址和 `VITE_NETEASE_API_BASE` 留空。仅在你主动选用远程服务时，才需要该源的部署配置。详见 [直连实现](ipados-netease-direct.md)。
+**网易云、QQ 音乐和酷狗音乐在 iPad 默认均无需部署 API。** QQ/酷狗实现与验收范围见 [设备直连扫码](ipados-qq-kugou-direct.md)。
+
+网易云默认由 App 内置设备直连，Swift 替换桌面 Node 请求/加密/会话层，主界面和全部视觉资源仍本地打包。请将网易云远程地址和 `VITE_NETEASE_API_BASE` 留空。仅在你主动选用远程服务时，才需要该源的部署配置。详见 [直连实现](ipados-netease-direct.md)。
 
 **自定义 AI 也无需部署 Folia API。** 在「设置 → 连接与集成 → 自定义 AI 接口」填写个人 HTTPS 接口、模型和 Key，详见 [AI 配置](ipados-ai.md)。下方 AI 环境变量仅用于选择自托管后端的用户；不要把服务端私有 Key 放进前端构建变量。
 
-下文是其他源、可选 AI 后端、同步、外部联动以及网易云可选远程覆盖的配置说明，不是网易云扫码的前置步骤。仓库有服务端源码不等于存在公共实例；本次未部署外部服务、使用账号或上传个人文件。
+下文是其他源、可选 AI 后端、同步、外部联动以及网易云可选远程覆盖的配置说明，不是网易云、QQ 或酷狗扫码的前置步骤。仓库有服务端源码不等于存在公共实例；本次未部署外部服务、使用账号或上传个人文件。
 
 ## 客户端地址
 
-可复制根目录 `.env.ios.example` 到 `.env.ios.local` 再构建，或直接在 iPad「设置 → 连接与集成 → iPad 服务连接」填写。保存会重载 App，避免旧账号/连接继续发往新地址；应先停止录屏、保存编辑。更换已有服务时，先在旧服务退出登录。原生 provider 凭据与缓存按 backend URL 分区；网易云直连使用独立 device-direct-v1 分区，原生会话另存本安装 Keychain。
+可复制根目录 `.env.ios.example` 到 `.env.ios.local` 再构建，或直接在 iPad「设置 → 连接与集成 → iPad 服务连接」填写。保存会重载 App，避免旧账号/连接继续发往新地址；应先停止录屏、保存编辑。更换已有服务时，先在旧服务退出登录。原生 provider 凭据与缓存按 backend URL 分区；网易云、QQ、酷狗直连使用各自独立 device-direct-v1 分区，会话另存本安装 Keychain。
 
 | 配置项 / 设置字段 | 应填写 | 不填写时 |
 |---|---|---|
 | `VITE_FOLIA_API_BASE` / Folia | 根地址，例如 `https://folia.example.invalid`；有反代前缀则包含前缀 | 未设个人 AI Key 时，AI 后端/歌词代理报未配置；个人 AI 直连与本地视觉不依赖它 |
 | `VITE_NETEASE_API_BASE` / 网易 | 增强 API 根地址；现有 Docker 网关例 `https://folia.example.invalid/netease` | 使用内置设备直连，无需服务 |
-| `VITE_KUGOU_API_BASE` / 酷狗 | KuGou API 根地址；Docker 网关例 `/kugou` 的完整 HTTPS URL | 酷狗不可用 |
-| `VITE_QQ_API_BASE` / QQ | 内置 serverless 为 `https://folia.example.invalid/api/qq`；Docker 网关为 `https://folia.example.invalid/qq`；独立 Node 是其根地址 | QQ 不可用 |
+| `VITE_KUGOU_API_BASE` / 酷狗 | KuGou API 根地址；Docker 网关例 `/kugou` 的完整 HTTPS URL | 使用内置设备直连，无需服务 |
+| `VITE_QQ_API_BASE` / QQ | 内置 serverless 为 `https://folia.example.invalid/api/qq`；Docker 网关为 `https://folia.example.invalid/qq`；独立 Node 是其根地址 | 使用内置设备直连，无需服务 |
 | `VITE_BODIAN_API_BASE` / 波点 | 本次提供的网关根地址，例如 `https://bodian.example.invalid` | 波点不显示为已配置 |
 | `VITE_NOWPLAYING_API_BASE` | 原 Now Playing 服务的 HTTPS 反代根地址 | 不使用 iPad localhost 连接 Mac |
 | `VITE_PLAYERCAP_API_BASE` | 原 PlayerCap 服务的 HTTPS 反代根地址 | 不使用 iPad localhost 连接 Mac |
@@ -31,9 +33,9 @@
 | 服务 | 源码/依赖 | 可部署位置 | 本次状态 |
 |---|---|---|---|
 | Folia AI/歌词代理 | `api-ts/*`、`worker/*`、Docker backend | 原 Vercel / Cloudflare / Node Docker；见已有配置 | 保留，native URL 已适配；未部署 |
-| QQ | `api-ts/qq.ts`、`worker/qq.ts`、`deploy/docker/qq-api`；qq-music-api 3.3.1 | Vercel / Worker；QQ QR 另需 DO 或常驻 Node/Docker | 原 transport 已接 HTTPS；账号待验证 |
+| QQ | `api-ts/qq.ts`、`worker/qq.ts`、`deploy/docker/qq-api`；qq-music-api 3.3.1 | Vercel / Worker；QQ QR 另需 DO 或常驻 Node/Docker | iPad 默认设备直连；此行是可选远程服务；真实账号待验收 |
 | 网易 | `deploy/docker/netease-api/package.json`；原增强 Node API | 现有 Docker 栈或单独 Node 后端；不能把 iOS 当 localhost 服务器 | 可选远程覆盖；默认不需要 |
-| 酷狗 | `deploy/docker/kugou-api/package.json`；KuGouMusicApi 1.6.0 | 现有 Docker 栈或单独 Node 服务 | 待你的部署地址 |
+| 酷狗 | `deploy/docker/kugou-api/package.json`；KuGouMusicApi 1.6.0 | 现有 Docker 栈或单独 Node 服务 | iPad 默认设备直连；此行是可选远程服务 |
 | 波点 | `deploy/ipados-bodian`；bodian-music-api 0.1.2 | 常驻 Node 24 + HTTPS 反代；本次没有编写 Worker 版本 | 已完成可选网关和本地无账号 smoke，未真实上游联调 |
 | 同步 | `sync-server/src`、独立 `sync-server/wrangler.toml`、Docker sync | Node/SQLite 或 Worker/D1；不是 Folia worker 自动附带的同一个服务 | 待用户配置 |
 | Navidrome | 现有用户服务器；App OpenSubsonic 客户端 | 你已有/另建的 HTTPS 服务器 | 不在 App 内启动 |

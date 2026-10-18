@@ -65,7 +65,7 @@ export default {
     "removeConfirm": "移除 {{name}} 及其模组数据？"
 },
   "nativeConnections": {
-    "neteaseSetupHint": "网易云默认由 App 在设备内直连，扫码登录无需部署 API，也不依赖 Mac 开机。下方地址留空即可；仅在主动使用自己的远程服务时填写。",
+    "neteaseSetupHint": "网易云、QQ 音乐和酷狗默认由 App 在设备内直连，扫码登录无需部署 API，也不依赖 Mac 开机。下方地址留空即可；仅在主动使用自己的兼容远程服务时填写。",
     "aiConsent": "允许将歌词文本和歌曲标题发送到 {{destination}} 用于 AI 主题/分词吗？你的后端可能继续转发给其配置的 AI 服务。不会上传音频或个人文件。本次授权仅限当前应用会话和目标服务器。",
     "nowplaying": "外部 Now Playing HTTPS 地址（可选）",
     "playercap": "外部 PlayerCap HTTPS 地址（可选）",

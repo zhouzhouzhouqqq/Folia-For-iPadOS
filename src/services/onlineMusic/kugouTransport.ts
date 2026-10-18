@@ -1,3 +1,5 @@
+import { isNativeIOS } from '../../platform/capabilities';
+import { createNativeHttp } from './mobileDirect/http';
 import { foliaApiUrl } from '../nativeConnections';
 import { getNativeApiBase } from '../nativeConnections';
 import md5 from 'blueimp-md5';
@@ -248,6 +250,7 @@ export const hasKugouAuthenticatedSearchSession = (): boolean => {
     if (typeof window !== 'undefined' && window.electron?.kugouRequest) {
         return Boolean(readProviderSessionValue('kugou', 'userid'));
     }
+    if (isKugouDirect()) return Boolean(readProviderSessionValue('kugou', 'userid'));
     const cookie = getWebSessionCookie();
     return ['token', 'userid', 'dfid'].every(key => (
         new RegExp(`(?:^|;)\\s*${key}=[^;]+`, 'i').test(cookie)
@@ -289,6 +292,13 @@ export const requestKugouAnonymousSearch = async (
 
     const targetUrl = new URL('http://complexsearch.kugou.com/v2/search/song');
     Object.entries(params).forEach(([key, value]) => targetUrl.searchParams.set(key, String(value)));
+    if (isKugouDirect()) {
+        targetUrl.protocol = 'https:';
+        return (await createNativeHttp('kugou').request({ url: targetUrl.toString(), headers: {
+            'User-Agent': 'Android14-1070-11070-201-0-SearchSong-wifi',
+            'KG-CLIENTTIMEMS': String(clientTimeMs), mid, 'x-router': 'complexsearch.kugou.com',
+        } })).data;
+    }
     const requestUrl = typeof window !== 'undefined' && window.electron
         ? targetUrl.toString()
         : foliaApiUrl(`/api/lyric-proxy?url=${encodeURIComponent(targetUrl.toString())}`);
@@ -362,6 +372,7 @@ export const requestKugouLegacyPlayInfo = async (hash: string): Promise<any> => 
     targetUrl.searchParams.set('cmd', 'playInfo');
     targetUrl.searchParams.set('hash', hash);
     const targetUrlString = targetUrl.toString();
+    if (isKugouDirect()) return (await createNativeHttp('kugou').request({ url: targetUrlString })).data;
 
     // In Electron, route through the main-process lyric proxy so CORS cannot block this
     // last-resort mobile endpoint. The Web build uses the same /api/lyric-proxy helper.
@@ -442,7 +453,9 @@ const persistElectronAccountHint = (operation: KugouOperation, response: any): v
     if (userId) writeProviderSessionValue('kugou', 'userid', String(userId));
 };
 
+export const isKugouDirect = (): boolean => isNativeIOS() && !getWebApiBase();
 export const getKugouTransportAvailability = () => {
+    if (isKugouDirect()) return { configured: true } as const;
     if (typeof window !== 'undefined' && window.electron?.kugouRequest) return { configured: true } as const;
     return getWebApiBase()
         ? { configured: true } as const
@@ -467,6 +480,17 @@ export const requestKugou = async <T = unknown>(operation: KugouOperation, param
         return response as T;
     }
 
+    if (isKugouDirect()) {
+        const { requestKugouDirect } = await import('./mobileDirect/kugou');
+        try {
+            const response = await requestKugouDirect(operation, params);
+            persistElectronAccountHint(operation, response);
+            return response as T;
+        } catch (error) {
+            if (error instanceof OnlineProviderError) throw error;
+            throw toKugouProviderError(operation, error);
+        }
+    }
     const base = getWebApiBase();
     if (!base) {
         throw new OnlineProviderError(

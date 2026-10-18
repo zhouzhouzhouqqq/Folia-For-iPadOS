@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-18",
+  "reportedErrors": [
+    "Missing package product 'CapApp-SPM'",
+    "Missing package product 'FoliaAutomixRuntime'"
+  ],
+  "cause": "Xcode package log: GitHub connection timed out; local package paths and product declarations were intact.",
+  "resolution": {
+    "command": "xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App",
+    "exitCode": 0,
+    "packages": [
+      "CapApp-SPM (local)",
+      "FoliaAutomixRuntime (local)",
+      "capacitor-swift-pm 8.5.3"
+    ]
+  },
+  "schemes": {
+    "command": "xcodebuild -list -project ios/App/App.xcodeproj -disableAutomaticPackageResolution",
+    "exitCode": 0,
+    "schemes": [
+      "App",
+      "CapApp-SPM",
+      "FoliaAutomixRuntime"
+    ]
+  },
+  "build": {
+    "command": "xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphoneos26.5 -destination 'generic/platform=iOS' -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO build",
+    "exitCode": 0,
+    "result": "BUILD SUCCEEDED",
+    "customDerivedDataPath": false,
+    "customSourcePackagesDirPath": false
+  },
+  "guiRecovery": {
+    "continuedFailure": "After the default-directory CLI build passed, GUI builds at 23:10 still referenced the same 22:37 GitHub timeout log without resolving again.",
+    "action": "Confirmed no unsaved workspace/source edits, normally closed the workspace with saving yes, and reopened the same ios/App/App.xcodeproj; retained downloaded package caches.",
+    "packageResolution": {
+      "timeLocal": "2026-10-18 23:14:45 Asia/Shanghai",
+      "logId": "B59ADD15-A960-4830-A65A-A52E28BF002B",
+      "result": "Resolving Package Graph Succeeded"
+    },
+    "build": {
+      "timeLocal": "2026-10-18 23:16:26 Asia/Shanghai",
+      "method": "Xcode AppleScript build workspace document (GUI process, not xcodebuild)",
+      "scheme": "App",
+      "destination": "Connected iPad selected; device name and identifier omitted",
+      "sdk": "iOS 26.5",
+      "status": "succeeded",
+      "completed": true,
+      "errors": 0,
+      "warnings": 0,
+      "logId": "1EACC25A-44D5-4B19-965E-64819BB35DAA",
+      "logResult": "Build succeeded",
+      "missingPackageProductErrors": 0,
+      "bothLocalPackagesReferenced": true,
+      "signing": "Existing local development signing used; Team and Bundle ID unchanged; identity omitted"
+    }
+  },
+  "limitations": "GUI package resolution and signed build verified. No physical-device installation, launch or real-account login verified by this recovery."
+}

@@ -1,3 +1,31 @@
+## 2026-10-19：开发预览 2 发布
+
+用户已授权提交、推送到自己的仓库并发布 IPA。最新 iPadOS 代码同步至独立公开分支 `codex/ipados-preview-2`，保留仓库现有首页与上游署名；本机自用工作树的 Team／Bundle 和未提交修改保留。公开版构建号 2，包内资源，无个人签名。类型检查、iOS build/sync、310 项相关测试已通过，详情见测试报告；Release archive 与最终包结果见发布记录。公开更新说明见 [preview 2](ipados-release-preview-2.md)。GitHub 登录凭据不存入仓库；后续操作记录保留在会话 work 目录。
+
+## 2026-10-18：Xcode 默认目录缺包修复
+
+用户在 Xcode Run 时看到 `Missing package product 'CapApp-SPM'` / `'FoliaAutomixRuntime'`。实际打开的是本工作目录；本地包路径、产品和 project 引用完整。Xcode 原日志明确记录 GitHub 连接超时（`Failed to connect to github.com port 443`），导致包图失败；此前通过的是独立 work/SourcePackages 与 DerivedData，不能代替 GUI 默认目录验证。
+
+已在默认目录执行 `xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App`，官方 Capacitor / Cordova 8.5.3 与 ONNX Runtime 1.24.2 二进制成功下载并解析，exit 0。随后实际 `-list` 确认 App / CapApp-SPM / FoliaAutomixRuntime schemes，未指定自定义 DerivedData / SourcePackages 的 arm64 / iphoneos26.5 / 无签名 build exit 0，`BUILD SUCCEEDED`。
+
+用户再次反馈“还是这样”后，读取 23:10 的 GUI build 日志，发现仍引用 22:37 的同一个超时包图，没有重新解析。确认工作区无未保存修改后，以 `saving yes` 正常关闭并重新打开同一 `ios/App/App.xcodeproj`，保留已下载缓存。23:14 新 GUI Package 日志明确 `Resolving Package Graph Succeeded`；23:16 通过 Xcode AppleScript 对实际工作区执行 Build（选择已连接 iPad，未执行 Run），返回 `succeeded` / completed=true / 0 errors / 0 warnings，实际 GUI build 日志为 `Build succeeded`，两个包均参与。此次沿用本机现有签名完成签名构建，未更改个人 Team/Bundle ID，未安装或启动设备 App。未改包引用、SDK版本或功能。记录见 `docs/ipados-validation/xcode-default-package-recovery.json`；接下来用户可在 Xcode ⌘R 覆盖安装，真实扫码仍待设备验证。不要仅凭 CLI 成功认定 GUI 已恢复，也不要清空所有缓存。
+
+## 2026-10-18：QQ / 酷狗设备直连扫码
+
+用户要求添加 QQ 音乐和酷狗音乐扫码登录，继续遵守无需另部署 API 的 iPad 体验。实现位于本目录 `outputs/folia-major`，独立分支 `codex/ipados-self-use`；保留所有原有未提交修改，未提交/推送/发布，未更新 `outputs/github-publish`。
+
+- 新增 `mobileDirect/{qq,kugou,http,state}`、固定上游可移植协议 vendor 和 `MusicProviders` 三个 Swift 文件；本地桥注册及 Xcode project 已接入。原 Omni/账号 UI/音频/视觉模式复用。
+- QQ/酷狗 API base 为空默认设备直连；显式远程地址继续旧路由。QQ MQTT 通过 WebKit WebSocket；原生 URLSession 只做白名单 HTTPS，不引入 Node 或第二套播放器。
+- 登录秘密存安装级 Keychain；页面仅账号提示。补齐退出迟到确认、401/403/152过期、429冷却、Cookie域/路径/跳转隔离及安全保存失败处理。
+- TypeScript 检查通过；11 个文件 310 项相关测试通过；实际 Swift arm64 无签名编译通过（scheme App，iphoneos26.5）。标准 `npm run ios:sync`、最终 arm64 原生编译和 1,873 个资源文件 SHA256 核对均通过，结果见测试报告。
+- 使用真实匿名上游：QQ 初始化/key/二维码/MQTT等待801、酷狗key/二维码/等待1，命令行及实际 Playwright WebKit 均通过。没有扫码确认、使用用户账号或写个人歌单。
+- 真机扫码确认、微信 channel、真实 Keychain 持久化与音频/账号各能力仍待用户验收；不要把 Mac WebKit 验证称为实体 iPad 通过。
+- 新文档 [QQ/酷狗设备直连](ipados-qq-kugou-direct.md)，已更新功能表、API部署说明、安装及真机清单。安装必须先 `npm run ios:sync` 再 Xcode ⌘R。
+
+原 Web/PWA 构建也已 exit 0，前端及 `generateSW` 均完成（204 个预缓存条目）；隔离输出未覆盖最终 iOS dist。日志已保存到 `docs/ipados-validation/qq-kugou-web-build.log`。
+
+后续：按真机清单验收真实账号和 Keychain/播放。不要重新克隆，也不要恢复旧的“QQ/酷狗必须部署后端”描述。
+
 # Folia iPadOS 移植执行记录与继续工作入口
 
 ## 2026-10-16：系统按钮仍显示±10秒的后续修正

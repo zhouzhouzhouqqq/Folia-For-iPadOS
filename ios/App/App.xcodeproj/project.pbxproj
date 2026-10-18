@@ -21,21 +21,24 @@
 		F011A1000000000000000032 /* AppIcon76@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F011A1000000000000000031 /* AppIcon76@2x.png */; };
 		F011A1000000000000000042 /* AppIcon83.5@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = F011A1000000000000000041 /* AppIcon83.5@2x.png */; };
 		F011A2000000000000000002 /* FoliaRecording.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A2000000000000000001 /* FoliaRecording.swift */; };
-		F011A3000000000000000002 /* NeteaseCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000001 /* NeteaseCrypto.swift */; };
-		F011A3000000000000000012 /* NeteaseState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000011 /* NeteaseState.swift */; };
-		F011A3000000000000000022 /* NeteaseHTTP.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000021 /* NeteaseHTTP.swift */; };
-		F011A3000000000000000032 /* NeteaseClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000031 /* NeteaseClient.swift */; };
-		F011A3000000000000000042 /* NeteaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000041 /* NeteaseBootstrap.swift */; };
-		F011A3000000000000000052 /* FoliaNeteasePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000051 /* FoliaNeteasePlugin.swift */; };
-		F011A4000000000000000002 /* AIConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A4000000000000000001 /* AIConfiguration.swift */; };
-		F011A4000000000000000012 /* AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A4000000000000000011 /* AIService.swift */; };
-		F011A4000000000000000022 /* FoliaAIPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A4000000000000000021 /* FoliaAIPlugin.swift */; };
-		F011A5000000000000000002 /* AutomixModelManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000001; };
-		F011A5000000000000000012 /* AutomixModelStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000011; };
-		F011A5000000000000000022 /* AutomixDownload.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000021; };
-		F011A5000000000000000032 /* AutomixInference.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000031; };
-		F011A5000000000000000042 /* FoliaAutomixPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000041; };
-		F011A5000000000000001002 /* FoliaAutomixRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = F011A5000000000000001003; };
+		F011A3000000000000000002 /* Netease/NeteaseCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000001 /* Netease/NeteaseCrypto.swift */; };
+		F011A3000000000000000012 /* Netease/NeteaseState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000011 /* Netease/NeteaseState.swift */; };
+		F011A3000000000000000022 /* Netease/NeteaseHTTP.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000021 /* Netease/NeteaseHTTP.swift */; };
+		F011A3000000000000000032 /* Netease/NeteaseClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000031 /* Netease/NeteaseClient.swift */; };
+		F011A3000000000000000042 /* Netease/NeteaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000041 /* Netease/NeteaseBootstrap.swift */; };
+		F011A3000000000000000052 /* Netease/FoliaNeteasePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A3000000000000000051 /* Netease/FoliaNeteasePlugin.swift */; };
+		F011A4000000000000000002 /* AI/AIConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A4000000000000000001 /* AI/AIConfiguration.swift */; };
+		F011A4000000000000000012 /* AI/AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A4000000000000000011 /* AI/AIService.swift */; };
+		F011A4000000000000000022 /* AI/FoliaAIPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A4000000000000000021 /* AI/FoliaAIPlugin.swift */; };
+		F011A5000000000000000002 /* Automix/AutomixModelManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000001 /* Automix/AutomixModelManifest.swift */; };
+		F011A5000000000000000012 /* Automix/AutomixModelStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000011 /* Automix/AutomixModelStore.swift */; };
+		F011A5000000000000000022 /* Automix/AutomixDownload.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000021 /* Automix/AutomixDownload.swift */; };
+		F011A5000000000000000032 /* Automix/AutomixInference.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000031 /* Automix/AutomixInference.swift */; };
+		F011A5000000000000000042 /* Automix/FoliaAutomixPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A5000000000000000041 /* Automix/FoliaAutomixPlugin.swift */; };
+		F011A5000000000000001002 /* FoliaAutomixRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = F011A5000000000000001003 /* FoliaAutomixRuntime */; };
+		F011A6000000000000000002 /* MusicProviders/ProviderSecurity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A6000000000000000001 /* MusicProviders/ProviderSecurity.swift */; };
+		F011A6000000000000000012 /* MusicProviders/ProviderHTTP.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A6000000000000000011 /* MusicProviders/ProviderHTTP.swift */; };
+		F011A6000000000000000022 /* MusicProviders/FoliaMusicProvidersPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A6000000000000000021 /* MusicProviders/FoliaMusicProvidersPlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,20 +61,23 @@
 		F011A1000000000000000031 /* AppIcon76@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon76@2x.png"; sourceTree = "<group>"; };
 		F011A1000000000000000041 /* AppIcon83.5@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon83.5@2x.png"; sourceTree = "<group>"; };
 		F011A2000000000000000001 /* FoliaRecording.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoliaRecording.swift; sourceTree = "<group>"; };
-		F011A3000000000000000001 /* NeteaseCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseCrypto.swift; sourceTree = "<group>"; };
-		F011A3000000000000000011 /* NeteaseState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseState.swift; sourceTree = "<group>"; };
-		F011A3000000000000000021 /* NeteaseHTTP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseHTTP.swift; sourceTree = "<group>"; };
-		F011A3000000000000000031 /* NeteaseClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseClient.swift; sourceTree = "<group>"; };
-		F011A3000000000000000041 /* NeteaseBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseBootstrap.swift; sourceTree = "<group>"; };
-		F011A3000000000000000051 /* FoliaNeteasePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/FoliaNeteasePlugin.swift; sourceTree = "<group>"; };
-		F011A4000000000000000001 /* AIConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AI/AIConfiguration.swift; sourceTree = "<group>"; };
-		F011A4000000000000000011 /* AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AI/AIService.swift; sourceTree = "<group>"; };
-		F011A4000000000000000021 /* FoliaAIPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AI/FoliaAIPlugin.swift; sourceTree = "<group>"; };
-		F011A5000000000000000001 /* AutomixModelManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/AutomixModelManifest.swift; sourceTree = "<group>"; };
-		F011A5000000000000000011 /* AutomixModelStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/AutomixModelStore.swift; sourceTree = "<group>"; };
-		F011A5000000000000000021 /* AutomixDownload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/AutomixDownload.swift; sourceTree = "<group>"; };
-		F011A5000000000000000031 /* AutomixInference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/AutomixInference.swift; sourceTree = "<group>"; };
-		F011A5000000000000000041 /* FoliaAutomixPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/FoliaAutomixPlugin.swift; sourceTree = "<group>"; };
+		F011A3000000000000000001 /* Netease/NeteaseCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseCrypto.swift; sourceTree = "<group>"; };
+		F011A3000000000000000011 /* Netease/NeteaseState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseState.swift; sourceTree = "<group>"; };
+		F011A3000000000000000021 /* Netease/NeteaseHTTP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseHTTP.swift; sourceTree = "<group>"; };
+		F011A3000000000000000031 /* Netease/NeteaseClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseClient.swift; sourceTree = "<group>"; };
+		F011A3000000000000000041 /* Netease/NeteaseBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/NeteaseBootstrap.swift; sourceTree = "<group>"; };
+		F011A3000000000000000051 /* Netease/FoliaNeteasePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Netease/FoliaNeteasePlugin.swift; sourceTree = "<group>"; };
+		F011A4000000000000000001 /* AI/AIConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AI/AIConfiguration.swift; sourceTree = "<group>"; };
+		F011A4000000000000000011 /* AI/AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AI/AIService.swift; sourceTree = "<group>"; };
+		F011A4000000000000000021 /* AI/FoliaAIPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AI/FoliaAIPlugin.swift; sourceTree = "<group>"; };
+		F011A5000000000000000001 /* Automix/AutomixModelManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/AutomixModelManifest.swift; sourceTree = "<group>"; };
+		F011A5000000000000000011 /* Automix/AutomixModelStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/AutomixModelStore.swift; sourceTree = "<group>"; };
+		F011A5000000000000000021 /* Automix/AutomixDownload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/AutomixDownload.swift; sourceTree = "<group>"; };
+		F011A5000000000000000031 /* Automix/AutomixInference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/AutomixInference.swift; sourceTree = "<group>"; };
+		F011A5000000000000000041 /* Automix/FoliaAutomixPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Automix/FoliaAutomixPlugin.swift; sourceTree = "<group>"; };
+		F011A6000000000000000001 /* MusicProviders/ProviderSecurity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicProviders/ProviderSecurity.swift; sourceTree = "<group>"; };
+		F011A6000000000000000011 /* MusicProviders/ProviderHTTP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicProviders/ProviderHTTP.swift; sourceTree = "<group>"; };
+		F011A6000000000000000021 /* MusicProviders/FoliaMusicProvidersPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicProviders/FoliaMusicProvidersPlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,25 +113,28 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
-				F011A5000000000000000041 /* FoliaAutomixPlugin.swift */,
-				F011A5000000000000000031 /* AutomixInference.swift */,
-				F011A5000000000000000021 /* AutomixDownload.swift */,
-				F011A5000000000000000011 /* AutomixModelStore.swift */,
-				F011A5000000000000000001 /* AutomixModelManifest.swift */,
+				F011A5000000000000000041 /* Automix/FoliaAutomixPlugin.swift */,
+				F011A5000000000000000031 /* Automix/AutomixInference.swift */,
+				F011A5000000000000000021 /* Automix/AutomixDownload.swift */,
+				F011A5000000000000000011 /* Automix/AutomixModelStore.swift */,
+				F011A5000000000000000001 /* Automix/AutomixModelManifest.swift */,
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				F011A2000000000000000001 /* FoliaRecording.swift */,
 				F011A0000000000000000011 /* FoliaDevicePlugin.swift */,
-				F011A3000000000000000051 /* FoliaNeteasePlugin.swift */,
-				F011A3000000000000000041 /* NeteaseBootstrap.swift */,
-				F011A3000000000000000031 /* NeteaseClient.swift */,
-				F011A3000000000000000021 /* NeteaseHTTP.swift */,
-				F011A3000000000000000011 /* NeteaseState.swift */,
-				F011A3000000000000000001 /* NeteaseCrypto.swift */,
-				F011A4000000000000000001 /* AIConfiguration.swift */,
-				F011A4000000000000000011 /* AIService.swift */,
-				F011A4000000000000000021 /* FoliaAIPlugin.swift */,
+				F011A6000000000000000001 /* MusicProviders/ProviderSecurity.swift */,
+				F011A6000000000000000011 /* MusicProviders/ProviderHTTP.swift */,
+				F011A6000000000000000021 /* MusicProviders/FoliaMusicProvidersPlugin.swift */,
+				F011A3000000000000000051 /* Netease/FoliaNeteasePlugin.swift */,
+				F011A3000000000000000041 /* Netease/NeteaseBootstrap.swift */,
+				F011A3000000000000000031 /* Netease/NeteaseClient.swift */,
+				F011A3000000000000000021 /* Netease/NeteaseHTTP.swift */,
+				F011A3000000000000000011 /* Netease/NeteaseState.swift */,
+				F011A3000000000000000001 /* Netease/NeteaseCrypto.swift */,
+				F011A4000000000000000001 /* AI/AIConfiguration.swift */,
+				F011A4000000000000000011 /* AI/AIService.swift */,
+				F011A4000000000000000021 /* AI/FoliaAIPlugin.swift */,
 				F011A0000000000000000001 /* FoliaBridgeViewController.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
@@ -192,7 +201,7 @@
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
-				F011A5000000000000001001 /* FoliaAutomixRuntime */,
+				F011A5000000000000001001 /* XCLocalSwiftPackageReference "../FoliaAutomixRuntime" */,
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
@@ -227,23 +236,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F011A5000000000000000042 /* FoliaAutomixPlugin.swift in Sources */,
-				F011A5000000000000000032 /* AutomixInference.swift in Sources */,
-				F011A5000000000000000022 /* AutomixDownload.swift in Sources */,
-				F011A5000000000000000012 /* AutomixModelStore.swift in Sources */,
-				F011A5000000000000000002 /* AutomixModelManifest.swift in Sources */,
+				F011A5000000000000000042 /* Automix/FoliaAutomixPlugin.swift in Sources */,
+				F011A5000000000000000032 /* Automix/AutomixInference.swift in Sources */,
+				F011A5000000000000000022 /* Automix/AutomixDownload.swift in Sources */,
+				F011A5000000000000000012 /* Automix/AutomixModelStore.swift in Sources */,
+				F011A5000000000000000002 /* Automix/AutomixModelManifest.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				F011A2000000000000000002 /* FoliaRecording.swift in Sources */,
 				F011A0000000000000000012 /* FoliaDevicePlugin.swift in Sources */,
-				F011A3000000000000000052 /* FoliaNeteasePlugin.swift in Sources */,
-				F011A3000000000000000042 /* NeteaseBootstrap.swift in Sources */,
-				F011A3000000000000000032 /* NeteaseClient.swift in Sources */,
-				F011A3000000000000000022 /* NeteaseHTTP.swift in Sources */,
-				F011A3000000000000000012 /* NeteaseState.swift in Sources */,
-				F011A3000000000000000002 /* NeteaseCrypto.swift in Sources */,
-				F011A4000000000000000002 /* AIConfiguration.swift in Sources */,
-				F011A4000000000000000012 /* AIService.swift in Sources */,
-				F011A4000000000000000022 /* FoliaAIPlugin.swift in Sources */,
+				F011A6000000000000000002 /* MusicProviders/ProviderSecurity.swift in Sources */,
+				F011A6000000000000000012 /* MusicProviders/ProviderHTTP.swift in Sources */,
+				F011A6000000000000000022 /* MusicProviders/FoliaMusicProvidersPlugin.swift in Sources */,
+				F011A3000000000000000052 /* Netease/FoliaNeteasePlugin.swift in Sources */,
+				F011A3000000000000000042 /* Netease/NeteaseBootstrap.swift in Sources */,
+				F011A3000000000000000032 /* Netease/NeteaseClient.swift in Sources */,
+				F011A3000000000000000022 /* Netease/NeteaseHTTP.swift in Sources */,
+				F011A3000000000000000012 /* Netease/NeteaseState.swift in Sources */,
+				F011A3000000000000000002 /* Netease/NeteaseCrypto.swift in Sources */,
+				F011A4000000000000000002 /* AI/AIConfiguration.swift in Sources */,
+				F011A4000000000000000012 /* AI/AIService.swift in Sources */,
+				F011A4000000000000000022 /* AI/FoliaAIPlugin.swift in Sources */,
 				F011A0000000000000000002 /* FoliaBridgeViewController.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 			);
@@ -385,9 +397,9 @@
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -406,9 +418,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -450,7 +462,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "CapApp-SPM";
 		};
-		F011A5000000000000001001 /* FoliaAutomixRuntime */ = {isa = XCLocalSwiftPackageReference; relativePath = "../FoliaAutomixRuntime"; };
+		F011A5000000000000001001 /* XCLocalSwiftPackageReference "../FoliaAutomixRuntime" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../FoliaAutomixRuntime;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -459,7 +474,11 @@
 			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
 			productName = "CapApp-SPM";
 		};
-		F011A5000000000000001003 /* FoliaAutomixRuntime */ = {isa = XCSwiftPackageProductDependency; package = F011A5000000000000001001; productName = FoliaAutomixRuntime; };
+		F011A5000000000000001003 /* FoliaAutomixRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F011A5000000000000001001 /* XCLocalSwiftPackageReference "../FoliaAutomixRuntime" */;
+			productName = FoliaAutomixRuntime;
+		};
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 504EC2FC1FED79650016851F /* Project object */;

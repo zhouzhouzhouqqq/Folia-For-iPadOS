@@ -1,6 +1,8 @@
 # Folia iPadOS 源码自签名版
 
-下载入口：[GitHub Releases](https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS/releases)。开发预览提供未签名 IPA、对应源码 ZIP 与 SHA-256 校验文件；IPA 必须由安装者自行签名，详见 [下载包说明](docs/ipados-release-downloads.md)。
+下载入口：[开发预览 2](https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS/releases/tag/ipados-0.7.19-preview.2)。提供未签名 IPA、对应源码 ZIP 和 SHA-256 校验文件；安装者需自行签名。详见 [下载包说明](docs/ipados-release-downloads.md)。
+
+本次新增 QQ 音乐／酷狗音乐设备直连扫码登录：对应远程 API 地址留空即可启用，无需部署 API。真实匿名取码及 WebKit 已验证，账号确认、重启保持和实播仍待 iPad 验收；见 [使用指南](docs/ipados-qq-kugou-direct.md)。
 
 自定义 AI 已支持原版歌词主题分析，无需部署 Folia 后端。新增原生插件后需 Xcode ⌘R 覆盖安装；配置步骤与范围见 [iPad AI 指南](docs/ipados-ai.md)。
 
@@ -31,7 +33,7 @@ npm run ios:open
 
 “设置 → 连接与集成 → iPad 服务连接”的网易云远程地址应留空。只有主动选用自己远程服务时才填写；构建配置 `VITE_NETEASE_API_BASE` 也要留空才能启用默认直连。旧安装需重新构建同步并用 Xcode Run 覆盖更新。
 
-网易云真实扫码确认、重启保持、播放 CDN/CORS 与后台播放尚待 iPad 验收；歌单订阅 Watchman 与 NCBL 听歌上报尚未实现直连，当前 capability 明确关闭这两项操作，其余能力未因此删除。QQ/酷狗/波点、Navidrome、AI/同步等不因此自动获得直连；它们仍按 [可选服务配置](docs/ipados-api-deployment.md) 各自配置。没有新增公共服务器或执行部署。
+网易云真实扫码确认、重启保持、播放 CDN/CORS 与后台播放尚待 iPad 验收；歌单订阅 Watchman 与 NCBL 听歌上报尚未实现直连，当前 capability 明确关闭这两项操作，其余能力未因此删除。QQ/酷狗也已提供默认设备直连；波点、Navidrome、同步及用户主动选择的远程模式仍按 [可选服务配置](docs/ipados-api-deployment.md) 各自配置。AI 使用用户自己的接口，见 [AI 指南](docs/ipados-ai.md)。没有新增公共服务器或执行部署。
 
 ## 当前验证与限制
 

@@ -1,6 +1,6 @@
 # Folia iPadOS 个人自用构建、安装与续签
 
-已提供开发预览 [Release 下载入口](https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS/releases)，包含未签名 IPA 和对应源码 ZIP。IPA 需要接收者自行签名；源码按本文使用 Xcode 构建安装。见 [下载与校验说明](ipados-release-downloads.md)。
+QQ 音乐和酷狗音乐已接入设备直连扫码登录，API 地址留空即可；使用方法与验收范围见 [QQ/酷狗登录指南](ipados-qq-kugou-direct.md)。新增 `FoliaMusicProviders` 插件后须先 `npm run ios:sync`，再在 Xcode 选择实体 iPad、按 ⌘R 覆盖安装；旧安装不会自动获得插件。
 
 自定义 AI 已支持原版歌词主题分析，无需部署 Folia 后端。新增原生插件后需 Xcode ⌘R 覆盖安装；配置步骤与范围见 [iPad AI 指南](ipados-ai.md)。
 
@@ -12,7 +12,7 @@ AutoMix 新增独立 Swift 包 `ios/FoliaAutomixRuntime`。首次 Xcode 构建�
 
 ## Mac 环境
 
-本次实际使用 Node 24.19.0、npm 11.17.0、Xcode 26.5 (17F42)、iOS 26.5 SDK；项目级配置与运行库包含 iOS 15.0 基线，但当前 App target 的有效部署版本为 iOS 18.6；以 Xcode target 实际设置为准。该编译目标不代表相应 OS 的全部 API/codec/OPFS/效果均已验收。建议先用近期 iPadOS 真机，记录设备型号与系统版本。
+本次实际使用 Node 24.19.0、npm 11.17.0、Xcode 26.5 (17F42)、iOS 26.5 SDK；项目级配置与运行库包含 iOS 15.0 基线，但当前 App target 的有效部署版本为 iOS 15.6；以 Xcode target 实际设置为准。该编译目标不代表相应 OS 的全部 API/codec/OPFS/效果均已验收。建议先用近期 iPadOS 真机，记录设备型号与系统版本。
 
 安装完整 Xcode，首次打开完成组件安装。在 Xcode Settings → Locations 选择对应 Command Line Tools。你已在本次会话确认接受许可；以后更换 Xcode 可能需要本人重新阅读许可。不要在脚本里自动替用户接受条款。
 
@@ -47,12 +47,12 @@ npm run ios:sync
 
 ```bash
 cp .env.ios.example .env.ios.local
-# 网易云保持为空即使用内置直连，不需要部署服务。
+# 网易云、QQ、酷狗各自 API 保持为空即使用内置直连，无需部署。
 # 其他可选服务填写自己的 HTTPS 地址；也可在 App 设置。
 npm run ios:sync
 ```
 
-不要将服务器密钥或个人账号放进 `VITE_*`。网易云默认直连不需要配置；仅其他服务或主动选择的远程覆盖需要地址。见 [设备内直连](ipados-netease-direct.md) 与 [可选服务配置](ipados-api-deployment.md)。没有附带公共代理实例。
+不要将服务器密钥或个人账号放进 `VITE_*`。网易云、QQ、酷狗默认直连不需要配置；仅其他服务或主动选择的远程覆盖需要地址。见 [设备内直连](ipados-netease-direct.md) 与 [可选服务配置](ipados-api-deployment.md)。没有附带公共代理实例。
 
 原 Web/PWA 构建仍是：
 
@@ -70,7 +70,7 @@ npm run ios:open
 
 或打开 `ios/App/App.xcodeproj`。本工程是 **Swift Package Manager** 版本，实际 scheme 是 `App`，不是 CocoaPods workspace。依赖固定到 Capacitor 8.5.3；首次 Xcode 会通过 SPM 解析并获取官方框架。保持网络/TLS 正常，不要把本次构建缓存或下载的 macOS 程序复制进 iOS。
 
-当前使用程序化 SceneDelegate 和 `FoliaBridgeViewController` 注册本地插件；启动屏用 Info.plist，图标为 Folia loose PNG。源模板 `Assets.xcassets`/storyboard 未加入构建资源阶段。这样也避开本次自动化环境无法连接 CoreSimulator 时 actool/ibtool 的失败；无需在你的 Mac 修改全局安全设置。不要改回普通 `CAPBridgeViewController` 而漏掉 `FoliaDevice` / `FoliaNetease` 注册。
+当前使用程序化 SceneDelegate 和 `FoliaBridgeViewController` 注册本地插件；启动屏用 Info.plist，图标为 Folia loose PNG。源模板 `Assets.xcassets`/storyboard 未加入构建资源阶段。这样也避开本次自动化环境无法连接 CoreSimulator 时 actool/ibtool 的失败；无需在你的 Mac 修改全局安全设置。不要改回普通 `CAPBridgeViewController` 而漏掉 `FoliaDevice` / `FoliaNetease` / `FoliaMusicProviders` 注册。
 
 ## 签名并安装到实体 iPad
 
@@ -83,7 +83,7 @@ npm run ios:open
 7. iPadOS 16+：设置 → 隐私与安全性 → 开发者模式，开启并按系统提示重启确认；入口出现条件以系统与 Xcode 提示为准。
 8. 在 Xcode 顶部选择实际 iPad 作为运行目的地，scheme `App`，按 Run。不要选择 “Any iOS Device” 后期待自动安装。
 9. 若 iPad 提示未信任开发者，按设置 → 通用 → VPN 与设备管理中的实际开发者条目处理，再打开 App。
-10. 启动后先检查本地界面、设置和模式列表，然后填写你的 HTTPS 服务地址、保存重载，并自行登录在线源。使用 [真机清单](ipados-device-checklist.md) 逐项记录。
+10. 启动后先检查本地界面、设置和模式列表，然后在首页连接 QQ/酷狗/网易云并自行扫码登录；这三源默认不填 API。仅其他源或主动远程覆盖需要填写 HTTPS 地址。使用 [真机清单](ipados-device-checklist.md) 逐项记录。
 
 Background Modes 的 Audio 已在 Info.plist 声明，AVAudioSession/系统媒体命令也已接入；**不要据此判断锁屏长播一定成功**。WebKit 的 Web Audio 后台行为必须按真机清单实测。没有新增第二套原生播放器来掩盖音效缺失。
 
@@ -120,6 +120,7 @@ xcodebuild -project ios/App/App.xcodeproj \
 | 白屏或旧界面 | 先 `npm run ios:sync`；确认 `public/index.html` 和 assets 已生成；使用本地 `dist`，capacitor.config 没有 server.url；查看 Xcode console |
 | FoliaDevice not implemented | SceneDelegate 必须创建 FoliaBridgeViewController；本地插件由 capacitorDidLoad 注册；不要仅改 Web 侧 mock |
 | SPM 下载失败 | 检查代理/GitHub 可达性、Xcode Package Resolution；保持证书校验；不要把临时固定 IP 写成长期配置 |
+| Missing package product `CapApp-SPM` / `FoliaAutomixRuntime` | 先展开 Package Resolution 日志；本机曾因 GitHub 连接超时使整套包图失败，两个本地包并未缺失。网络恢复后在项目根目录运行 `xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App`，等成功后再 Run；界面仍保留旧错误可用 File → Packages → Resolve Package Versions。若新 build 仍引用旧超时日志，先保存所有编辑，再关闭工程窗口并重新打开 `ios/App/App.xcodeproj`，等待包图重载后以 ⌘B 验证。本机实际以重新打开工程恢复，GUI Build succeeded / 0 errors；无需清空下载缓存。独立 `-derivedDataPath` / `-clonedSourcePackagesDirPath` 的成功构建不代表 Xcode 默认目录或 GUI 内存状态也已恢复；不要先删包引用或清空所有缓存 |
 | Signing/Provisioning 错误 | 选个人 Team、唯一 Bundle ID、正确设备/开发者模式，按 Xcode 的签名提示处理 |
 | 歌曲可见但播放转圈/无声 | 真机已读到音频就绪但playing后立即pause/interrupted、重复宿主中断；最新修复移除宿主setActive抢焦点及宿主中断暂停反馈。必须先ios:sync并以原Team/Bundle ID Run覆盖（含Swift改动，仅刷新网页无效），勿卸载；先测首次播放、暂停继续和下一首，再测后台。若仍失败检查系统输出、音量和播放链接/会员限制，提供Xcode音频错误日志，勿发送Cookie/Token；见[专项记录](ipados-background-audio.md) |
 | API 返回 HTML/404 | base/path 配置错误，尤其 `/api/api`、QQ 少 `/api/qq`；按实际后端路径填写 |

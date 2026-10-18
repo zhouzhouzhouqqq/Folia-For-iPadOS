@@ -1,0 +1,13 @@
+npm warn Unknown project config "onnxruntime-node-install". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> folia-major@0.7.19 test:unit
+> vitest run -c vitest.config.ts --maxWorkers=1 --testTimeout=30000 test/unit/ipados/mobileProviderHttp.test.ts test/unit/ipados/mobileProviderState.test.ts test/unit/ipados/mobileKugouProtocol.test.ts test/unit/ipados/mobileQqSessions.test.ts test/unit/ipados/mobileProviderRouting.test.ts test/unit/ipados/providerStorage.test.ts test/unit/onlineMusic/qqTransport.test.ts test/unit/onlineMusic/kugouTransport.test.ts test/unit/onlineMusic/qqProvider.test.ts test/unit/onlineMusic/kugouProvider.test.ts test/unit/onlineMusic/qqLoginMethod.test.ts
+
+
+ RUN  v4.1.11 /FOLIA_WORKSPACE/outputs/github-publish/Folia-For-iPadOS
+
+
+ Test Files  11 passed (11)
+      Tests  310 passed (310)
+   Start at  23:52:34
+   Duration  17.88s (transform 2.35s, setup 0ms, import 2.68s, tests 12.14s, environment 2ms)

@@ -13,6 +13,7 @@ vi.mock('@/services/onlineMusic/qqTransport', () => ({
     getQqTransportAvailability: () => ({ configured: true }),
     getQqRemoteApiBase: () => 'https://qq.example.test',
     hasQqSession: () => transportState.hasSession,
+    isQqDirect: () => false,
     clearQqSession: clearSessionMock,
     requestQq: requestMock,
 }));

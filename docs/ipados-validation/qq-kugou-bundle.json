@@ -1,0 +1,12 @@
+{
+  "fileCount": 1873,
+  "sourceDistSyncedAndCompiledSHA256Match": true,
+  "providerChunks": [
+    "kugou-CNDh2XwA.js",
+    "qq-CyVnqPF7.js"
+  ],
+  "remoteServerURL": false,
+  "iosServiceWorker": false,
+  "bridgeLogging": "none",
+  "scope": "Final standard npm run ios:sync and unsigned arm64 App. Anonymous QR API/WebKit checks passed; real-account confirmation, iPad Keychain and playback remain pending."
+}

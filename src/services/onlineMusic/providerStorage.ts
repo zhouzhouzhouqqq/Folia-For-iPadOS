@@ -11,7 +11,7 @@ const nativeNamespace = (providerId: OnlineProviderId): string => {
         qq: import.meta.env.VITE_QQ_API_BASE, bodian: import.meta.env.VITE_BODIAN_API_BASE };
     const id = providerId as keyof typeof env;
     const base = getNativeApiBase(id, env[id] || '');
-    return `:${encodeURIComponent(base || (id === 'netease' ? 'device-direct-v1' : ''))}`;
+    return `:${encodeURIComponent(base || (['netease', 'qq', 'kugou'].includes(id) ? 'device-direct-v1' : ''))}`;
 };
 
 export const getProviderCacheKey = (providerId: OnlineProviderId, key: string): string => (

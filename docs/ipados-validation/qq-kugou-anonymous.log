@@ -1,0 +1,7 @@
+{"host":"login-user.kugou.com","httpStatus":200}
+{"host":"login-user.kugou.com","httpStatus":200}
+{"provider":"kugou","key":true,"image":true,"waiting":true,"status":1}
+{"host":"api.tencentmusic.com","httpStatus":200}
+{"host":"u.y.qq.com","httpStatus":200}
+{"host":"u.y.qq.com","httpStatus":200}
+{"provider":"qq","key":true,"image":true,"waiting":true,"status":801}

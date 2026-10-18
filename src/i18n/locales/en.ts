@@ -65,7 +65,7 @@ export default {
     "removeConfirm": "Remove {{name}} and its stored mod data?"
 },
   "nativeConnections": {
-    "neteaseSetupHint": "NetEase connects directly from this device by default. QR login needs no deployed API or running Mac. Leave the field empty unless you choose your own remote service.",
+    "neteaseSetupHint": "NetEase, QQ Music and KuGou connect directly from this device by default. QR login needs no deployed API or running Mac. Leave these fields empty unless you choose your own compatible remote service.",
     "aiConsent": "Allow sending lyric text and song titles to {{destination}} for AI themes/segmentation? Your backend may forward them to its configured AI provider. Audio and personal files are not uploaded. Approval lasts for this app session and destination.",
     "nowplaying": "External Now Playing HTTPS base (optional)",
     "playercap": "External PlayerCap HTTPS base (optional)",
