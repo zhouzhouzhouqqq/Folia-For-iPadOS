@@ -1991,6 +1991,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
                 {/* Footer (Empty now) */}
                 {/* <div className="mt-8 pt-0 border-t-0 p-0" /> */}
+                <p
+                    className="relative z-10 mt-4 shrink-0 break-words text-center text-xs leading-relaxed"
+                    style={{ color: 'var(--text-secondary)' }}
+                    lang="zh-CN"
+                    data-folia-adaptation-credit="Marcusphotograph"
+                >
+                    由 Marcusphotograph修改制作
+                </p>
                 <AnimatePresence>
                     {meowEasterEgg && (
                         <motion.img

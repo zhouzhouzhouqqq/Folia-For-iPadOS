@@ -1,13 +1,13 @@
 {
   "file": "Folia-iPadOS-0.7.19-preview.2-unsigned.ipa",
-  "bytes": 18642560,
-  "sha256": "c3453d51427ffcc20830e26db6e284d056eec70cff77c6aa68d457b213ce84fb",
+  "bytes": 18642375,
+  "sha256": "d9ff9ec1120acc66a366dd098a8b4f8e74615aa4da7000cac541cbd2f9f22b72",
   "bundleIdentifier": "org.folia.personal",
   "version": "0.7.19",
   "minimumOSVersion": "15.6",
   "architecture": "arm64",
   "signing": "Unsigned public build; requires the recipient to sign before installation.",
-  "buildNumber": "2",
+  "buildNumber": "3",
   "bundledWebFilesMatched": 1873,
   "noRemotePage": true,
   "noServiceWorker": true,
@@ -25,14 +25,29 @@
     "files": 11,
     "passed": 310,
     "initialTimeouts": 3,
-    "retry": "54/54 file retry and 310/310 complete rerun passed without changing timeout or tests"
+    "retry": "54/54 file retry and 310/310 complete rerun passed without changing timeout or tests",
+    "scope": "310 tests passed for build 2; credit-only build 3 did not rerun provider tests"
   },
   "privacyScan": {
     "filesScanned": 3535,
-    "findings": 0
+    "findings": 0,
+    "scope": "Build 2 source scan; build 3 reviewed attribution, metadata and documentation diff"
   },
   "sourceAndNativeBundle": "Public placeholder org.folia.personal",
   "backgroundAndSystemButtons": "Pending device validation; see test report",
   "sourceWhitespaceCheck": "Passed excluding verbatim third-party vendor bundles/licenses; upstream whitespace preserved.",
-  "validationDate": "2026-10-19"
+  "validationDate": "2026-10-19",
+  "settingsCredit": "由 Marcusphotograph修改制作",
+  "settingsCreditWebKitChecks": {
+    "passed": 6,
+    "viewports": [
+      "1024x768",
+      "768x1024",
+      "375x768"
+    ],
+    "tabs": [
+      "options",
+      "help"
+    ]
+  }
 }

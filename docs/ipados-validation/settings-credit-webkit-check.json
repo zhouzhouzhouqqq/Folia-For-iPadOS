@@ -1,0 +1,68 @@
+[
+  {
+    "name": "landscape",
+    "tab": "选项",
+    "text": "由 Marcusphotograph修改制作",
+    "box": {
+      "x": 97,
+      "y": 657.890625,
+      "width": 830,
+      "height": 19.5
+    }
+  },
+  {
+    "name": "landscape",
+    "tab": "帮助",
+    "text": "由 Marcusphotograph修改制作",
+    "box": {
+      "x": 289,
+      "y": 677.09375,
+      "width": 446,
+      "height": 19.5
+    }
+  },
+  {
+    "name": "portrait",
+    "tab": "选项",
+    "text": "由 Marcusphotograph修改制作",
+    "box": {
+      "x": 53,
+      "y": 894.6875,
+      "width": 662,
+      "height": 19.5
+    }
+  },
+  {
+    "name": "portrait",
+    "tab": "帮助",
+    "text": "由 Marcusphotograph修改制作",
+    "box": {
+      "x": 161,
+      "y": 900.4375,
+      "width": 446,
+      "height": 19.5
+    }
+  },
+  {
+    "name": "split",
+    "tab": "选项",
+    "text": "由 Marcusphotograph修改制作",
+    "box": {
+      "x": 41,
+      "y": 685.09375,
+      "width": 293,
+      "height": 19.5
+    }
+  },
+  {
+    "name": "split",
+    "tab": "帮助",
+    "text": "由 Marcusphotograph修改制作",
+    "box": {
+      "x": 41,
+      "y": 685.09375,
+      "width": 293,
+      "height": 19.5
+    }
+  }
+]
