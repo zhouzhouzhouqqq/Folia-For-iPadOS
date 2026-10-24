@@ -53,6 +53,7 @@ print(json.dumps({
     'file': output.name, 'bytes': output.stat().st_size,
     'sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
     'bundleIdentifier': info['CFBundleIdentifier'], 'version': info['CFBundleShortVersionString'],
+    'buildNumber': info['CFBundleVersion'],
     'minimumOSVersion': info['MinimumOSVersion'], 'architecture': architecture,
     'signing': 'Unsigned public build; requires the recipient to sign before installation.',
 }, ensure_ascii=False, indent=2))

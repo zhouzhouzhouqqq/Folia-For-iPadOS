@@ -67,3 +67,7 @@
 - `xcodebuild -showsdks` 确认 iOS 26.5 / iOS Simulator 26.5。Xcode 的 Swift Package 解析需要访问 `https://github.com/ionic-team/capacitor-swift-pm.git`，本机连接多次超时，因此尚未完成 Xcode 原生编译或 IPA；不是源码编译错误。网络恢复后在 Xcode 中重新打开本工程并执行 Resolve Package Versions，再进行无签名或个人 Team 签名构建。
 
 本地 Xcode 工程：`$HOME/Developer/Folia-For-iPadOS/ios/App/App.xcodeproj`。本次优化版 IPA 尚未生成，也没有替换旧的 GitHub 文件。
+
+## Preview 3 发布补充（2026-10-24）
+
+此前 Swift Package 连接超时现已恢复，Capacitor 8.5.3 与原生 ORT 依赖解析成功。已重新执行 `npm run ios:sync`，并以实际 App scheme、Release、iOS 26.5 SDK、arm64 设备目标完成无签名 archive（`ARCHIVE SUCCEEDED`）。Preview 3 的 App 版本为 0.7.21、构建号为 5，使用通用 Bundle ID，个人 Team 和描述文件不进入分发包。归档/IPA 成功仍不替代真机性能与播放验收。对应源码、安装包、校验文件及具体检查见 [Preview 3 说明](ipados-preview3.md) 与其 Release 附件 manifest。

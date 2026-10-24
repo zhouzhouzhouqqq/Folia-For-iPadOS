@@ -23,12 +23,12 @@
 | iOS Web 构建 | `npm run build:ios` 通过，5,674 个模块转换 |
 | Capacitor 同步 | `npm run ios:sync` 通过，App 内置 Web 资源已更新 |
 | 原生工程配置 | `Info.plist` 校验通过；本机有 iOS / Simulator 26.5 SDK |
-| 本轮原生编译与 IPA | 尚未完成；Swift Package 依赖获取遇到 GitHub 连接超时 |
+| 本轮原生编译与 IPA | 后续 Preview 3 已完成 arm64 Release 无签名归档与 IPA 打包；此前依赖下载超时已恢复 |
 | 真机性能、全部视觉与后台 | 待验证 |
 
 源码中的 Xcode 工程使用通用 Bundle ID，不包含个人 Team ID。自行构建时在 Xcode 的 Signing & Capabilities 选择自己的 Team，并修改为自己的 Bundle ID。安装方法见 [自行构建文档](ipados-self-build.md)。
 
-本次更新源码，不把旧 IPA 重新标记为优化版；现有 Releases 附件保持原版本。GitHub 的 Code → Download ZIP 可下载当前源码，仍需在 Mac 上自行构建签名。
+最初的源码提交没有替换旧 IPA。随后发布的 [Preview 3](ipados-preview3.md) 提供重新构建的 0.7.21 / build 5 IPA 和对应源码；Preview 1 / 2 的附件保持原版本。GitHub 的 Code → Download ZIP 可下载当前源码，源码安装仍需在 Mac 上自行构建签名。
 
 ## 已知差异
 

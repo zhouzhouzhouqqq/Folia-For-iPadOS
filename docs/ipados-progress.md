@@ -188,3 +188,7 @@ CoreSimulator/LaunchServices在自动化环境不可启动；最初未测真实W
 ## 2026-10-23 Xcode 工程入口纠正
 
 用户反馈 Xcode 仍为 0.7.19。已实际读取 Xcode workspace/window 路径，确认此前打开的是 outputs/folia-major/ios/App/App.xcodeproj（旧签名工程），而更新后的源码在 outputs/github-publish/Folia-For-iPadOS。现已打开新版并关闭旧版窗口，保留旧工程与签名。xcodebuild -showBuildSettings 确认新版 MARKETING_VERSION=0.7.21；package.json 同为 0.7.21，Info.plist 从 MARKETING_VERSION 取值，iOS public 本地 bundle 存在。未覆盖个人 Team/Bundle ID；新版公开工程需要用户在 Signing & Capabilities 选择自己的签名。以后从本目录 ios/App/App.xcodeproj 打开，勿从旧 Recent 项目进入。
+
+## 2026-10-24 Preview 3
+
+源码 0.7.21 合入及性能/触控布局更新已发布到 main（0daaaf9）。后续 Preview 3 使用 0.7.21 / build 5，重新完成 iOS Web 构建、Capacitor sync 与 arm64 Release 无签名归档。分发使用通用 Bundle ID，个人签名设置仅留在本机。安装包、对应源码 ZIP、校验清单与 manifest 发布到 `ipados-0.7.21-preview.3`；详情与未完成项见 `docs/ipados-preview3.md`。实际帧率、全模式视觉、账号、后台/锁屏/蓝牙等仍待真机回归，不把归档成功解释为完整验收。

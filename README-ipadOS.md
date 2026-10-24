@@ -1,12 +1,12 @@
 # Folia iPadOS 源码自签名版
 
-下载入口：[开发预览 2](https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS/releases/tag/ipados-0.7.19-preview.2)。提供未签名 IPA、对应源码 ZIP 和 SHA-256 校验文件；安装者需自行签名。详见 [下载包说明](docs/ipados-release-downloads.md)。
+下载入口：[开发预览 3](https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS/releases/tag/ipados-0.7.21-preview.3)。提供未签名 IPA、对应源码 ZIP 和 SHA-256 校验文件；安装者需自行签名。详见 [下载包说明](docs/ipados-release-downloads.md)。
 
 本次新增 QQ 音乐／酷狗音乐设备直连扫码登录：对应远程 API 地址留空即可启用，无需部署 API。真实匿名取码及 WebKit 已验证，账号确认、重启保持和实播仍待 iPad 验收；见 [使用指南](docs/ipados-qq-kugou-direct.md)。
 
 自定义 AI 已支持原版歌词主题分析，无需部署 Folia 后端。新增原生插件后需 Xcode ⌘R 覆盖安装；配置步骤与范围见 [iPad AI 指南](docs/ipados-ai.md)。
 
-基于 [chthollyphile/folia-major](https://github.com/chthollyphile/folia-major) 0.7.19 的 iPadOS 适配，沿用上游 AGPL-3.0 许可证与署名。采用本地前端资源 + Capacitor/WKWebView + Swift 平台桥。保留原 Web/PWA/Electron 构建入口。
+基于 [chthollyphile/folia-major](https://github.com/chthollyphile/folia-major) 0.7.21 的 iPadOS 适配，沿用上游 AGPL-3.0 许可证与署名。采用本地前端资源 + Capacitor/WKWebView + Swift 平台桥。保留原 Web/PWA/Electron 构建入口。
 
 这是用于自行构建和验证的源码，不是已签名 IPA，也不是已完整验收的公开稳定版。当前全部歌词动画和背景代码保留；实际 iPad 上的效果、后台持续播放、蓝牙与系统中断仍需验收。AutoMix 原版两模型已接入设备内推理并通过合成音频对照，需用户下载模型与真机验收；任意 Node/native 模组、桌面离线/透明视频和独立音频导出等尚未实现，见功能矩阵。
 
@@ -37,7 +37,7 @@ npm run ios:open
 
 ## 当前验证与限制
 
-最新真机反馈为歌曲能显示，但点播放转圈或无声；前台实播与后台播放均待新版复验。本轮已修正播放启动等待 `AudioContext.resume()` / 原生会话响应可能卡住的路径，保留原 EQ、音效、双 deck 混音与分析器。115 项相关回归、类型检查、Web/PWA、iOS同步及 arm64 无签名构建通过；这些结果不等于设备播放已恢复。现有安装请保留 Team / Bundle ID，Xcode Run 覆盖更新，不需要卸载或重新部署网易 API。
+此前真机反馈包括点播放转圈或无声；Preview 3 的前台实播与后台播放仍待新版复验。本轮已修正播放启动等待 `AudioContext.resume()` / 原生会话响应可能卡住的路径，保留原 EQ、音效、双 deck 混音与分析器。此前针对播放路径的回归记录见实际测试报告；本次发布验证与限制见 [Preview 3 说明](docs/ipados-preview3.md)。本机构建不等于设备播放已恢复。现有安装请保留 Team / Bundle ID，Xcode Run 覆盖更新，不需要卸载或重新部署网易 API。
 
 - [完整功能矩阵](docs/ipados-feature-matrix.md)
 - [实际测试报告](docs/ipados-test-report.md)

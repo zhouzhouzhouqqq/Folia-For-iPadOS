@@ -143,4 +143,6 @@ xcodebuild -project ios/App/App.xcodeproj \
 
 本工程已合入 0.7.21；安装前请先读 ipados-upstream-0.7.21.md 的未实现和待验证项。新版原生 AI/API/录屏设置在“连接与集成”，原生模型位于“播放控制”。智能动感复用实际动态图形；iOS 使用设备内 ORT 模型，首次分析速度/内存未作真机保证。Spotify/YouTube Music 本次尚无 iOS 播放桥。
 
+Preview 3 的发布版本为 0.7.21 / build 5，包含上述合入及本轮性能、触控布局修改，并已完成 arm64 Release 无签名归档。预编译 IPA、自行签名与版本对应关系见 [Preview 3 说明](ipados-preview3.md) 和 [下载包说明](ipados-release-downloads.md)。本机已签名安装覆盖更新时保持自己的 Team / Bundle ID。
+
 原生模型清单为 shared/ipadosModelManifest.json，生成/核对命令是 python3 dev/ipados/automix/sync-manifest.py --check。shared/modelManifest.json 是新版桌面/GPU .bin 权重，两者不能交换。模型不是音乐，不包含用户数据；下载/导入只安装公开权重，不上传本地音频。

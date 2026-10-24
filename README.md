@@ -17,4 +17,4 @@ Folia 的 iPadOS 适配版，基于 Capacitor 与 WKWebView，保留原版歌词
 
 本次更新尚未经过实体设备验收，请勿把无签名编译成功当作后台播放、账号和所有视觉参数均已通过。
 
-2026-10-24 源码更新包含 0.7.21 合入、共享背景渲染与莫奈频谱优化、帧率限制调度修正、触控播放面板及设置窗口适配。当前源码已通过类型检查、相关 30 项单测、iOS Web 构建与 Capacitor 同步。本轮优化尚未生成新的 IPA，Releases 中已有安装包不包含本轮全部改动；真机帧率和全模式验收仍待完成。详见[本次源码更新记录](docs/ipados-update-2026-10-24.md)。
+2026-10-24 更新包含 0.7.21 合入、共享背景渲染与莫奈频谱优化、帧率限制调度修正、触控播放面板及设置窗口适配。[Preview 3 下载](https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS/releases/tag/ipados-0.7.21-preview.3)提供 **0.7.21 / build 5 未签名 IPA**、对应源码 ZIP 与校验文件。类型检查、相关 30 项单测、iOS Web 构建、Capacitor 同步与 arm64 Release 归档已通过；真机帧率和全模式验收仍待完成。详见[Preview 3 说明](docs/ipados-preview3.md)和[本次源码更新记录](docs/ipados-update-2026-10-24.md)。
