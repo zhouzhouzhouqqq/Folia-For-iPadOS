@@ -71,7 +71,8 @@ describe('dev/folium sample mods', () => {
 const activatePlaybackConsoleMain = () => {
     const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'folia-dev-sample-'));
     temporaryDirectories.push(userData);
-    const manifest = JSON.parse(fs.readFileSync(path.join(PLAYBACK_CONSOLE_DIR, 'mod.json'), 'utf8'));
+    // As the loader hands it over: validated, its permission ids as Folium 1.6 names them.
+    const { value: manifest } = validateManifest(JSON.parse(fs.readFileSync(path.join(PLAYBACK_CONSOLE_DIR, 'mod.json'), 'utf8')));
     const dirs = resolveModStorageDirs(userData, manifest.id);
     const handlers = new Map<string, (...args: unknown[]) => Promise<unknown>>();
     const api = createModApi({
@@ -220,11 +221,13 @@ const createFakeFolium = (context: 'main' | 'export' = 'main') => {
     return { folium, homeTabs, commands, rpcCalls, emit, playback, state, handlerCount: () => [...handlers.values()].reduce((sum, list) => sum + list.length, 0) };
 };
 
+// The sample is written for Folium 1.5, which named onChange `subscribe`; the host hands it both.
 const panelContext = (locale: string): FoliumPanelContext => ({
     locale,
     getTheme: () => { throw new Error('unused'); },
+    onChange: () => () => {},
     subscribe: () => () => {},
-});
+}) as unknown as FoliumPanelContext;
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 

@@ -30,6 +30,9 @@ import { PartitaChunk } from './PartitaChunk';
 
 type VisualizerPartitaProps = VisualizerSharedProps;
 
+/** How the shown line leaves when the text is hidden, rather than replaced by the next line. */
+const TEXT_HIDDEN_EXIT = { opacity: 0, transition: { duration: 0.2, ease: 'easeOut' as const } };
+
 const VisualizerPartita: React.FC<VisualizerPartitaProps> = (props) => {
     const {
         currentTime,
@@ -146,13 +149,17 @@ const VisualizerPartita: React.FC<VisualizerPartitaProps> = (props) => {
                 animate={lyricContainerFloat.animate}
                 transition={lyricContainerFloat.transition}
             >
-                <AnimatePresence mode="popLayout">
+                {/* A line hidden because the text is (a window over the player) only fades: the next line's
+                    exit grows and blurs it, and this layer covers most of the screen. */}
+                <AnimatePresence mode="popLayout" custom={!showText}>
                     {showText && activeLine && activeLineRenderProfile && (
                         <motion.div
                             key={activeLine.startTime}
                             initial={activeLineContainerMotion.initial}
                             animate={activeLineContainerMotion.animate}
-                            exit={activeLineContainerMotion.exit}
+                            custom={!showText}
+                            variants={{ leave: (hidden: boolean) => (hidden ? TEXT_HIDDEN_EXIT : activeLineContainerMotion.exit) }}
+                            exit="leave"
                             className="flex flex-row-reverse items-stretch justify-center w-full max-w-5xl"
                             style={{
                                 perspective: `${sequentialLayout.lineConfig.perspective}px`,

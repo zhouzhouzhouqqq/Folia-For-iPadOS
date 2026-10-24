@@ -41,7 +41,7 @@ describe('QQ device-direct session boundary', () => {
         await expect(requestQqDirect('user_detail', {})).rejects.toMatchObject({ code: 'auth-required' });
         expect(JSON.parse(mock.records.get('qq')!)).not.toHaveProperty('token');
         mock.operation.mockResolvedValue({ status: 429, body: { message: 'cooldown', retryAfterMs: 15000 } });
-        await expect(requestQqDirect('login_qr_key', {})).rejects.toMatchObject({ code: 'rate-limited', retryAfterMs: 15000 });
+        await expect(requestQqDirect('login_qr_key', {})).rejects.toMatchObject({ code: 'network', httpStatus: 429, retryAfterMs: 15000 });
     });
     it('does not restore credentials from a QR confirmation that completes after logout', async () => {
         let finish!: (value: any) => void;

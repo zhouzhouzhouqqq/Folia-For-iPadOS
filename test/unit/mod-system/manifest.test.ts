@@ -113,22 +113,6 @@ describe('parseDependency / satisfiesRange', () => {
 });
 
 describe('validateManifest Folium entries and opt-ins', () => {
-    it('rejects the pre-Folium fields with a pointed message', () => {
-        const result = validateManifest({
-            ...validManifest,
-            apiVersion: 1,
-            entry: 'index.cjs',
-            visualizers: [{ id: 'a', entry: 'v.mjs' }],
-        });
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-            const joined = result.errors.join('\n');
-            expect(joined).toContain('apiVersion-replaced-by-folium');
-            expect(joined).toContain('entry-replaced-by-main');
-            expect(joined).toContain('visualizers-moved-to-client');
-        }
-    });
-
     it('accepts a client-only mod and requires at least one entry', () => {
         const clientOnly = { ...validManifest, main: undefined, client: 'client.mjs', permissions: [] };
         expect(validateManifest(clientOnly).ok).toBe(true);

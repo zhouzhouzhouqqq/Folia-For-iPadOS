@@ -46,9 +46,12 @@ function MediaSessionProbe() {
         unknownArtistLabel: 'Unknown', isNowPlayingStageActive: false, mediaSessionPlayRef: playRef, mediaSessionPauseRef: pauseRef,
         mediaSessionNextRef: nextRef, mediaSessionPrevRef: prevRef, mediaSessionSeekRef: seekRef, isNowPlayingControlDisabledRef: disabledRef });
     useEffect(() => {
+        let current = true;
         // Match usePlaybackAudioBridge's explicit load on a changed source, before optional autoplay.
         audioRef.current?.load();
-        if (requested.current) void audioRef.current?.play().catch(e => setError(String(e)));
+        if (requested.current) void audioRef.current?.play().catch(e => { if (current) setError(String(e)); });
+        // A replaced source aborts its old play promise; only the current source owns errors.
+        return () => { current = false; };
     }, [index, sources]);
     useEffect(() => {
         const urls = [330, 440, 550].map(syntheticWave); setSources(urls);

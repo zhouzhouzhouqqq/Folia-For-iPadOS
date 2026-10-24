@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { ModClearCacheResult, ModExportProgress, ModFfmpegStatus, ModLogEntry, ModRuntimeInfo, ModRuntimeSnapshot, ModStorageUsageResult } from './mods/types';
+import type { ModClearCacheResult, ModExportProgress, ModFfmpegStatus, ModLogEntry, ModMainCallStats, ModRuntimeInfo, ModRuntimeSnapshot, ModStorageUsageResult } from './mods/types';
 
 declare global {
   const __COMMIT_HASH__: string;
@@ -61,7 +61,7 @@ declare global {
     mimeType?: string | null;
   }
 
-  type ElectronKugouOperation = import('./services/onlineMusic/kugouTransport').KugouOperation;
+  type ElectronKugouOperation = import('./services/onlineMusic/kugou/kugouTransport').KugouOperation;
 
   interface ElectronAudioCacheStats {
     size: number;
@@ -80,6 +80,8 @@ declare global {
     status: 'starting' | 'running' | 'error';
     port: number | null;
     error: string | null;
+    // 没起来是因为断网：页面说连不上，下一次要用它时它再启动一次。
+    offline?: boolean;
     updatedAt: number;
   }
 
@@ -169,6 +171,7 @@ declare global {
     app: ElectronAppEnvironment;
     backend: ElectronNeteaseApiStatus;
     startup: ElectronBackendStartupRun[];
+    /** 上游包没加载起来（startup 里 load 步骤失败）时为 null，identity 同理。 */
     login: {
       capturedAt: number;
       startup: { anonymousTokenAtLoad?: 'present' | 'empty' };
@@ -177,9 +180,9 @@ declare global {
         error?: string;
       };
       requests: ElectronNeteaseLoginRequestRecord[];
-    };
+    } | null;
     /**
-     * 扫码身份轮换（electron/neteaseLoginIdentity.cjs）：进程启动时刻、当前 deviceId、扫码请求被重置的次数、
+     * 扫码身份轮换（electron/netease/neteaseLoginIdentity.cjs）：进程启动时刻、当前 deviceId、扫码请求被重置的次数、
      * 实际轮换的次数（被重置后到下一次要码才换）、最近一次是否换到了新的匿名 token、是否还有待轮换。
      */
     identity: {
@@ -190,7 +193,7 @@ declare global {
       lastRotatedAt: number | null;
       lastTokenRenewed: boolean | null;
       pendingRotation: boolean;
-    };
+    } | null;
     /** 最近的上游连接（不属于任何一次登录请求的那些，例如启动时取 xeapi 公钥）。 */
     connections: ElectronNetworkConnection[];
   }
@@ -203,7 +206,7 @@ declare global {
     version: string | null;
     startup: ElectronBackendStartupRun[];
     hooks: { installed: string[]; error: string | null };
-    /** 包内扫码服务的失败（electron/qqBackend.cjs 的钩子），带原始错误。 */
+    /** 包内扫码服务的失败（electron/qq/qqBackend.cjs 的钩子），带原始错误。 */
     failures: Array<{
       at: number;
       kind: 'session' | 'bootstrap';
@@ -257,11 +260,13 @@ declare global {
     | { type: 'set-transparent-mode-enabled'; enabled: boolean }
     | { type: 'disable-transparent-mode' }
     | { type: 'cycle-player-chrome-visibility-mode' }
+    | { type: 'set-player-chrome-visibility-mode'; mode: import('./types/remoteControl').PlayerChromeVisibilityMode }
     | { type: 'open-export' }
     | { type: 'start-export'; preset: ElectronVideoExportPreset; startMode: ElectronVideoExportStartMode }
     | { type: 'stop-export' }
     | { type: 'cancel-export' }
-    | { type: 'toggle-like' };
+    | { type: 'toggle-like' }
+    | import('./types/remoteControl').RemoteActionActivation;
 
   type ElectronVideoExportStatus =
     | 'idle'
@@ -299,6 +304,7 @@ declare global {
   }
 
   interface ElectronRemoteControlSnapshot {
+    remoteActions?: import('./types/remoteControl').RemoteActionsSnapshot;
     hasTrack: boolean;
     trackKey: string | null;
     title: string | null;
@@ -330,6 +336,7 @@ declare global {
     exportState: ElectronVideoExportState;
     isDaylight?: boolean;
     lyrics?: import('./types').LyricData | null;
+    subtitleContentMode: import('./types').SubtitleContentMode;
     isLiked?: boolean;
     canLike?: boolean;
     likeUnavailableProvider?: string;
@@ -648,57 +655,26 @@ declare global {
     result?: unknown;
   }
 
-  /**
-   * One downloadable as the settings page sees it. `path` is null when it is not installed.
-   *
-   * Not all of them are models: `runtime` is the Python separation runs in, which is a different
-   * archive per platform and unpacks to a directory rather than landing as a file. It is in the
-   * same list because everything the page does with it - size, progress, install, remove - is the
-   * same, and the two differences it does have are the two fields below.
-   */
-  interface ElectronAutomixModelEntry {
-    name: string;
-    /** null on a platform with no build, where there is no archive to name. */
-    file: string | null;
-    bytes: number;
-    /** Which capability this buys: the beat grid, or the stems. */
-    enables: 'beatGrid' | 'stems';
-    license: string;
-    /**
-     * False only for `runtime`, and only where no build exists for this OS and architecture -
-     * today that is Intel Macs. The row is still drawn; it offers no download.
-     */
-    supported: boolean;
-    path: string | null;
-    downloading: boolean;
+
+  /** One connected display, for the choice of the display wallpaper mode uses. Geometry is in DIP, as Electron reports it. */
+  interface ElectronWallpaperDisplay {
+    id: number;
+    /** The monitor's own name, where the system gives one. */
+    label: string;
+    bounds: { x: number; y: number; width: number; height: number };
+    scaleFactor: number;
+    primary: boolean;
   }
 
-  interface ElectronAutomixModelStatus {
-    /**
-     * The netdisk routes, offered only once every mirror has failed. An empty list = not offered.
-     * The extraction code belongs to the link rather than to the block: the two disks have
-     * different ones, and a code shown beside the wrong link is worse than no code.
-     */
-    manual: { links: Array<{ label: string; url: string; code?: string }>; note: string };
-    downloadDir: string;
-    models: ElectronAutomixModelEntry[];
-  }
-
-  /** A verified copy of a model found somewhere on this machine. Matched by hash, not by name. */
-  interface ElectronAutomixModelFound {
-    name: string;
-    file: string;
-    path: string;
-    bytes: number;
-  }
-
-  interface ElectronAutomixModelProgress {
-    name: string;
-    status: 'downloading' | 'ready' | 'failed';
-    received: number;
-    total: number;
-    /** Which mirror is answering, or null before one has been reached. */
-    host: string | null;
+  /** What the main process says about that choice; see electron/wallpaper/wallpaperDisplay.cjs. */
+  interface ElectronWallpaperDisplaysState {
+    displays: ElectronWallpaperDisplay[];
+    /** The stored choice; null is automatic. Its display need not be connected. */
+    choice: { id: number; label: string; bounds: { x: number; y: number; width: number; height: number } } | null;
+    /** The connected display the choice is, or null: automatic, or its display is not connected. */
+    chosenId: number | null;
+    /** The display the wallpaper is on, or would be on if it were entered now. */
+    activeId: number | null;
   }
 
   /** One process's share of a memory sample. Sizes are whole megabytes; see electron/debug/memoryMonitor.cjs. */
@@ -759,6 +735,8 @@ declare global {
   interface DebugModuleState {
     runtimeLogEnabled: boolean;
     runtimeLogMode: 'append' | 'overwrite';
+    /** The session-log switch as the main process last heard it. The renderer owns it. */
+    consoleCaptureEnabled: boolean;
     memoryMonitorEnabled: boolean;
     memoryLogEnabled: boolean;
     memoryLogMode: 'append' | 'overwrite';
@@ -774,13 +752,32 @@ declare global {
         /** Resolves the OS path of a dropped File (File.path was removed in modern Electron). */
         getPathForFile: (file: File) => string;
       };
-      /** Beat This! inference in the main process. Null when the weights or runtime are absent. */
+      /** Beat This! on the CPU in the analysis worker - automix's fallback only. Null when the weights are absent. */
       runBeatThis?: (
         chunks: Array<{ data: Float32Array; frames: number }>,
       ) => Promise<{ beat: Float32Array[]; downbeat: Float32Array[] } | null>;
       /**
-       * htdemucs separation in the main process, for one window of one track at 44.1kHz.
+       * The WebGPU export of Beat This! (fp16 tensors + manifest, one file), read by the main process.
+       * final0, shipped with the app, which automix and 智能动感模式 both run. Null when absent.
+       */
+      getBeatThisGpuWeights?: (model?: 'beat_this') => Promise<{
+        weights: Uint8Array<ArrayBuffer>;
+        manifest: import('./services/analysis/beatThisWgsl/runtime').BeatThisWgslManifest;
+      } | null>;
+      /** htdemucs' WebGPU export, shipped with the app, for the drum stem of 智能动感模式; null when absent. */
+      getHtdemucsGpuWeights?: () => Promise<{
+        weights: Uint8Array<ArrayBuffer>;
+        manifest: import('./services/analysis/htdemucsWgsl/runtime').HtdemucsWgslManifest;
+      } | null>;
+      /**
+       * Automix switched on or off. While on, the analysis worker keeps htdemucs loaded across tracks;
+       * off releases it in that process. One-way.
+       */
+      setAutomixEnabled?: (enabled: boolean) => void;
+      /**
+       * htdemucs separation in the analysis worker, for one window of one track at 44.1kHz.
        * `other` is not returned - it is derived by subtraction so the stems sum to the mix exactly.
+       * `{ declined }` carries the worker's reason when it ran nothing.
        */
       separateStems?: (
         request: { left: Float32Array<ArrayBuffer>; right: Float32Array<ArrayBuffer> },
@@ -789,46 +786,36 @@ declare global {
         // Never shared memory: this crosses the IPC boundary by structured clone, which always
         // reconstitutes a plain ArrayBuffer on this side.
         { left: Float32Array<ArrayBuffer>; right: Float32Array<ArrayBuffer> }
-      > | null>;
+      > | { declined: string } | null>;
       /**
        * Which model files are on disk, answered without loading them.
        *
        * Absent in the browser build, which is why every reader treats a missing function as "no
        * weights" rather than as "unknown".
        */
-      getAutomixModelsPresent?: () => Promise<{ beat_this: boolean; htdemucs: boolean }>;
-      chooseModelsDirectory?: () => Promise<{ canceled: boolean }>;
-      resetModelsDirectory?: () => Promise<void>;
-      getAutomixModelStatus?: () => Promise<ElectronAutomixModelStatus>;
-      downloadAutomixModel?: (name: string) => Promise<{ ok: boolean; skipped?: string[]; path?: string }>;
-      cancelAutomixModelDownload?: (name: string) => Promise<boolean>;
-      scanForAutomixModels?: () => Promise<{ found: ElectronAutomixModelFound[]; scanned: number }>;
-      installAutomixModel?: (name: string, source: string) => Promise<{ ok: boolean; reason?: string }>;
-      /**
-       * Deletes every copy of every model the app can reach, plus any `.part` leftovers.
-       * `failed` is non-empty when a copy could not be removed - typically one inside the
-       * installer's own read-only directory, which stays installed and is reported as such.
-       */
-      removeAllAutomixModels?: () => Promise<{
-        ok: boolean;
-        removed: string[];
-        freed: number;
-        failed: Array<{ name: string; reason: string }>;
-      }>;
-      onAutomixModelProgress?: (
-        callback: (progress: ElectronAutomixModelProgress) => void,
-      ) => () => void;
+      getAutomixModelsPresent?: () => Promise<{ beat_this: boolean; htdemucs: boolean; htdemucs_gpu?: boolean }>;
       /** Developer debug module. Absent in the browser build, where every caller no-ops. */
       debugGetState?: () => Promise<DebugModuleState>;
-      debugSetState?: (patch: Partial<Pick<DebugModuleState, 'runtimeLogEnabled' | 'runtimeLogMode' | 'memoryMonitorEnabled' | 'memoryLogEnabled' | 'memoryLogMode' | 'memoryIntervalMs'>>) => Promise<DebugModuleState>;
+      debugSetState?: (patch: Partial<Pick<DebugModuleState, 'runtimeLogEnabled' | 'runtimeLogMode' | 'consoleCaptureEnabled' | 'memoryMonitorEnabled' | 'memoryLogEnabled' | 'memoryLogMode' | 'memoryIntervalMs'>>) => Promise<DebugModuleState>;
       debugOpenLogs?: (which?: 'runtime' | 'memory') => Promise<boolean>;
       debugWriteRuntimeLines?: (lines: Array<{ at: number; level: string; tag: string | null; text: string }>) => void;
+      /** The main process's console lines, for the log panel. */
+      onDebugMainLines?: (callback: (lines: Array<{ at: number; level: 'log' | 'info' | 'warn' | 'error' | 'debug'; text: string }>) => void) => () => void;
       /** What this process can say about itself that the metrics table cannot see from outside. */
       debugRendererMemory?: () => Promise<{ pid: number; privateKB: number; sharedKB: number; blinkAllocatedKB: number } | null>;
       debugReportRendererMemory?: (report: { pid: number; privateKB?: number; sharedKB?: number; blinkAllocatedKB?: number; heapUsedKB?: number }) => void;
       onDebugMemorySample?: (callback: (sample: DebugMemorySample) => void) => () => void;
       /** One-way stage marks from the automix session into the runtime log. */
       diagMark?: (text: string) => void;
+      /**
+       * Old automix models in the folder an earlier version (up to 0.7.20) let the listener choose:
+       * where, how many and how big, or null when there is nothing to ask about.
+       */
+      checkLegacyModels?: () => Promise<{ dir: string; count: number; bytes: number } | null>;
+      /** Deletes them ('delete') or leaves them ('dismiss'); either way the prompt is not shown again. */
+      resolveLegacyModels?: (action: 'delete' | 'dismiss') => Promise<{ ok: boolean }>;
+      /** Opens that folder in the file manager. */
+      openLegacyModelsFolder?: () => Promise<boolean>;
       platform: string;
       isLinuxX11: boolean;
       getSettings: () => Promise<any>;
@@ -838,8 +825,14 @@ declare global {
       /** The tray asked to enter wallpaper mode; the renderer shows the confirmation before entering. */
       onWallpaperEntryRequested?: (callback: () => void) => () => void;
       onWallpaperInputMonitorRequested?: (callback: () => void) => () => void;
+      /** The connected displays and the display chosen for wallpaper mode. null when the asking page is not the main window. */
+      getWallpaperDisplays?: () => Promise<ElectronWallpaperDisplaysState | null>;
+      /** Chooses a connected display by id, or automatic with null; a running wallpaper moves at once. Answers the new state. */
+      setWallpaperDisplay?: (displayId: number | null) => Promise<ElectronWallpaperDisplaysState | null>;
+      /** A display was connected, removed or changed, or the choice changed. */
+      onWallpaperDisplaysChanged?: (callback: (state: ElectronWallpaperDisplaysState) => void) => () => void;
       setPlaybackDisplaySleepBlockingActive: (active: boolean) => Promise<boolean>;
-      setAppLocale: (localeKey: 'en' | 'zh-CN' | 'in') => Promise<string>;
+      setAppLocale: (localeKey: 'en' | 'zh-CN' | 'zh-TW' | 'in') => Promise<string>;
       getCacheDirectory: () => Promise<ElectronCacheDirectoryResult>;
       chooseCacheDirectory: () => Promise<ElectronCacheDirectoryResult>;
       resetCacheDirectory: () => Promise<ElectronCacheDirectoryResult>;
@@ -855,6 +848,8 @@ declare global {
       hasAudioCache: (cacheKey: string) => Promise<boolean>;
       /** `limitBytes` is the cache ceiling to prune down to afterwards; 0 means no ceiling. */
       saveAudioCache: (cacheKey: string, data: ArrayBuffer, mimeType?: string, limitBytes?: number) => Promise<boolean>;
+      /** Deletes the file under `cacheKey` only while it is `size` bytes; resolves to whether it did. */
+      removeAudioCache: (cacheKey: string, size: number) => Promise<boolean>;
       getAudioCacheUsage: () => Promise<number>;
       getAudioCacheStats: () => Promise<ElectronAudioCacheStats>;
       clearAudioCache: () => Promise<boolean>;
@@ -888,13 +883,22 @@ declare global {
       getLoginDiagnostics?: (providerId: string) => Promise<ElectronLoginDiagnostics | null>;
       /** 扫码登录失败后的主动自检（electron/loginSelfCheck.cjs）。 */
       runLoginSelfCheck?: (providerId: string) => Promise<import('./types/onlineMusic').LoginSelfCheckResult | null>;
-      restartNeteaseApi: () => Promise<ElectronNeteaseApiStatus>;
+      // 'needed'：一个请求要用它，它却因为断网没起来；主进程只在离上一次断网失败够久时才再启动。
+      restartNeteaseApi: (reason?: 'needed') => Promise<ElectronNeteaseApiStatus>;
       onNeteaseApiStatusChanged: (callback: (status: ElectronNeteaseApiStatus) => void) => () => void;
       getKugouApiStatus: () => Promise<ElectronKugouApiStatus>;
       bodianRequest: (
-        operation: import('./services/onlineMusic/bodianTransport').BodianOperation,
-        params?: import('./services/onlineMusic/bodianTransport').BodianParams,
-      ) => Promise<import('./services/onlineMusic/bodianTransport').BodianBridgeResult>;
+        operation: import('./services/onlineMusic/bodian/bodianTransport').BodianOperation,
+        params?: import('./services/onlineMusic/bodian/bodianTransport').BodianParams,
+      ) => Promise<import('./services/onlineMusic/bodian/bodianTransport').BodianBridgeResult>;
+      ytmRequest: (
+        operation: import('./services/onlineMusic/ytm/ytmTransport').YtmOperation,
+        params?: import('./services/onlineMusic/ytm/ytmTransport').YtmParams,
+      ) => Promise<import('./services/onlineMusic/ytm/ytmTransport').YtmBridgeResult>;
+      spotifyRequest: (
+        operation: import('./services/onlineMusic/spotify/spotifyTransport').SpotifyOperation,
+        params?: import('./services/onlineMusic/spotify/spotifyTransport').SpotifyParams,
+      ) => Promise<import('./services/onlineMusic/spotify/spotifyTransport').SpotifyBridgeResult>;
       kugouRequest: (
         operation: ElectronKugouOperation,
         params?: Record<string, string | number | boolean | undefined>,
@@ -955,8 +959,12 @@ declare global {
       closeRemoteControl: () => Promise<boolean>;
       getRemoteControlAlwaysOnTop: () => Promise<boolean>;
       setRemoteControlAlwaysOnTop: (alwaysOnTop: boolean) => Promise<boolean>;
-      getRemoteControlWindowSettings: () => Promise<{ hideTitlebar: boolean; clickThrough: boolean }>;
-      onRemoteControlWindowSettingsChanged: (callback: (settings: { hideTitlebar: boolean; clickThrough: boolean }) => void) => () => void;
+      /** alwaysOnTopSupported is false on native Wayland, where setAlwaysOnTop is silently ignored. */
+      getRemoteControlWindowSettings: () => Promise<{ hideTitlebar: boolean; clickThrough: boolean; expandCover?: boolean; alwaysOnTopSupported?: boolean }>;
+      onRemoteControlWindowSettingsChanged: (callback: (settings: { hideTitlebar: boolean; clickThrough: boolean; expandCover?: boolean; alwaysOnTopSupported?: boolean }) => void) => () => void;
+      /** Null when the main process cannot tell (a Wayland session): the page then uses its own mouse events. */
+      getRemoteControlPointerInside: () => Promise<boolean | null>;
+      onRemoteControlPointerInside: (callback: (inside: boolean) => void) => () => void;
       publishRemoteControlSnapshot: (snapshot: ElectronRemoteControlSnapshot) => Promise<boolean>;
       getRemoteControlSnapshot: () => Promise<ElectronRemoteControlSnapshot | null>;
       sendRemoteControlCommand: (command: ElectronRemoteControlCommand) => Promise<boolean>;
@@ -991,7 +999,7 @@ declare global {
       onStagePlayerControlRequest: (callback: (request: StagePlayerControlRequest) => void) => () => void;
       onStagePlayerQueueRequest: (callback: (request: StagePlayerQueueRequest) => void) => () => void;
       mods?: {
-        listMods: () => Promise<{ mods: ModRuntimeInfo[]; ffmpeg: ModFfmpegStatus; directories: string[] }>;
+        listMods: () => Promise<{ mods: ModRuntimeInfo[]; ffmpeg: ModFfmpegStatus; directories: string[]; startSkipped?: boolean }>;
         setModEnabled: (modId: string, enabled: boolean) => Promise<{ ok: boolean; error?: string; mods: ModRuntimeInfo[] }>;
         reloadMods: () => Promise<{ mods: ModRuntimeInfo[] }>;
         cancelExport: () => Promise<{ ok: boolean }>;
@@ -1007,6 +1015,9 @@ declare global {
         installModFromZip: (zipPath: string) => Promise<{ ok: boolean; id?: string; error?: string }>;
         getModStorageUsage: (modId: string) => Promise<ModStorageUsageResult>;
         clearModCache: (modId: string) => Promise<ModClearCacheResult>;
+        getModCallStats: () => Promise<{ stats: Record<string, ModMainCallStats> }>;
+        reportModsStartSettled: () => Promise<{ ok: boolean }>;
+        reportModsStartAlive: () => Promise<{ ok: boolean }>;
         onModsStateChanged: (callback: (mods: ModRuntimeInfo[]) => void) => () => void;
         onExportProgress: (callback: (progress: ModExportProgress) => void) => () => void;
         onModLog: (callback: (entry: ModLogEntry) => void) => () => void;

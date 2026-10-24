@@ -33,6 +33,20 @@ describe('online audio URL normalization', () => {
             .toBe('https://m10.music.126.net/song.mp3');
     });
 
+    it('upgrades QQ authenticated CDN URLs to HTTPS for WebKit audio', () => {
+        expect(toSafeRemoteUrl('http://sjy6.stream.qqmusic.qq.com/C400song.m4a?vkey=abc'))
+            .toBe('https://sjy6.stream.qqmusic.qq.com/C400song.m4a?vkey=abc');
+        expect(toSafeRemoteUrl('http://dl.stream.qqmusic.qq.com/M500song.mp3?guid=1'))
+            .toBe('https://dl.stream.qqmusic.qq.com/M500song.mp3?guid=1');
+        expect(toSafeRemoteUrl('http://cdn.tc.qq.com/song.mp3?token=abc'))
+            .toBe('https://cdn.tc.qq.com/song.mp3?token=abc');
+    });
+
+    it('does not rewrite unrelated QQ HTTP endpoints', () => {
+        expect(toSafeRemoteUrl('http://u.y.qq.com/cgi-bin/musicu.fcg?data=1'))
+            .toBe('http://u.y.qq.com/cgi-bin/musicu.fcg?data=1');
+    });
+
     it('keeps only the first KuGou candidate while preserving Electron HTTP', () => {
         expect(toSafePlaybackUrl(
             'http://fs.youthandroid2.kugou.com/primary.mp3,http://fs.youthandroid2.kugou.com/backup.mp3',

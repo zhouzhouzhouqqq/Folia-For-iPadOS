@@ -6,12 +6,10 @@ import { getCustomCappellaAvatar } from '../services/cappellaAvatarPack';
 import { getMonetBackgroundImage } from '../services/monetBackgroundImage';
 import { getMonetPortraitImage } from '../services/monetPortraitImage';
 import { restoreUploadedLyricsFont } from '../services/customLyricsFont';
-import {
-    resolveStoredCappellaTuning,
-    resolveStoredMonetBackgroundTuning,
-    resolveStoredMonetTuning,
-    resolveVisualizerBackgroundMode,
-} from '../stores/visualizerSettingsPersistence';
+import { resolveStoredCappellaTuning } from '../components/visualizer/cappella/tuning';
+import { resolveStoredMonetBackgroundTuning } from '../components/visualizer/backgrounds/monet/tuning';
+import { resolveStoredMonetTuning } from '../components/visualizer/monet/tuning';
+import { resolveVisualizerBackgroundMode } from '../stores/visualizerSettingsPersistence';
 import i18n from '../i18n/config';
 import { setStatusMessage } from '../stores/useStatusMessageStore';
 import { createSafeObjectUrl } from '../utils/blobGuards';

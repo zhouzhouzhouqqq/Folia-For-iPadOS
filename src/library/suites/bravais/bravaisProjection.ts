@@ -1,5 +1,5 @@
 import type { SongResult } from '../../../types';
-import type { LibraryHomeCard } from '../../core/contracts/homeModel';
+import type { LibraryHomeCard } from '../../core/home/homeModel.contract';
 import type { BravaisItem, BravaisItemKind } from './bravaisLayer';
 import { formatCollectionBadge, resolveBravaisTileForm, resolveCollectionTrackCount } from './bravaisTileForm';
 

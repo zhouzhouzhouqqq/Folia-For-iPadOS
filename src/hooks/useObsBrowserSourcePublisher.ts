@@ -45,7 +45,7 @@ import { loadTemperaLayerImageBlobs } from '../services/temperaLayerImages';
 import type { VisualizerTuningBundle } from '../components/visualizer/tuningRegistry';
 import type { VisualizerBackgroundConfig } from '../components/visualizer/backgrounds/definition';
 import { getSongAlbumLabel, getSongArtistLabel } from '../services/onlineMusic/songMetadata';
-import { usePlaybackStore } from '../stores/usePlaybackStore';
+import { selectDisplayPlayerState, usePlaybackStore } from '../stores/usePlaybackStore';
 import { useThemeSettingsStore } from '../stores/useThemeSettingsStore';
 import { useVisualizerSettingsStore } from '../stores/useVisualizerSettingsStore';
 import { useTypographySettingsStore } from '../stores/useTypographySettingsStore';
@@ -137,7 +137,9 @@ export const useObsBrowserSourcePublisher = ({
     const currentSong = usePlaybackStore(state => state.currentSong);
     const lyrics = usePlaybackStore(state => state.lyrics);
     const duration = usePlaybackStore(state => state.duration);
-    const playerState = usePlaybackStore(state => state.playerState);
+    // Shown, not raw: the overlay pauses its picture on anything but PLAYING, so the raw IDLE of
+    // every song change paused it for as long as the next song took to start.
+    const playerState = usePlaybackStore(selectDisplayPlayerState);
     const isDaylight = useThemeSettingsStore(state => state.isDaylight);
     const staticMode = useThemeSettingsStore(state => state.staticMode);
     const visualizerMode = useVisualizerSettingsStore(state => state.visualizerMode);

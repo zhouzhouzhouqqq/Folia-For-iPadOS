@@ -1,6 +1,6 @@
 // Copyright (c) 2026 chthollyphile
 import type { LumiereRenderQuality, LumiereTuning } from '../../../types';
-import { snapResolutionToTexturePool } from '../pixiTextureBudget';
+import { snapResolutionToTexturePool } from '../pixi/pixiTextureBudget';
 import type { LumiereProgramOptions } from './lumiereProgram';
 import type { LumiereSceneTuning } from './types';
 

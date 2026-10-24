@@ -184,15 +184,15 @@ test('the settings section offers stay here, and the command palette switches to
         const { useSettingsModalStore } = await import(/* @vite-ignore */ modulePath);
         useSettingsModalStore.getState().openSettings('options', 'general', null, 'playbackEntryView');
     });
-    const options = page.locator('[data-playback-entry-view]');
-    await expect(options).toHaveCount(3);
-    await expect(page.locator('[data-playback-entry-view="player"]')).toHaveAttribute('aria-pressed', 'true');
-    const stay = page.locator('[data-playback-entry-view="stay"]');
-    await expect(stay).toContainText('Stay here');
+    const choiceRow = page.locator('[data-settings-row="playbackEntryViewChoice"]');
+    await expect(choiceRow.getByRole('button')).toHaveCount(3);
+    const player = choiceRow.getByRole('button', { name: 'Visualizer' });
+    await expect(player).toHaveAttribute('aria-pressed', 'true');
+    const stay = choiceRow.getByRole('button', { name: 'Stay here' });
     await stay.click();
     await expect(stay).toHaveAttribute('aria-pressed', 'true');
     expect(await page.evaluate(() => localStorage.getItem('playback_entry_view'))).toBe('stay');
-    await page.locator('[data-playback-entry-view="player"]').click();
+    await player.click();
     expect(await page.evaluate(() => localStorage.getItem('playback_entry_view'))).toBe('player');
     await page.keyboard.press('Escape');
 

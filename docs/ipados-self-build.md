@@ -4,7 +4,7 @@ QQ 音乐和酷狗音乐已接入设备直连扫码登录，API 地址留空即�
 
 自定义 AI 已支持原版歌词主题分析，无需部署 Folia 后端。新增原生插件后需 Xcode ⌘R 覆盖安装；配置步骤与范围见 [iPad AI 指南](ipados-ai.md)。
 
-本工程复用 Folia 0.7.19 的完整前端、内置视觉模式和 Web Audio 链路，以 Capacitor 8.5.3 打包本地资源。你需要在自己的 Xcode 中选择个人 Team 并运行到 iPad。**本仓库没有签名证书、个人 Team ID、已签名 IPA 或账号。无签名编译通过不是完整移植验收。**
+本工程已合入 Folia 0.7.21 的前端、内置视觉模式和 Web Audio 链路，以 Capacitor 8.5.3 打包本地资源。你需要在自己的 Xcode 中选择个人 Team 并运行到 iPad。**本仓库没有签名证书、个人 Team ID、已签名 IPA 或账号。无签名编译通过不是完整移植验收。**
 
 先读 [当前功能状态](ipados-feature-matrix.md) 与 [实际验证报告](ipados-test-report.md)。当前后台连续播放尚未通过实体 iPad 验收；所有效果 WebKit 运行和设备性能未完成实体 iPad 验证；AutoMix 两模型已接通设备内推理并通过合成数据对照，需用户安装模型及真机验收，详见 [AutoMix 指南](ipados-automix.md)。任意 Node/native 模组和桌面离线/透明导出尚未完成。
 
@@ -26,7 +26,7 @@ xcodebuild -showsdks
 git status --short
 ```
 
-保留当前 `codex/ipados-self-use` 分支的未提交修改，不执行 `git reset --hard`、清理未跟踪文件或重新克隆覆盖。不需要将 .dmg/.app 转成 .ipa，也不需要在 iPad 运行 Electron。
+保留当前 `codex/upstream-0.7.21` 分支的未提交修改，不执行 `git reset --hard`、清理未跟踪文件或重新克隆覆盖。不需要将 .dmg/.app 转成 .ipa，也不需要在 iPad 运行 Electron。
 
 ## 安装依赖与构建
 
@@ -137,3 +137,10 @@ xcodebuild -project ios/App/App.xcodeproj \
 ## 可继续开发的位置
 
 先读 `docs/ipados-progress.md`，保留分支和所有未提交修改。`src/platform` 是原生能力边界，Swift 插件在 `ios/App/App`，provider 仍经 Omni。不要删除未适配桌面源码；功能状态与验证结果分别更新。未经验收不要把本工程称作“完整保留全部功能”。
+
+
+## 0.7.21 迁移版说明（2026-10-23）
+
+本工程已合入 0.7.21；安装前请先读 ipados-upstream-0.7.21.md 的未实现和待验证项。新版原生 AI/API/录屏设置在“连接与集成”，原生模型位于“播放控制”。智能动感复用实际动态图形；iOS 使用设备内 ORT 模型，首次分析速度/内存未作真机保证。Spotify/YouTube Music 本次尚无 iOS 播放桥。
+
+原生模型清单为 shared/ipadosModelManifest.json，生成/核对命令是 python3 dev/ipados/automix/sync-manifest.py --check。shared/modelManifest.json 是新版桌面/GPU .bin 权重，两者不能交换。模型不是音乐，不包含用户数据；下载/导入只安装公开权重，不上传本地音频。

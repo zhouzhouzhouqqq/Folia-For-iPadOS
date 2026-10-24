@@ -15,13 +15,20 @@ export const SEAM_EDGE_MARGIN = 14;
 /** Weight of "distance from the base line" against "camera shift" when choosing a boundary. */
 export const SEAM_LINE_DISTANCE_WEIGHT = 0.15;
 
-/** World x of the gap midline on the left edge of block `column`. */
-export const getSeamBoundaryX = (column: number, metrics: WallMetrics) => (
-    column * getBlockSize(metrics).width - metrics.gap / 2
+/**
+ * World x of the gap midline on the left edge of block `column`. `blockWidth` is the distance
+ * between two blocks' left edges: a wall whose blocks stand further apart than the 12-unit block
+ * (a street between them) passes its own; the midline is then the middle of the wider gap.
+ */
+/** How far the gap midline stands left of a block's left edge (half of the gap, street included). */
+const seamOffset = (metrics: WallMetrics, blockWidth: number) => (blockWidth - getBlockSize(metrics).width + metrics.gap) / 2;
+
+export const getSeamBoundaryX = (column: number, metrics: WallMetrics, blockWidth = getBlockSize(metrics).width) => (
+    column * blockWidth - seamOffset(metrics, blockWidth)
 );
 
-export const nearestSeamBoundaryX = (x: number, metrics: WallMetrics) => (
-    getSeamBoundaryX(Math.round((x + metrics.gap / 2) / getBlockSize(metrics).width), metrics)
+export const nearestSeamBoundaryX = (x: number, metrics: WallMetrics, blockWidth = getBlockSize(metrics).width) => (
+    getSeamBoundaryX(Math.round((x + seamOffset(metrics, blockWidth)) / blockWidth), metrics, blockWidth)
 );
 
 export const isSeamBoundaryX = (x: number, metrics: WallMetrics) => (
@@ -44,6 +51,8 @@ export type BlockSeamPlanInput = {
     openWidth: number;
     view: WallView;
     metrics: WallMetrics;
+    /** The distance between two blocks' left edges, when the wall's blocks stand further apart (see getSeamBoundaryX). */
+    blockWidth?: number;
     /** Keep this boundary (the split is visible and stays put); only the camera may yield. */
     preferX?: number;
     edge?: number;
@@ -59,16 +68,16 @@ export const blockSeamPlan = ({
     openWidth,
     view,
     metrics,
+    blockWidth = getBlockSize(metrics).width,
     preferX,
     edge = SEAM_EDGE_MARGIN,
 }: BlockSeamPlanInput): SeamPlan => {
     const lineX = getViewLineX(view);
     const need = openWidth / 2 + edge;
-    const blockWidth = getBlockSize(metrics).width;
     const base = Math.round((cameraX + metrics.gap / 2) / blockWidth);
     const candidates = preferX !== undefined
         ? [preferX]
-        : [base - 1, base, base + 1].map(column => getSeamBoundaryX(column, metrics));
+        : [base - 1, base, base + 1].map(column => getSeamBoundaryX(column, metrics, blockWidth));
 
     let best: SeamPlan | null = null;
     let bestScore = Number.POSITIVE_INFINITY;

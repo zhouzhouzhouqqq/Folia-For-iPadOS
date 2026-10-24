@@ -3,11 +3,14 @@ import { hasNativeAutomix } from '../../platform/ios/automix';
 import type { SongResult } from '../../types';
 import { getPlaybackSongKey, getPlaybackSourceRef } from '../../utils/appPlaybackGuards';
 import { onAudioCached } from '../audioCache';
+import { hasProviderKeptSongAudio } from '../onlineMusic/providerRegistry';
 import { getCachedSongAudioBlob } from '../onlineMusic/resourceCache';
 import { getSongResourceCacheKey } from '../onlineMusic/resourceKeys';
-import { getPlaybackAnalysisKey, getPlaybackRepresentation } from '../playbackRecovery/representationRegistry';
-import { canRunBeatThis } from './beatThis';
-import { modelCanRun, noteModelFailed } from './modelAvailability';
+import type { PlaybackRepresentation } from '../../types/playbackRecovery';
+import { getPlaybackAnalysisKey, getPlaybackAnalysisTarget } from '../playbackRecovery/representationRegistry';
+import { whyNotTheSong } from '../wholeSongCheck';
+import { canRunBeatThis } from '../analysis/beatThis';
+import { modelCanRun, noteModelFailed } from '../analysis/modelAvailability';
 import { profilesSettled } from './profileService';
 // The one edge back the other way is `import type`, so it is erased and this is not a cycle.
 import { envelopeOf, lastVocalMoment } from './stemGesture';
@@ -262,7 +265,7 @@ const parked = new Map<string, StemRequest>();
 
 // Subscribed at module scope. The listener has to be in place before the first request can park,
 // and the first request parks inside the first call to `ensureStems` - there is no earlier hook.
-onAudioCached((cacheKey) => {
+onAudioCached((cacheKey, keptUrl) => {
     for (const [key, request] of [...parked]) {
         if (getSongResourceCacheKey('audio', request.song) !== cacheKey) continue;
         parked.delete(key);
@@ -270,7 +273,9 @@ onAudioCached((cacheKey) => {
         // was parked. The check in there sits after the decode, which is tens of megabytes spent to
         // learn something already known at this line.
         if (request.stillWanted && !request.stillWanted()) continue;
-        void ensureStems(request);
+        // A song its provider keeps is read by its URL, and the request may have parked before
+        // the song had one (the next song is asked for as soon as the current one starts).
+        void ensureStems(keptUrl ? { ...request, audioUrl: keptUrl } : request);
     }
 });
 
@@ -402,9 +407,11 @@ export const getStemsByKey = (key: string | null, role: StemRole): TrackStems | 
  * already in hand, or - for a local track with no URL - the file straight off its own handle
  * (`readBytes`), and gives up otherwise.
  */
-const readLocalBytes = async (request: StemRequest): Promise<ArrayBuffer | null> => {
+const readLocalBytes = async (
+    request: StemRequest,
+    representation: PlaybackRepresentation | null,
+): Promise<ArrayBuffer | null> => {
     const { song, audioUrl } = request;
-    const representation = getPlaybackRepresentation(song);
     if (representation) {
         try {
             const response = await fetch(representation.url);
@@ -416,16 +423,30 @@ const readLocalBytes = async (request: StemRequest): Promise<ArrayBuffer | null>
         }
     }
     const cached = await getCachedSongAudioBlob(song);
-    if (cached) return cached.arrayBuffer();
+    if (cached) {
+        // A copy under half the song (a clip a version before wholeSongCheck.ts kept) is not
+        // separated: its window is not the song's. The request waits as for no copy, and the song's
+        // own file wakes it when it is stored. A marked clip never reaches the media cache, and its
+        // URL is an online one, which is never read here.
+        const notTheSong = await whyNotTheSong(song, null, cached);
+        if (!notTheSong) return cached.arrayBuffer();
+        explainOnce(`${keyOf(song, request.role)}:not-the-song`, `[Automix] not separating the ${request.role} of "${song.name}": the copy in the media cache is ${notTheSong}`);
+        return null;
+    }
 
     // A local URL already in hand: the outgoing track plays from a blob: URL, so its tail reads
-    // straight off that. An online URL is left alone - separation never downloads.
+    // straight off that. An online URL is left alone - separation never downloads - unless its
+    // provider keeps the file on this machine itself: reading that URL is then a read of the kept
+    // file, not a download.
     if (audioUrl) {
         const isLocalUrl = audioUrl.startsWith('blob:') || audioUrl.startsWith('file:')
             || getPlaybackSourceRef(song).kind !== 'online';
-        if (!isLocalUrl) return null;
+        if (!isLocalUrl && !await hasProviderKeptSongAudio(song, audioUrl)) return null;
         try {
-            return await (await fetch(audioUrl)).arrayBuffer();
+            const response = await fetch(audioUrl);
+            // A URL the provider no longer honours answers with a status and no audio.
+            if (!isLocalUrl && !response.ok) return null;
+            return await response.arrayBuffer();
         } catch {
             return null;
         }
@@ -507,7 +528,10 @@ const cutWindow = async (bytes: ArrayBuffer, role: StemRole) => {
  */
 export const ensureStems = async (request: StemRequest): Promise<void> => {
     if (!canSeparateStems()) return;
-    const key = keyOf(request.song, request.role);
+    // The key and the representation read for it, resolved together (see analysis/README.md), so a
+    // transcode registering mid-window cannot file one's stems under the other's key.
+    const target = getPlaybackAnalysisTarget(request.song);
+    const key = `${target.key}:${request.role}`;
     if (inFlight.has(key)) return;
     if (cache.has(key)) {
         // A hit says something, and it used to say it by staying quiet. "We already have this" and
@@ -553,7 +577,7 @@ export const ensureStems = async (request: StemRequest): Promise<void> => {
         await profilesSettled();
 
         const started = performance.now();
-        const bytes = await readLocalBytes(request);
+        const bytes = await readLocalBytes(request, target.representation);
         if (!bytes) {
             // A local file the handle could not reach - permission not restored, moved, or deleted.
             // NOT parked: nothing fires a media-cache event for a local file, so a parked request would
@@ -590,7 +614,12 @@ export const ensureStems = async (request: StemRequest): Promise<void> => {
         }
         const modelStarted = performance.now();
         const parts = await separate({ left, right });
-        if (!parts) {
+        if (!parts || 'declined' in parts) {
+            // Said here, in the console the listener reads. The worker's own line goes to the main
+            // process's stdout only, so a library that would not load once looked like a separation
+            // that never finished: "separating" and then nothing, track after track.
+            console.warn(`[Automix] could not separate the ${request.role} of "${request.song.name}":`
+                + ` ${parts ? parts.declined : 'the analysis worker answered nothing'}`);
             // Nothing came back. The window this can happen in is the widest in the app - separation
             // is asked for the instant a track starts and runs for tens of seconds - so weights
             // disappearing under one, or the worker restarting under it on a folder switch, is

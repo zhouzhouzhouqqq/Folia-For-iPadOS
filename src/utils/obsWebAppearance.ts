@@ -5,7 +5,7 @@ import type { VisualizerBackgroundConfig } from '../components/visualizer/backgr
 // 所以短码里的模式只可能是内建的。
 import { DEFAULT_VISUALIZER_MODE, isBuiltinVisualizerMode } from '../types/visualizerModes';
 import { decompressConfig } from './appearanceCodec';
-import type { ObsAiConfig } from '../services/gemini';
+import type { ObsAiConfig } from '../services/aiText';
 import { getWebAiProvider } from '../services/runtimeConfig';
 
 // src/utils/obsWebAppearance.ts

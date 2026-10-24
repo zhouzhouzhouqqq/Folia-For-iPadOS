@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Theme, ThemeMode, VisualizerBackgroundMode, VisualizerMode } from '../../../types';
-import type { ThemeSourceModel } from '../../../hooks/themeControllerState';
+import { PlayerState, type Theme, type VisualizerBackgroundMode, type VisualizerMode } from '../../../types';
 import { getVisualizerModeLabel, getVisualizerRegistryEntry, VISUALIZER_REGISTRY } from '../../visualizer/registry';
 import {
     getVisualizerBackgroundModeLabel,
@@ -16,15 +15,31 @@ import { openCommandPaletteCommand } from '../../../stores/useAppViewStore';
 import { useLyricSegmentationStore } from '../../../stores/useLyricSegmentationStore';
 import { LYRIC_SEGMENTATION_COMMAND_ID } from '../../command-palette/commands/lyricSegmentationCommand';
 import ModeStepperRow from './ModeStepperRow';
-import ThemeSourceRow from './ThemeSourceRow';
 import { BackgroundModeGlyph, VisualizerModeGlyph } from '../../visualizer/modeGlyphs';
+import { panelMakesImages, panelPictureTheme } from './panelPictures';
+import BackgroundPicture from '../../visualizer/preview/BackgroundPicture';
+import { LyricPreviewProvider, type LyricPreviewLook } from '../../visualizer/preview/LyricPreviewContext';
+import LyricStylePicture from '../../visualizer/preview/LyricStylePicture';
+import { usePreviewClock } from '../../visualizer/preview/usePreviewClock';
+import { backgroundTuningActions, getVisualizerTuning } from '../../visualizer/tuningRegistry';
+import type { VisualizerTuningSettings } from '../../visualizer/tuningDefinition';
+import { useVisualizerBackgroundConfig } from '../../visualizer/useVisualizerBackgroundConfig';
+import { useVisualizerTunings } from '../../visualizer/useVisualizerTunings';
+import { useTypographySettingsStore } from '../../../stores/useTypographySettingsStore';
 import { useVisualizerSettingsStore } from '../../../stores/useVisualizerSettingsStore';
 import { useSettingsModalStore } from '../../../stores/useSettingsModalStore';
+import { selectDisplayPlayerState, usePlaybackStore } from '../../../stores/usePlaybackStore';
+import { usePonderStore } from '../../../stores/usePonderStore';
+import { Toggle, type PictureState } from '../../modal/settings/kit';
 
 // src/components/panelTab/controls/AppearanceSection.tsx
-// 外观区：歌词样式、背景、主题来源三件事放在一起。
-// 前两行是「‹ 字形 当前模式 参数 ›」取景器；背景的模式专属参数由背景注册表自己提供，
+// 外观区：歌词样式、背景、播放页透明背景三件事放在一起。
+// 前两行是「‹ 字形 当前模式 ›」取景器：歌词样式的动画强度在按钮右侧，分词开关和背景参数在按钮下面一行，
+// 没有就收起；背景的模式专属参数由背景注册表自己提供，
 // 面板不再按模式写 if 链，新增背景模式会自带快捷控件。
+// 行里只有字形；点开后的一格一格小图画的是真的样式和背景，用的是当前主题和已保存的设置；
+// 它们共用这里的一个预览时钟，只有某一行的选择器开着时时钟才走。
+// 歌在放的时候，只有选择器开着才做小图，换歌带来的新主题也要等下一次打开选择器才用上（panelPictures.ts）。
 
 interface AppearanceSectionProps {
     theme: Theme;
@@ -34,15 +49,19 @@ interface AppearanceSectionProps {
     onVisualizerModeChange: (mode: VisualizerMode) => void;
     useCoverColorBg: boolean;
     onToggleCoverColorBg: (enable: boolean) => void;
-    themeSourceModel: ThemeSourceModel;
-    onBgModeChange: (mode: ThemeMode) => void;
-    hasCustomTheme: boolean;
-    defaultTheme: Theme;
-    daylightTheme: Theme;
+    transparentPlayerBackground: boolean;
+    onToggleTransparentPlayerBackground: (enable: boolean) => void;
     onClosePanel?: () => void;
 }
 
 const ANIMATION_INTENSITIES: Theme['animationIntensity'][] = ['calm', 'normal', 'chaotic'];
+
+const drawStyle = (mode: VisualizerMode, state: PictureState) => <LyricStylePicture mode={mode} {...state} />;
+const drawBackground = (mode: VisualizerBackgroundMode, state: PictureState) => <BackgroundPicture mode={mode} {...state} />;
+const drawStyleGlyph = (mode: VisualizerMode) => <VisualizerModeGlyph mode={mode} size={18} />;
+const drawBackgroundGlyph = (mode: VisualizerBackgroundMode) => <BackgroundModeGlyph mode={mode} size={18} />;
+
+type PictureTheme = { theme: Theme; isDaylight: boolean };
 
 const AppearanceSection: React.FC<AppearanceSectionProps> = ({
     theme,
@@ -52,14 +71,12 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
     onVisualizerModeChange,
     useCoverColorBg,
     onToggleCoverColorBg,
-    themeSourceModel,
-    onBgModeChange,
-    hasCustomTheme,
-    defaultTheme,
-    daylightTheme,
+    transparentPlayerBackground,
+    onToggleTransparentPlayerBackground,
     onClosePanel,
 }) => {
     const { t } = useTranslation();
+    const transparentLabelId = useId();
     const openSettings = useSettingsModalStore(state => state.openSettings);
     // Only the modes whose typography is built from word segmentation get the chip; the registry
     // says which, so adding such a mode does not mean editing a list here.
@@ -67,14 +84,6 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
     const hasSavedSegmentation = useLyricSegmentationStore(state => Boolean(state.record));
     const visualizerBackgroundMode = useVisualizerSettingsStore(state => state.visualizerBackgroundMode);
     const setVisualizerBackgroundMode = useVisualizerSettingsStore(state => state.handleSetVisualizerBackgroundMode);
-    const monetBackgroundTuning = useVisualizerSettingsStore(state => state.monetBackgroundTuning);
-    const setMonetBackgroundTuning = useVisualizerSettingsStore(state => state.handleSetMonetBackgroundTuning);
-    const nomandBackgroundTuning = useVisualizerSettingsStore(state => state.nomandBackgroundTuning);
-    const setNomandBackgroundTuning = useVisualizerSettingsStore(state => state.handleSetNomandBackgroundTuning);
-    const latentBackgroundTuning = useVisualizerSettingsStore(state => state.latentBackgroundTuning);
-    const setLatentBackgroundTuning = useVisualizerSettingsStore(state => state.handleSetLatentBackgroundTuning);
-    const soraBackgroundTuning = useVisualizerSettingsStore(state => state.soraBackgroundTuning);
-    const setSoraBackgroundTuning = useVisualizerSettingsStore(state => state.handleSetSoraBackgroundTuning);
 
     const visualizerOptions = useMemo(
         () => VISUALIZER_REGISTRY.map(entry => ({
@@ -94,6 +103,31 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
         [t],
     );
     const resolvedBackgroundMode = resolveVisualizerBackgroundMode(visualizerBackgroundMode, visualizerMode);
+
+    // Which row's picker is open, if any. The pictures' clock runs only then: a picture moves only
+    // while the pointer rests on it in an open picker.
+    const [openPicker, setOpenPicker] = useState<'style' | 'background' | null>(null);
+    const isPlaying = usePlaybackStore(state => selectDisplayPlayerState(state) === PlayerState.PLAYING);
+    const pageTheme = useMemo<PictureTheme>(() => ({ theme, isDaylight }), [theme, isDaylight]);
+    // No picture is drawn before a picker opens, and opening one takes the page's theme.
+    const [pictureTheme, setPictureTheme] = useState(pageTheme);
+    const followedTheme = panelPictureTheme(pictureTheme, pageTheme, { playing: isPlaying, pickerOpens: false });
+    if (followedTheme !== pictureTheme) {
+        setPictureTheme(followedTheme);
+    }
+    const changeOpenPicker = (next: 'style' | 'background' | null) => {
+        setOpenPicker(next);
+        if (next !== null) {
+            setPictureTheme(held => panelPictureTheme(held, pageTheme, { playing: isPlaying, pickerOpens: true }));
+            // The rows' Ponder hint, if it is showing, would lie over the picker (lyricStyle.target.ts keeps it away while one is open).
+            usePonderStore.getState().setHoveredTargetId(null);
+        }
+    };
+    const previewClock = usePreviewClock({ mode: visualizerMode, paused: openPicker === null });
+    const visualizerTunings = useVisualizerTunings();
+    const lyricsFontScale = useTypographySettingsStore(state => state.lyricsFontScale);
+    const pictureLook = useMemo<LyricPreviewLook>(() => ({ visualizerTunings, lyricsFontScale }), [visualizerTunings, lyricsFontScale]);
+    const pictureBackground = useVisualizerBackgroundConfig();
 
     const stepBackgroundMode = (direction: -1 | 1) => {
         if (backgroundOptions.length < 2) {
@@ -123,20 +157,33 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
         });
     };
 
-    const backgroundQuickControls = getVisualizerBackgroundRegistryEntry(resolvedBackgroundMode).renderQuickControls?.({
-        config: {
-            common: { useCoverColorBg },
-            monet: { tuning: monetBackgroundTuning },
-            nomand: { tuning: nomandBackgroundTuning },
-            latent: { tuning: latentBackgroundTuning },
-            sora: { tuning: soraBackgroundTuning },
+    // The style's own quick controls get its tuning as it is saved, and a change that is saved at once
+    // through the store action its tuning.ts names (an action needs no subscription).
+    const styleTuning = getVisualizerTuning(visualizerMode);
+    const styleQuickControls = getVisualizerRegistryEntry(visualizerMode).renderQuickControls?.({
+        t,
+        isDaylight,
+        theme,
+        tuning: styleTuning?.read(visualizerTunings),
+        onTuningChange: (patch) => {
+            const save = styleTuning && (useVisualizerSettingsStore.getState() as unknown as Record<string, unknown>)[styleTuning.settingsSetterKey];
+            if (typeof save === 'function') {
+                save(patch);
+            }
         },
+        settings: useVisualizerSettingsStore.getState() as unknown as VisualizerTuningSettings,
+    });
+    const hasStyleQuickControls = styleQuickControls !== null && styleQuickControls !== undefined && styleQuickControls !== false;
+
+    const backgroundQuickControls = getVisualizerBackgroundRegistryEntry(resolvedBackgroundMode).renderQuickControls?.({
+        // The backgrounds' tunings as they are saved, and the store's actions for them (an action needs no subscription).
+        config: { ...pictureBackground, common: { ...pictureBackground.common, useCoverColorBg } },
         actions: {
-            common: { onCoverColorChange: onToggleCoverColorBg },
-            monet: { onTuningChange: setMonetBackgroundTuning },
-            nomand: { onTuningChange: setNomandBackgroundTuning },
-            latent: { onTuningChange: setLatentBackgroundTuning },
-            sora: { onTuningChange: setSoraBackgroundTuning },
+            common: {
+                onCoverColorChange: onToggleCoverColorBg,
+                onDisableVignetteChange: useVisualizerSettingsStore.getState().handleToggleDisableVisualizerVignette,
+            },
+            ...backgroundTuningActions(useVisualizerSettingsStore.getState() as unknown as Record<string, unknown>),
         },
         t,
         isDaylight,
@@ -144,69 +191,76 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
     });
 
     return (
-        <div className="space-y-1">
+        <div>
             {/* 思索「歌词样式」的埋点：两行一起算，因为那一章讲的就是歌词和背景各选各的。 */}
-            <div data-ponder="lyric-style" className="space-y-1">
-                <ModeStepperRow<VisualizerMode>
-                    value={visualizerMode}
-                    options={visualizerOptions}
-                    onSelect={onVisualizerModeChange}
-                    onStep={stepVisualizerMode}
-                    renderGlyph={mode => <VisualizerModeGlyph mode={mode} />}
-                    ariaLabel={t('ui.animationMode')}
-                    moreLabel={t('ui.moreSettings')}
-                    onOpenMore={openVisualizerSettings}
-                    isDaylight={isDaylight}
-                    primaryColor={theme.primaryColor}
-                    trailing={(
-                        <>
+            <div data-ponder="lyric-style">
+                <LyricPreviewProvider
+                    clock={previewClock}
+                    theme={pictureTheme.theme}
+                    isDaylight={pictureTheme.isDaylight}
+                    look={pictureLook}
+                    background={pictureBackground}
+                    making={panelMakesImages({ playing: isPlaying, pickerOpen: openPicker !== null })}
+                >
+                    <ModeStepperRow<VisualizerMode>
+                        value={visualizerMode}
+                        options={visualizerOptions}
+                        onSelect={onVisualizerModeChange}
+                        onStep={stepVisualizerMode}
+                        renderGlyph={drawStyleGlyph}
+                        renderPicture={drawStyle}
+                        caption={t('ui.animationMode')}
+                        moreLabel={t('ui.moreSettings')}
+                        onOpenMore={openVisualizerSettings}
+                        open={openPicker === 'style'}
+                        onOpenChange={open => changeOpenPicker(open ? 'style' : null)}
+                        aside={(
                             <QuickControlChip
-                                isDaylight={isDaylight}
                                 label={t(`animation.${theme.animationIntensity}`)}
                                 title={`${t('ui.animationIntensity')}: ${t(`animation.${theme.animationIntensity}`)}`}
                                 onClick={cycleAnimationIntensity}
                             />
-                            {usesWordSegmentation && (
-                                <QuickControlToggle
-                                    active={hasSavedSegmentation}
-                                    theme={theme}
-                                    label={t('commandPalette.commands.lyric-segmentation.title')}
-                                    onToggle={() => {
-                                        openCommandPaletteCommand(LYRIC_SEGMENTATION_COMMAND_ID);
-                                        onClosePanel?.();
-                                    }}
-                                >
-                                    <WholeWord size={14} />
-                                </QuickControlToggle>
-                            )}
-                        </>
-                    )}
-                />
+                        )}
+                        params={(usesWordSegmentation || hasStyleQuickControls) && (
+                            <>
+                                {usesWordSegmentation && (
+                                    <QuickControlToggle
+                                        active={hasSavedSegmentation}
+                                        label={t('commandPalette.commands.lyric-segmentation.title')}
+                                        onToggle={() => {
+                                            openCommandPaletteCommand(LYRIC_SEGMENTATION_COMMAND_ID);
+                                            onClosePanel?.();
+                                        }}
+                                    >
+                                        <WholeWord size={14} />
+                                    </QuickControlToggle>
+                                )}
+                                {styleQuickControls}
+                            </>
+                        )}
+                    />
 
-                <ModeStepperRow<VisualizerBackgroundMode>
-                    value={resolvedBackgroundMode}
-                    options={backgroundOptions}
-                    onSelect={setVisualizerBackgroundMode}
-                    onStep={stepBackgroundMode}
-                    renderGlyph={mode => <BackgroundModeGlyph mode={mode} />}
-                    ariaLabel={t('options.visualizerBackgroundMode')}
-                    moreLabel={t('ui.moreSettings')}
-                    onOpenMore={openBackgroundSettings}
-                    isDaylight={isDaylight}
-                    primaryColor={theme.primaryColor}
-                    trailing={backgroundQuickControls}
-                />
+                    <ModeStepperRow<VisualizerBackgroundMode>
+                        value={resolvedBackgroundMode}
+                        options={backgroundOptions}
+                        onSelect={setVisualizerBackgroundMode}
+                        onStep={stepBackgroundMode}
+                        renderGlyph={drawBackgroundGlyph}
+                        renderPicture={drawBackground}
+                        caption={t('options.visualizerBackgroundMode')}
+                        moreLabel={t('ui.moreSettings')}
+                        onOpenMore={openBackgroundSettings}
+                        open={openPicker === 'background'}
+                        onOpenChange={open => changeOpenPicker(open ? 'background' : null)}
+                        params={backgroundQuickControls}
+                    />
+                </LyricPreviewProvider>
             </div>
 
-            <div className="pt-1">
-                <ThemeSourceRow
-                    themeSourceModel={themeSourceModel}
-                    onBgModeChange={onBgModeChange}
-                    hasCustomTheme={hasCustomTheme}
-                    defaultTheme={defaultTheme}
-                    daylightTheme={daylightTheme}
-                    isDaylight={isDaylight}
-                />
+            {/* Only the switch turns it; the text names it for a screen reader. */}
+            <div className="flex min-h-11 items-center gap-3 py-1.5">
+                <span id={transparentLabelId} className="min-w-0 flex-1 text-sm leading-5">{t('options.transparentPlayerBackground')}</span>
+                <Toggle checked={transparentPlayerBackground} onChange={onToggleTransparentPlayerBackground} labelledBy={transparentLabelId} />
             </div>
         </div>
     );

@@ -3,7 +3,7 @@ import { useVisualizerSettingsStore } from '../../../stores/useVisualizerSetting
 import { useLyricSegmentationStore } from '../../../stores/useLyricSegmentationStore';
 import { useVideoLayerSettingsStore } from '../../../stores/useVideoLayerSettingsStore';
 import { getVisualizerRegistryEntry } from '../../visualizer/registry';
-import { isLyricSegmentationAiAvailable } from '../../../services/lyricSegmentationAi';
+import { isLyricSegmentationAiAvailable } from '../../../services/aiText';
 import type { LyricSegmentationActions } from '../playback/createLyricSegmentationActions';
 
 // src/components/app/command-palette-context/buildVisualizerCommandContext.ts
@@ -30,6 +30,10 @@ export const buildVisualizerCommandContext = (
         toggleVideoLayer: () => {
             const videoLayer = useVideoLayerSettingsStore.getState();
             videoLayer.setVideoLayerEnabled(!videoLayer.videoLayerEnabled);
+        },
+        toggleSmartBeat: () => {
+            const latest = useVisualizerSettingsStore.getState();
+            latest.handleSetSmartBeat({ enabled: !latest.smartBeat.enabled });
         },
         pickVideoLayerFile: () => useVideoLayerSettingsStore.getState().pickLocalFile(),
         usesWordSegmentation: Boolean(getVisualizerRegistryEntry(visualizer.visualizerMode).usesWordSegmentation),

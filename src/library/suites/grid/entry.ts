@@ -1,5 +1,5 @@
-import type { LibraryAccountActionId } from '../../core/contracts/account';
-import type { LibraryHomeActionId, LibrarySuiteManifest } from '../../core/contracts/suite';
+import type { LibraryAccountActionId } from '../../core/account/account.contract';
+import type { LibraryHomeActionId, LibrarySuiteManifest } from '../../core/suite/suite.contract';
 import Grid3D from './home/Grid3D';
 import GridCollectionSurface from './collection/GridCollectionSurface';
 import GridArtistSurface from './artist/GridArtistSurface';
@@ -44,8 +44,8 @@ const GRID_HOME_ACTIONS: readonly LibraryHomeActionId[] = [
     'home-refresh-navidrome',
 ];
 
-// 账户：登录弹窗（二维码、QQ 两步选方式、重试、关闭、失败诊断、网易后端重启）与切换确认框（GridAccountSurface），
-// 以及首页切换器 / 连接面板上的选平台与登出（Grid3D 经账户 controller 调用）。全部 7 个动作都实现。
+// 账户：切换确认框（GridAccountSurface）；登录（二维码或浏览器、QQ 两步选方式、重来、关闭、失败详情与诊断、本地服务
+// 重启）在共用的登录窗口里，首页的登录按钮和右下角的药丸打开它，选平台与登出也在窗口里。全部 7 个动作都实现。
 const GRID_ACCOUNT_ACTIONS: readonly LibraryAccountActionId[] = [
     'account-login',
     'account-login-method',

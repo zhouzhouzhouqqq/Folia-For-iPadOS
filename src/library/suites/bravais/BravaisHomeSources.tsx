@@ -1,9 +1,9 @@
 import React, { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LocalLibraryGroup, LocalPlaylist, LocalSong } from '../../../types';
-import type { LibraryCollectionDescriptor } from '../../core/contracts/collection';
-import type { LibraryDirectoryBatchController, LibraryHiddenScope } from '../../core/contracts/directory';
-import type { LibraryLocalCatalogSnapshot } from '../../core/contracts/home';
+import type { LibraryCollectionDescriptor } from '../../core/collection/collection.contract';
+import type { LibraryDirectoryBatchController, LibraryHiddenScope } from '../../core/directory/directory.contract';
+import type { LibraryLocalCatalogSnapshot } from '../../core/home/home.contract';
 import type {
     LibraryHomeActionsController,
     LibraryHomeCard,
@@ -12,17 +12,17 @@ import type {
     LibraryHomeTabKey,
     LibraryLocalDirectoryTreesResource,
     LibraryNavidromeHomeResource,
-} from '../../core/contracts/homeModel';
-import type { LibraryDeclaredActions, LibraryHomeActionId } from '../../core/contracts/suite';
-import type { LibraryAccountController } from '../../core/contracts/account';
-import { isPersonalFmCard } from '../../core/model/homeCards';
-import { resolveLocalHomeActions, type LocalHomeRow } from '../../core/model/localHomeModel';
-import { isNavidromeHomeSection, resolveNavidromeCollectionType } from '../../core/model/navidromeHomeModel';
-import type { LibraryHomeOnlineList } from '../../core/bindings/useLibraryHomeOnline';
-import { useLibraryHomeLocal, useLocalDirectoryTrees, useLocalHomeBatchConfig } from '../../core/bindings/useLibraryHomeLocal';
-import { useLibraryHomeNavidrome } from '../../core/bindings/useLibraryHomeNavidrome';
-import { useLibraryHomeActions } from '../../core/bindings/useLibraryHomeActions';
-import { useLibraryHomeListRegistration } from '../../core/bindings/useLibraryHomeSurfaceRegistration';
+} from '../../core/home/homeModel.contract';
+import type { LibraryDeclaredActions, LibraryHomeActionId } from '../../core/suite/suite.contract';
+import type { LibraryAccountController } from '../../core/account/account.contract';
+import { isPersonalFmCard } from '../../core/home/homeCards';
+import { resolveLocalHomeActions, type LocalHomeRow } from '../../core/home/localHomeModel';
+import { isNavidromeHomeSection, resolveNavidromeCollectionType } from '../../core/home/navidrome/navidromeHomeModel';
+import type { LibraryHomeOnlineList } from '../../core/home/online/useLibraryHomeOnline';
+import { useLibraryHomeLocal, useLocalDirectoryTrees, useLocalHomeBatchConfig } from '../../core/home/useLibraryHomeLocal';
+import { useLibraryHomeNavidrome } from '../../core/home/navidrome/useLibraryHomeNavidrome';
+import { useLibraryHomeActions } from '../../core/home/useLibraryHomeActions';
+import { useLibraryHomeListRegistration } from '../../core/home/useLibraryHomeSurfaceRegistration';
 import type { BravaisHomeTool } from './bravaisHomeModels';
 import type { BravaisSeamMenuItem } from './bravaisSeamModels';
 import type { BravaisHomeChrome } from './useBravaisHomeChrome';

@@ -74,13 +74,13 @@ import './bravaisHome.css';
 
 /**
  * B10 账户位：首页在线页签窄缝里的平台切换（account-select / account-logout）放在这里。B9 只给一个空容器，挂着
- * `data-bravais-account-slot=<providerId>`；B10 按 BravaisHomeAccount（扩展它）在里面渲染平台列表与登出。
- * B10：容器里是 BravaisSeamAccountSwitcher（书脊上是一个展开缝的图标按钮）。
+ * `data-bravais-account-slot=<providerId>`；里面是账户入口，点了打开共用的登录窗口。
+ * 容器里是 BravaisSeamAccountSwitcher（书脊上是一个图标按钮）。
  * fb4：容器是首页窄缝的直接子级，排在工具格正上方。
  */
-export const BravaisSeamAccountSlot: React.FC<{ account: BravaisHomeAccount; compact: boolean; onExpand: () => void }> = ({ account, compact, onExpand }) => (
+export const BravaisSeamAccountSlot: React.FC<{ account: BravaisHomeAccount; compact: boolean }> = ({ account, compact }) => (
     <div className="bravais-seam-account" data-bravais-account-slot={account.providerId} aria-label={account.providerLabel}>
-        <BravaisSeamAccountSwitcher account={account} compact={compact} onExpand={onExpand} />
+        <BravaisSeamAccountSwitcher account={account} compact={compact} />
     </div>
 );
 
@@ -382,7 +382,7 @@ const BravaisSeamHome: React.FC<{
                 </button>
             )}
             {/* fb4：账户入口贴在工具格正上方（不在中段），平台列表从它往上弹出、盖在导航区上。 */}
-            {home?.account && <BravaisSeamAccountSlot account={home.account} compact={compact} onExpand={expand} />}
+            {home?.account && <BravaisSeamAccountSlot account={home.account} compact={compact} />}
             {home && (
                 <BravaisSeamHomeTools home={home} compact={compact} onExpand={expand}
                     menuShortcuts={shortcuts && !shortcutsInColumn ? shortcuts : null} onOpenShortcut={openShortcut} />

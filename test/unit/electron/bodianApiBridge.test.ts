@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 // test/unit/electron/bodianApiBridge.test.ts — host persistence and IPC; protocol tests live in the API repository.
 
 const require = createRequire(import.meta.url);
-const { createBodianApiBridge } = require('../../../electron/bodianApiBridge.cjs');
+const { createBodianApiBridge } = require('../../../electron/bodian/bodianApiBridge.cjs');
 const { createSessionRepository, SESSION_KEY } = require('../../../electron/bodian/session.cjs');
 const { createBodianMediaPolicy } = require('../../../electron/bodian/mediaCors.cjs');
 const { createWire } = require('../../helpers/bodianWire.cjs');

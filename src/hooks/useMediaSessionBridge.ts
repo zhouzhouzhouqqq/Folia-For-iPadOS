@@ -90,7 +90,8 @@ export const useMediaSessionBridge = ({
         let disposed = false;
         const controller = new AbortController();
         const sourceArtworkUrl = cachedCoverUrl || getSongCoverUrl(currentSong) || '';
-        let artworkUrl = getSupportedMediaSessionArtworkUrl(sourceArtworkUrl, document.baseURI);
+        // Native metadata must never briefly publish the original before its bounded thumbnail.
+        let artworkUrl = isNativeIOS() ? '' : getSupportedMediaSessionArtworkUrl(sourceArtworkUrl, document.baseURI);
         let disposeArtwork: (() => void) | undefined;
         const publish = () => {
             if (disposed || !isMediaSessionSourceReady(audio, audioSrc, document.baseURI)) {

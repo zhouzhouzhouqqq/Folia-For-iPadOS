@@ -8,10 +8,11 @@ import { ensureLyricDataRenderHints } from '../../../utils/lyrics/renderHints';
 import { applyLyricWordSegmentation } from '../../../utils/lyrics/lyricSegmentationRecord';
 import { applyAutoWordSegmentation } from '../../../utils/lyrics/icuFolia';
 import { getLyricSegmentationRecord } from '../../../stores/useLyricSegmentationStore';
-import { applyDetectedChorusEffects, applyNeteaseChorusByTime } from '../../../utils/lyrics/chorusEffects';
-import type { NeteaseChorusRange } from '../../../utils/lyrics/chorusEffects';
+import { applyDetectedChorusEffects, applyChorusRangesByTime } from '../../../utils/lyrics/chorusEffects';
+import type { ChorusRange } from '../../../utils/lyrics/chorusEffects';
 import { getPlaybackSongKey } from '../../../utils/appPlaybackGuards';
-import { applyLyricsTransform, untransformedLyrics } from '../../../services/hostExtensionHooks';
+import { applyLyricsTransform, lyricsForNoLyrics, untransformedLyrics } from '../../../services/hostExtensionHooks';
+import { setLyricsState as setPlaybackLyrics, usePlaybackStore } from '../../../stores/usePlaybackStore';
 
 // src/components/app/playback/createLyricsSetter.ts
 
@@ -46,7 +47,7 @@ export const createLyricsSetter = (
     staffOptions?: LyricStaffPolicyOptions,
 ) => {
     let lastSongId: number | string | null = null;
-    let cachedNeteaseChorusRanges: NeteaseChorusRange[] | null = null;
+    let cachedNeteaseChorusRanges: ChorusRange[] | null = null;
 
     return (incomingLyrics: LyricData | null) => {
         // Lyrics already on screen (e.g. re-applied after an automix cancel) re-enter from
@@ -91,7 +92,7 @@ export const createLyricsSetter = (
                 }
 
                 if (cachedNeteaseChorusRanges && cachedNeteaseChorusRanges.length > 0) {
-                    processed = applyNeteaseChorusByTime(processed, cachedNeteaseChorusRanges);
+                    processed = applyChorusRangesByTime(processed, cachedNeteaseChorusRanges);
                 } else {
                     // Fall back to text-based frequency detection
                     const rebuildLrcText = processed.lines.map(line => `[00:00.00]${line.fullText}`).join('\n');
@@ -111,4 +112,16 @@ export const createLyricsSetter = (
             setLyricsState(null);
         }
     };
+};
+
+/**
+ * Called where a lyric load ends, after its check that the song is still the one asked for: when the
+ * load left the song without lyrics (none found, an instrumental, a failed fetch), an extension
+ * transform may supply some (lyricsForNoLyrics). Not in the setter above: setting null is also how
+ * the app clears lyrics (song start, platform switch, stage reset), and a clear must stay a clear.
+ */
+export const supplyLyricsAfterEmptyLoad = () => {
+    if (usePlaybackStore.getState().lyrics !== null) return;
+    const supplied = lyricsForNoLyrics();
+    if (supplied) setPlaybackLyrics(supplied);
 };

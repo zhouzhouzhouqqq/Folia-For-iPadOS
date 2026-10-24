@@ -7,9 +7,10 @@ import type { LyricData, SongResult, StageLoopMode } from '../../types';
 import type { AudioQualityPreference } from '../../types/onlineMusic';
 import type { PlaybackRecoveryTarget } from '../../types/playbackRecovery';
 import { getPlaybackSongKey, isNavidromePlaybackSong, resolveNavidromePlaybackCarrier } from '../../utils/appPlaybackGuards';
+import { nextTransitionSong } from '../../utils/playbackNeighbors';
 import { getPrefetchedData } from '../prefetchService';
 import { ensureTrackProfile, getTrackProfile, recordPlayedTail } from './profileService';
-import { refreshModelAvailability } from './modelAvailability';
+import { refreshModelAvailability } from '../analysis/modelAvailability';
 import { canSeparateStems, ensureStems, getStemsByKey, setWantedStems, stemWindowKey } from './stems';
 import { connectAutomixDeck, type AutomixDeckChain } from './crossfadeGraph';
 import {
@@ -87,29 +88,6 @@ const STALL_GRACE_MS = 2_500;
  */
 const STALL_RETRY_MS = 1_000;
 const STALL_ATTEMPTS = 10;
-
-/**
- * The track the queue would advance to, mirroring handleNextTrack's own index maths.
- *
- * Deliberately does not reproduce the FM-mode top-up: that fetch is asynchronous, and a track we
- * cannot name yet is a track we cannot measure, so automix simply stays out of the way.
- */
-const resolveNextQueueSong = (
-    queue: SongResult[],
-    currentSong: SongResult,
-    loopMode: StageLoopMode,
-): SongResult | null => {
-    if (queue.length < 2) return null;
-    const currentKey = getPlaybackSongKey(currentSong);
-    const index = queue.findIndex(song => getPlaybackSongKey(song) === currentKey);
-
-    const next = index >= 0 && index < queue.length - 1
-        ? queue[index + 1]
-        : loopMode === 'all' ? queue[0] : null;
-
-    // Wrapping onto ourselves is a repeat, not a transition.
-    return next && getPlaybackSongKey(next) !== currentKey ? next : null;
-};
 
 export interface DeckSrcInput {
     deck: AutomixDeckId;
@@ -212,6 +190,7 @@ export function useAutomixDecks({
     const lyrics = usePlaybackStore(state => state.lyrics);
     const duration = usePlaybackStore(state => state.duration);
     const playQueue = usePlaybackStore(state => state.playQueue);
+    const isFmMode = usePlaybackStore(state => state.isFmMode);
     const playerState = usePlaybackStore(state => state.playerState);
     const audioQuality = useAudioSettingsStore(state => state.audioQuality);
 
@@ -237,6 +216,7 @@ export function useAutomixDecks({
     // the whole point of it — see the comment at the call site.
     const transitionDisplay = usePlaybackStore(state => state.transitionDisplay);
     const setTransitionDisplay = usePlaybackStore(state => state.setTransitionDisplay);
+    const releaseTransitionDisplay = usePlaybackStore(state => state.releaseTransitionDisplay);
     /**
      * The next track's source, handed to the idle deck so it can buffer before it is needed.
      *
@@ -279,7 +259,7 @@ export function useAutomixDecks({
         void refreshModelAvailability().then((present) => {
             console.log(
                 `[Automix] models on disk at startup: beat_this ${present.beat_this ? 'yes' : 'no'},`
-                + ` htdemucs ${present.htdemucs ? 'yes' : 'no'}`,
+                + ` htdemucs ${present.htdemucs ? 'yes' : 'no'}, htdemucs_gpu ${present.htdemucs_gpu ? 'yes' : 'no'}`,
             );
         });
     }, []);
@@ -298,7 +278,7 @@ export function useAutomixDecks({
         const song = deckSongRef.current[deck];
         const history = chainsRef.current[deck]?.analyser.levelHistory();
         if (!element || !song || !history) return;
-        recordPlayedTail(song, history.db, history.hopSec, element.duration);
+        recordPlayedTail(song, history.db, history.hopSec, element.duration, element.currentSrc || null);
     }, []);
     // The session's ports are built once, before this exists, and must not close over a stale copy.
     const harvestRef = useRef(harvestDeck);
@@ -412,7 +392,10 @@ export function useAutomixDecks({
                 // same block that calls `advanceTrack` a few lines later, so what the ref holds
                 // here is still the outgoing track. A snapshot taken from an effect would race the
                 // advance and capture whichever of the two React had committed by then.
-                setTransitionDisplay(src === null ? null : displayRef.current);
+                // The release carries how the blend ended: the screen continues the incoming track's
+                // clock only across a hand-over, and treats a cancel or a skip as a plain song change.
+                if (src === null) releaseTransitionDisplay(opts?.end ?? 'handedOver');
+                else setTransitionDisplay(displayRef.current);
                 // Mirrored into a ref so `getDisplayElement` can stay a stable callback: it is
                 // read from an animation frame, and a changing identity there restarts the loop.
                 displayHeldRef.current = src !== null;
@@ -571,13 +554,16 @@ export function useAutomixDecks({
         const modeTag = `${transition.mode}:`;
         if (loopMode === 'one') return report('loop-one', 'single-track loop, nothing to blend into');
 
-        const nextSong = resolveNextQueueSong(playQueue, currentSong, loopMode);
+        // The queue's own rule for the track a transition goes into (playbackNeighbors). None on the
+        // last Personal FM track: its successor is fetched when the track ends and cannot be named
+        // or measured before that, so automix stays out of the way there.
+        const nextSong = nextTransitionSong(playQueue, currentSong, loopMode, isFmMode);
         if (!nextSong) return report(`${audioSrc}:queue-end`, 'nothing queued after this track');
 
         // Nothing below applies while a transition is already in flight - `requestTransition` returns null
         // on sight - and the write underneath it is not free. This function runs on every timeupdate, the
         // deck it runs on becomes the INCOMING deck the moment anything arms, and by then
-        // `resolveNextQueueSong` is answering about a song after the one being blended in. Recomputing the
+        // `nextTransitionSong` is answering about a song after the one being blended in. Recomputing the
         // warm source from that answer takes the source away from the deck the listener is hearing, which
         // is where "playback error, skipping" came from: the common case is a track whose bytes are in the
         // media cache, the prefetcher reports 'CACHED_IN_DB', and the line below turns it into null. The
@@ -633,7 +619,7 @@ export function useAutomixDecks({
         } else if (time >= plan.outStart) {
             report(`${audioSrc}:${modeTag}unwired`, `wanted a ${plan.overlap}s blend but the decks are not on the audio graph`);
         }
-    }, [activeDeck, audioQuality, audioSrc, currentSong, duration, isEnabled, loopMode, lyrics, playQueue, report, session, transition]);
+    }, [activeDeck, audioQuality, audioSrc, currentSong, duration, isEnabled, isFmMode, loopMode, lyrics, playQueue, report, session, transition]);
 
     /**
      * Reads the ref rather than the `currentSong` prop, and that is the whole correctness of it.
@@ -722,7 +708,7 @@ export function useAutomixDecks({
         if (!isEnabled || !currentSong || transition.mode !== 'automix') return;
         if (!canSeparateStems()) return;
 
-        const next = resolveNextQueueSong(playQueue, currentSong, loopMode);
+        const next = nextTransitionSong(playQueue, currentSong, loopMode, isFmMode);
         stemSongsRef.current = { from: currentSong, to: next };
         // The same pair, told to the cache: it decides what to throw away when it runs out of room,
         // and without this it can only go by age - which is how it came to evict the window a
@@ -751,7 +737,6 @@ export function useAutomixDecks({
         if (playerState !== PlayerState.PLAYING && tailSrc === null) return;
         if (hasNativeAutomix()) {
             const enableMediaCache = useAudioSettingsStore.getState().enableMediaCache;
-            const next = resolveNextQueueSong(playQueue, currentSong, loopMode);
             void ensureTrackProfile({ song: currentSong, audioUrl: audioSrc, enableMediaCache, wantGrid: true });
             if (next) {
                 const cached = getPrefetchedData(next, audioQuality);
@@ -790,7 +775,7 @@ export function useAutomixDecks({
                 readBytes: () => localBytesRef.current?.(next) ?? Promise.resolve(null),
             });
         }
-    }, [audioQuality, audioSrc, currentSong, isEnabled, loopMode, playQueue, playerState, tailSrc, transition.mode, nativeAnalysisRevision]);
+    }, [audioQuality, audioSrc, currentSong, isEnabled, isFmMode, loopMode, playQueue, playerState, tailSrc, transition.mode, nativeAnalysisRevision]);
 
     // Any pause, from the UI, a media key or the OS, ends a transition. Watching player state
     // rather than the element's pause event matters: while armed the active deck is the silent

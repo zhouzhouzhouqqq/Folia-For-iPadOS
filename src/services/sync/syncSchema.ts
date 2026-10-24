@@ -70,6 +70,8 @@ const parseSyncedVisualSettings = (value: Record<string, unknown>): SyncedVisual
     else if (typeof value.subtitleFontFamily === 'string') settings.subtitleFontFamily = value.subtitleFontFamily;
     if (isStringArray(value.subtitleFontFallbackFamilies)) settings.subtitleFontFallbackFamilies = value.subtitleFontFallbackFamilies;
     if (isRecord(value.visualizerTunings)) settings.visualizerTunings = value.visualizerTunings;
+    // Frozen: the 13 lyric-style tunings below predate the visualizerTunings bundle, which carries any
+    // new style. Do not add a lyric style here.
     if (value.classicTuning !== undefined) settings.classicTuning = value.classicTuning;
     if (value.cadenzaTuning !== undefined) settings.cadenzaTuning = value.cadenzaTuning;
     if (value.partitaTuning !== undefined) settings.partitaTuning = value.partitaTuning;

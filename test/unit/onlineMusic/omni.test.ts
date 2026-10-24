@@ -5,6 +5,8 @@ import { registerOnlineMusicProvider, unregisterOnlineMusicProvider } from '@/se
 import { useOnlineProviderAccountStore } from '@/stores/useOnlineProviderAccountStore';
 import type { UnifiedSong } from '@/types';
 import type { OnlineMusicProvider, ProviderCapabilities, ProviderCollection } from '@/types/onlineMusic';
+import { onlineFailureOf } from '@/services/onlineMusic/failure/onlineFailureCase';
+import { installOmniResultHooks } from '@/services/hostExtensionHooks';
 
 // test/unit/onlineMusic/omni.test.ts
 
@@ -272,7 +274,7 @@ describe('omni routing', () => {
             capabilities: { ...capabilities, likes: true },
             library: {
                 getUserPlaylists: async () => ({ items: [], hasMore: false, nextOffset: 0 }),
-                getLikedSongIds: async () => ['liked-song'],
+                getLikedSongIds: async () => ({ ids: ['liked-song'], whole: true }),
             },
         });
         const target = song(providerId, 'liked-song');
@@ -360,10 +362,128 @@ describe('omni routing', () => {
         await expect(omni.reportPlayback(target, { playedSeconds: 45 })).rejects.toMatchObject({ code: 'unsupported' });
     });
 
+    it('takes no report of a song its provider says it cannot vouch for', () => {
+        registerOnlineMusicProvider({
+            ...provider(providerId, { searchSongs: async () => ({ items: [], hasMore: false, nextOffset: 0 }) }),
+            capabilities: { ...capabilities, playbackReports: true },
+            playbackReports: { canReport: target => target.id !== '6', reportPlayback: async () => {} },
+        });
+
+        expect(omni.canReportPlayback(song(providerId, '5'))).toBe(true);
+        expect(omni.canReportPlayback(song(providerId, '6'))).toBe(false);
+    });
+
     it('answers false rather than throwing for a song no online provider owns', () => {
         const localSong = { ...song(providerId), sourceRef: { kind: 'local', mediaId: 'local-1' } } as UnifiedSong;
 
         expect(omni.canReportPlayback(localSong)).toBe(false);
+    });
+});
+
+// The media cache keeps the level a copy was fetched at, and asks for it by the URL the bytes came
+// from: the quality option may be moved between a URL being handed out and its bytes being saved.
+describe('the level an audio URL was handed out at', () => {
+    // A provider that tells two levels apart and puts the one it was asked for in its URL.
+    const twoLevelProvider = (
+        urlOf = (mediaId: string, quality: string) => `https://${providerId}/${mediaId}/${quality}`,
+    ): OnlineMusicProvider => ({
+        ...provider(providerId, { searchSongs: async () => ({ items: [], hasMore: false, nextOffset: 0 }) }),
+        playback: {
+            getSongDetail: async mediaId => song(providerId, String(mediaId)),
+            audioQualityLevels: ['standard', 'high'],
+            getAudioSource: async (target, quality) => ({
+                url: urlOf(String(target.sourceRef?.mediaId), quality), fetchedAt: 1, quality,
+            }),
+        },
+    });
+
+    it('is the level the preference meant to the provider when that URL was asked for', async () => {
+        registerOnlineMusicProvider(twoLevelProvider());
+
+        const first = await omni.getAudioSource(song(providerId, 'a'), 'standard');
+        // The option is moved while the first URL is still playing.
+        const second = await omni.getAudioSource(song(providerId, 'a'), 'hires');
+
+        expect(omni.levelOfAudioSource(first!.url)).toBe('standard');
+        expect(omni.levelOfAudioSource(second!.url)).toBe('high');
+    });
+
+    it('is unknown for a URL no provider handed out', () => {
+        expect(omni.levelOfAudioSource('blob:http://localhost/0b8f')).toBeUndefined();
+        expect(omni.levelOfAudioSource('https://navidrome.test/rest/stream?id=1')).toBeUndefined();
+    });
+
+    // NetEase hands out http and playback upgrades it to https. A deck that has played out reports
+    // its element's `currentSrc`, which is the URL as the parser writes it.
+    it('is found by the spelling playback and the audio element hold', async () => {
+        registerOnlineMusicProvider(twoLevelProvider(mediaId => `http://m1.music.126.net/${mediaId} live.mp3`));
+
+        await omni.getAudioSource(song(providerId, 'b'), 'high');
+
+        expect(omni.levelOfAudioSource('https://m1.music.126.net/b%20live.mp3')).toBe('high');
+    });
+
+    it('forgets the oldest URL once it holds 200', async () => {
+        registerOnlineMusicProvider(twoLevelProvider());
+
+        for (let index = 0; index <= 200; index += 1) {
+            await omni.getAudioSource(song(providerId, `n${index}`), 'high');
+        }
+
+        expect(omni.levelOfAudioSource(`https://${providerId}/n0/high`)).toBeUndefined();
+        expect(omni.levelOfAudioSource(`https://${providerId}/n1/high`)).toBe('high');
+    });
+});
+
+// What a provider knows of a failed request is left on the error it threw, and the error goes on as it is.
+describe('a request for audio or for a collection\'s tracks that fails', () => {
+    const refused = new Error('E_SEVENTH 7');
+    const failing = (describeFailure: OnlineMusicProvider['describeFailure']): OnlineMusicProvider => ({
+        ...provider(providerId, { searchSongs: async () => ({ items: [], hasMore: false, nextOffset: 0 }) }),
+        describeFailure,
+        playback: {
+            getSongDetail: async mediaId => song(providerId, String(mediaId)),
+            getAudioSource: async () => { throw refused; },
+        },
+        catalog: { getPlaylistTracks: async () => { throw refused; } },
+    });
+    const playlist = { providerId, id: 'p1', name: 'P', type: 'playlist' } as ProviderCollection;
+
+    afterEach(() => installOmniResultHooks(null));
+
+    it('leaves the provider\'s description on the error, for the audio and for the tracks', async () => {
+        const describeFailure = vi.fn((operation: string) => ({ code: '7', message: `${operation} refused` }));
+        registerOnlineMusicProvider(failing(describeFailure));
+
+        const audioError = await omni.getAudioSource(song(providerId), 'high').catch((error: unknown) => error);
+        expect(audioError).toBe(refused);
+        expect(onlineFailureOf({ operation: 'audio' }, { error: audioError })).toMatchObject({ case: 'refused', facts: { code: '7', message: 'audio refused' } });
+
+        const tracksError = await omni.getCollectionTracks(playlist, { limit: 10, offset: 0 }).catch((error: unknown) => error);
+        expect(tracksError).toBe(refused);
+        expect(onlineFailureOf({ operation: 'collection' }, { error: tracksError }).facts.message).toBe('collection refused');
+        expect(describeFailure.mock.calls.map(([operation]) => operation)).toEqual(['audio', 'collection']);
+    });
+
+    it('lets the error go on as it is when the provider\'s description throws', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        registerOnlineMusicProvider(failing(() => { throw new TypeError('bad'); }));
+
+        await expect(omni.getAudioSource(song(providerId), 'high')).rejects.toBe(refused);
+        expect(warn).toHaveBeenCalledWith('[Omni] describeFailure threw; the error goes on without a note', { operation: 'audio' }, expect.any(TypeError));
+        warn.mockRestore();
+    });
+
+    // A mod's omni audio hook could always give a URL where the provider gave none; a provider that throws keeps that.
+    it('asks the mods\' audio hook for a source when the provider threw, and throws only when it gives none', async () => {
+        registerOnlineMusicProvider(failing(() => null));
+        const hook = vi.fn(async (_song: unknown, source: unknown) => source as null);
+        installOmniResultHooks({ audio: hook });
+        await expect(omni.getAudioSource(song(providerId), 'high')).rejects.toBe(refused);
+        expect(hook).toHaveBeenCalledWith(expect.objectContaining({ id: '1' }), null);
+
+        installOmniResultHooks({ audio: async () => ({ url: 'https://mod.test/1.mp3', fetchedAt: 1, quality: 'standard' }) });
+        await expect(omni.getAudioSource(song(providerId), 'high')).resolves.toMatchObject({ url: 'https://mod.test/1.mp3' });
     });
 });
 
@@ -376,7 +496,7 @@ describe('omni like mutations', () => {
 
     afterEach(() => useOnlineProviderAccountStore.getState().clearAccount(providerId));
 
-    const seedAccount = (state: { likedSongIds: string[]; likedSongFileIds: Record<string, string | number> }) => {
+    const seedAccount = (state: { likedSongIds: string[] }) => {
         useOnlineProviderAccountStore.getState().updateAccount(providerId, {
             status: 'authenticated',
             user: { id: 'user', nickname: 'Listener' },
@@ -386,41 +506,41 @@ describe('omni like mutations', () => {
 
     it('keeps likedSongIds in sync when likeSong is called directly', async () => {
         registerOnlineMusicProvider(likeProvider(async () => undefined));
-        seedAccount({ likedSongIds: ['7'], likedSongFileIds: { '7': 987 } });
+        seedAccount({ likedSongIds: ['7'] });
 
         await omni.likeSong(song(providerId, '7'), false);
 
         const account = useOnlineProviderAccountStore.getState().accounts[providerId];
         expect(account.likedSongIds).toEqual([]);
-        expect(account.likedSongFileIds).toEqual({});
     });
 
-    it('hands the cached playlist-local file id to the provider', async () => {
+    // What a provider needs beyond the song to like or unlike it (a row in its liked playlist) is
+    // the adapter's own to keep.
+    it('hands the provider the song and the state asked for, and nothing else', async () => {
         const likeSong = vi.fn(async () => undefined);
         registerOnlineMusicProvider(likeProvider(likeSong));
-        seedAccount({ likedSongIds: ['7'], likedSongFileIds: { '7': 987 } });
+        seedAccount({ likedSongIds: ['7'] });
 
         const target = song(providerId, '7');
         await omni.likeSong(target, false);
 
-        expect(likeSong).toHaveBeenCalledWith(target, false, { likedFileId: 987 });
+        expect(likeSong).toHaveBeenCalledExactlyOnceWith(target, false);
     });
 
-    it('leaves the liked state untouched and drops the stale file id when the mutation fails', async () => {
+    it('leaves the liked state untouched when the mutation fails', async () => {
         registerOnlineMusicProvider(likeProvider(async () => { throw new Error('network'); }));
-        seedAccount({ likedSongIds: ['7'], likedSongFileIds: { '7': 987 } });
+        seedAccount({ likedSongIds: ['7'] });
 
         await expect(omni.likeSong(song(providerId, '7'), false)).rejects.toThrow('network');
 
         const account = useOnlineProviderAccountStore.getState().accounts[providerId];
         expect(account.likedSongIds).toEqual(['7']);
-        expect(account.likedSongFileIds).toEqual({});
     });
 
     it('persists the new liked list so a restart does not restore the old heart', async () => {
         vi.mocked(saveProviderAccountSnapshot).mockClear();
         registerOnlineMusicProvider(likeProvider(async () => undefined));
-        seedAccount({ likedSongIds: ['7'], likedSongFileIds: { '7': 987 } });
+        seedAccount({ likedSongIds: ['7'] });
 
         await omni.likeSong(song(providerId, '7'), false);
 
@@ -432,21 +552,20 @@ describe('omni like mutations', () => {
     it('keeps the mutation successful when persisting the snapshot fails', async () => {
         vi.mocked(saveProviderAccountSnapshot).mockRejectedValueOnce(new Error('disk full'));
         registerOnlineMusicProvider(likeProvider(async () => undefined));
-        seedAccount({ likedSongIds: [], likedSongFileIds: {} });
+        seedAccount({ likedSongIds: [] });
 
         await expect(omni.likeSong(song(providerId, '7'), true)).resolves.toBeUndefined();
         expect(useOnlineProviderAccountStore.getState().accounts[providerId].likedSongIds.map(String)).toEqual(['7']);
     });
 
-    it('adds the song to likedSongIds without inventing a file id', async () => {
+    it('adds the song to likedSongIds', async () => {
         registerOnlineMusicProvider(likeProvider(async () => undefined));
-        seedAccount({ likedSongIds: [], likedSongFileIds: {} });
+        seedAccount({ likedSongIds: [] });
 
         const nextLiked = await omni.toggleSongLike(song(providerId, '7'));
 
         const account = useOnlineProviderAccountStore.getState().accounts[providerId];
         expect(nextLiked).toBe(true);
         expect(account.likedSongIds.map(String)).toEqual(['7']);
-        expect(account.likedSongFileIds).toEqual({});
     });
 });

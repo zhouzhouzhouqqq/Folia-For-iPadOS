@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { SongResult } from '@/types';
-import type { LibraryArtistAlbum, LibraryArtistAlbumSync } from '@/library/core/contracts/artist';
-import { filterArtistAlbums } from '@/library/core/model/artistModel';
-import { artistSongEntryKey } from '@/library/core/model/artistSurface';
+import type { LibraryArtistAlbum, LibraryArtistAlbumSync } from '@/library/core/artist/artist.contract';
+import { filterArtistAlbums } from '@/library/core/artist/artistModel';
+import { artistSongEntryKey } from '@/library/core/artist/artistSurface';
 import { collectWallSlots } from '@/components/wall/wallSlots';
 import type { BravaisLayer } from '@/library/suites/bravais/bravaisLayer';
 import { createBravaisDisplay, diffDisplays, resolveSlotItem } from '@/library/suites/bravais/bravaisDisplay';

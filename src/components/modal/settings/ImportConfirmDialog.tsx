@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Check, ChevronDown, Info, Minus, Undo2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { SheetButton } from '../../shared/Sheet';
 import ThemedDialog from '../../shared/ThemedDialog';
 import { getVisualizerModeLabel, hasVisualizerMode } from '../../visualizer/registry';
 import { getVisualizerBackgroundModeLabel, hasVisualizerBackgroundMode } from '../../visualizer/backgrounds/registry';
@@ -48,6 +49,7 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
     followSystemTheme: 'options.followSystemTheme',
     visualizerMode: 'options.visualizerMode',
     visualizerOpacity: 'options.visualizerOpacity',
+    smartBeat: 'options.smartBeat',
     hidePlayerTranslationSubtitle: 'options.hidePlayerTranslationSubtitle',
     showSubtitleTranslation: 'options.showSubtitleTranslation',
     subtitleContentMode: 'options.subtitleContentMode',
@@ -98,6 +100,8 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
 
 // The per-renderer tunings borrow the renderer's own display name instead of inventing one.
 const TUNING_MODES: Record<string, string> = {
+    // Frozen: the 13 lyric-style tunings below predate the visualizerTunings bundle, which carries any
+    // new style. Do not add a lyric style here.
     classicTuning: 'classic',
     cadenzaTuning: 'cadenza',
     partitaTuning: 'partita',
@@ -374,27 +378,22 @@ const ImportConfirmDialog: React.FC<ImportConfirmDialogProps> = ({
             isDaylight={isDaylight}
             title={t('options.importConfirmTitle')}
             description={t('options.importConfirmDesc')}
-            maxWidthClass="max-w-xl"
+            size="m"
             footer={(
                 <>
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${isDaylight ? 'hover:bg-zinc-200/60' : 'hover:bg-white/10'}`}
-                    >
+                    <SheetButton onClick={onCancel}>
                         {t('status.cancel')}
-                    </button>
-                    <button
-                        type="button"
+                    </SheetButton>
+                    <SheetButton
+                        variant="primary"
                         onClick={() => onConfirm([...selected])}
                         // Nothing to pick is not the same as picking nothing: a plan whose changes
                         // are all derived, or which has none at all, still has to be dismissable
                         // through the confirm button rather than only through cancel.
                         disabled={selectableKeys.length > 0 && selected.size === 0}
-                        className="rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         {t('options.importApplySelected')}
-                    </button>
+                    </SheetButton>
                 </>
             )}
         >

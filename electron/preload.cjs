@@ -6,21 +6,44 @@ contextBridge.exposeInMainWorld('electron', {
       // resolve the OS path of a dropped file from the renderer.
       getPathForFile: (file) => webUtils.getPathForFile(file),
     },
-    // Beat This! inference. Returns null whenever the weights or the runtime are not there,
-    // which is the browser build's permanent answer and any desktop install missing the model.
+    // Beat This! on the CPU, automix's fallback when the renderer's GPU path cannot run. Returns null
+    // whenever the weights are not there, which is the browser build's permanent answer.
     runBeatThis: (chunks) => ipcRenderer.invoke('automix-beat-this', chunks),
+    // The same model's WebGPU export ({ weights, manifest }) for the renderer's own GPU runtime, or null.
+    getBeatThisGpuWeights: (model) => ipcRenderer.invoke('automix-beat-this-gpu-weights', model),
+    getHtdemucsGpuWeights: () => ipcRenderer.invoke('automix-beat-this-gpu-weights', 'htdemucs'),
     separateStems: (request) => ipcRenderer.invoke('automix-htdemucs', request),
+    // Whether automix is switched on. While it is, the analysis worker keeps htdemucs loaded; switching
+    // it off releases it. See electron/analysis/host.cjs.
+    setAutomixEnabled: (enabled) => ipcRenderer.send('automix-enabled', enabled === true),
     // Which weights exist, answered without loading them. See the handler for why the settings page
     // is not allowed to infer this from "am I running in Electron".
     getAutomixModelsPresent: () => ipcRenderer.invoke('automix-models-present'),
     // One-way stage marks from the automix session into the runtime log. See services/automix/diag.ts.
     diagMark: (text) => ipcRenderer.send('automix-diag', text),
+    // Old automix models left in the folder an earlier version let the listener choose. See main.cjs.
+    checkLegacyModels: () => ipcRenderer.invoke('legacy-models-check'),
+    resolveLegacyModels: (action) => ipcRenderer.invoke('legacy-models-resolve', action),
+    openLegacyModelsFolder: () => ipcRenderer.invoke('legacy-models-open'),
     // Developer debug module: the runtime log and the memory monitor. See electron/debug/debugHost.cjs.
     debugGetState: () => ipcRenderer.invoke('debug-get-state'),
     debugSetState: (patch) => ipcRenderer.invoke('debug-set-state', patch),
     debugOpenLogs: (which) => ipcRenderer.invoke('debug-open-logs', which),
     // Batched by the caller - one message per line would cost more than the logging it records.
     debugWriteRuntimeLines: (lines) => ipcRenderer.send('debug-runtime-lines', lines),
+    // The main process's console lines, for the log panel: what was said so far, then each burst.
+    onDebugMainLines: (callback) => {
+        // After a reload the window is still listed from its last page, and a burst sent to it can
+        // arrive ahead of the backlog this page asks for, which holds the same lines.
+        let caughtUp = false;
+        const listener = (_event, lines, isBacklog) => {
+            caughtUp ||= isBacklog === true;
+            if (caughtUp) callback(lines);
+        };
+        ipcRenderer.on('debug-main-lines', listener);
+        ipcRenderer.send('debug-main-lines-ready');
+        return () => ipcRenderer.removeListener('debug-main-lines', listener);
+    },
     /**
      * What only this process can answer about itself.
      *
@@ -51,23 +74,6 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.on('debug-memory-sample', listener);
         return () => ipcRenderer.removeListener('debug-memory-sample', listener);
     },
-    // Where the weights are kept. The settings page reads the live location off the model status;
-    // these two only change it.
-    chooseModelsDirectory: () => ipcRenderer.invoke('choose-models-directory'),
-    resetModelsDirectory: () => ipcRenderer.invoke('reset-models-directory'),
-    // Getting the weights onto this machine: over the network, off a file already here, or by
-    // pointing at one. All three end at the same verified file - see analysis/modelStore.cjs.
-    getAutomixModelStatus: () => ipcRenderer.invoke('automix-model-status'),
-    downloadAutomixModel: (name) => ipcRenderer.invoke('automix-model-download', name),
-    cancelAutomixModelDownload: (name) => ipcRenderer.invoke('automix-model-cancel', name),
-    scanForAutomixModels: () => ipcRenderer.invoke('automix-model-scan'),
-    installAutomixModel: (name, source) => ipcRenderer.invoke('automix-model-install', name, source),
-    removeAllAutomixModels: () => ipcRenderer.invoke('automix-model-remove-all'),
-    onAutomixModelProgress: (callback) => {
-        const listener = (_event, progress) => callback(progress);
-        ipcRenderer.on('automix-model-progress', listener);
-        return () => ipcRenderer.removeListener('automix-model-progress', listener);
-    },
     platform: process.platform,
     isLinuxX11: process.platform === 'linux' && !process.env.WAYLAND_DISPLAY,
     getSettings: () => ipcRenderer.invoke('get-settings'),
@@ -92,6 +98,13 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.on('wallpaper-input-monitor-requested', listener);
         return () => ipcRenderer.removeListener('wallpaper-input-monitor-requested', listener);
     },
+    getWallpaperDisplays: () => ipcRenderer.invoke('wallpaper-displays-get'),
+    setWallpaperDisplay: (displayId) => ipcRenderer.invoke('wallpaper-display-set', displayId),
+    onWallpaperDisplaysChanged: (callback) => {
+        const listener = (_event, state) => callback(state);
+        ipcRenderer.on('wallpaper-displays-changed', listener);
+        return () => ipcRenderer.removeListener('wallpaper-displays-changed', listener);
+    },
     setPlaybackDisplaySleepBlockingActive: (active) => ipcRenderer.invoke('playback-display-sleep-set-active', active),
     setAppLocale: (localeKey) => ipcRenderer.invoke('set-app-locale', localeKey),
     getCacheDirectory: () => ipcRenderer.invoke('get-cache-directory'),
@@ -112,6 +125,7 @@ contextBridge.exposeInMainWorld('electron', {
     getAudioCache: (cacheKey) => ipcRenderer.invoke('get-audio-cache', cacheKey),
     hasAudioCache: (cacheKey) => ipcRenderer.invoke('has-audio-cache', cacheKey),
     saveAudioCache: (cacheKey, data, mimeType, limitBytes) => ipcRenderer.invoke('save-audio-cache', cacheKey, data, mimeType, limitBytes),
+    removeAudioCache: (cacheKey, size) => ipcRenderer.invoke('remove-audio-cache', cacheKey, size),
     getAudioCacheUsage: () => ipcRenderer.invoke('get-audio-cache-usage'),
     getAudioCacheStats: () => ipcRenderer.invoke('get-audio-cache-stats'),
     clearAudioCache: () => ipcRenderer.invoke('clear-audio-cache'),
@@ -134,7 +148,8 @@ contextBridge.exposeInMainWorld('electron', {
     getNeteaseApiStatus: () => ipcRenderer.invoke('get-netease-api-status'),
     getLoginDiagnostics: (providerId) => ipcRenderer.invoke('get-login-diagnostics', providerId),
     runLoginSelfCheck: (providerId) => ipcRenderer.invoke('run-login-self-check', providerId),
-    restartNeteaseApi: () => ipcRenderer.invoke('restart-netease-api'),
+    // 'needed': a request needs the local service and finds it down (see startsAgainWhenNeeded).
+    restartNeteaseApi: (reason) => ipcRenderer.invoke('restart-netease-api', reason),
     onNeteaseApiStatusChanged: (callback) => {
         const listener = (_event, status) => callback(status);
         ipcRenderer.on('netease-api-status-changed', listener);
@@ -143,6 +158,8 @@ contextBridge.exposeInMainWorld('electron', {
     getKugouApiStatus: () => ipcRenderer.invoke('kugou-api-status'),
     kugouRequest: (operation, params) => ipcRenderer.invoke('kugou-api-request', operation, params),
     bodianRequest: (operation, params) => ipcRenderer.invoke('bodian-api-request', operation, params),
+    ytmRequest: (operation, params) => ipcRenderer.invoke('ytm-api-request', operation, params),
+    spotifyRequest: (operation, params) => ipcRenderer.invoke('spotify-api-request', operation, params),
     getQqPort: () => ipcRenderer.invoke('get-qq-port'),
     getQqApiStatus: () => ipcRenderer.invoke('get-qq-api-status'),
     onQqApiStatusChanged: (callback) => {
@@ -237,6 +254,12 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.on('remote-control-window-settings-changed', listener);
         return () => ipcRenderer.removeListener('remote-control-window-settings-changed', listener);
     },
+    getRemoteControlPointerInside: () => ipcRenderer.invoke('remote-control-get-pointer-inside'),
+    onRemoteControlPointerInside: (callback) => {
+        const listener = (_event, inside) => callback(Boolean(inside));
+        ipcRenderer.on('remote-control-pointer-inside', listener);
+        return () => ipcRenderer.removeListener('remote-control-pointer-inside', listener);
+    },
     publishRemoteControlSnapshot: (snapshot) => ipcRenderer.invoke('remote-control-publish-snapshot', snapshot),
     getRemoteControlSnapshot: () => ipcRenderer.invoke('remote-control-get-snapshot'),
     sendRemoteControlCommand: (command) => ipcRenderer.invoke('remote-control-send-command', command),
@@ -309,6 +332,9 @@ contextBridge.exposeInMainWorld('electron', {
         installModFromZip: (zipPath) => ipcRenderer.invoke('folia-mods:install-zip', zipPath),
         getModStorageUsage: (modId) => ipcRenderer.invoke('folia-mods:storage-usage', modId),
         clearModCache: (modId) => ipcRenderer.invoke('folia-mods:clear-cache', modId),
+        getModCallStats: () => ipcRenderer.invoke('folia-mods:call-stats'),
+        reportModsStartSettled: () => ipcRenderer.invoke('folia-mods:start-settled'),
+        reportModsStartAlive: () => ipcRenderer.invoke('folia-mods:start-alive'),
         onModsStateChanged: (callback) => {
             const listener = (_event, mods) => callback(mods);
             ipcRenderer.on('folia-mods:state-changed', listener);

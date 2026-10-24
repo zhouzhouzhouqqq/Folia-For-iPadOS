@@ -106,7 +106,7 @@
 
 ## 渲染分辨率与纹理池
 
-`textureResolution`（默认 1.5）不是直接交给 pixi 的，先过 `../pixiTextureBudget.ts` 的 `snapResolutionToTexturePool`。原因是 pixi 的 `TexturePool.getOptimalTexture` 把每个 render target 逐轴向上取整到 2 的幂（`nextPow2(ceil(frame * resolution - 1e-6))`）并按这对尺寸做池 key，**一个 pass 是按「档位」计费而不是按画幅计费的**：781x850 的视口在 1.5x 下光栅化成 1172x1275，落进 2048x2048 的档，16MB 的纹理里 71% 从来没画过东西。Tempera 同时挂着若干这样的全屏 pass，加上反色 filter 的 backdrop 拷贝，浪费是成倍的。
+`textureResolution`（默认 1.5）不是直接交给 pixi 的，先过 `../pixi/pixiTextureBudget.ts` 的 `snapResolutionToTexturePool`。原因是 pixi 的 `TexturePool.getOptimalTexture` 把每个 render target 逐轴向上取整到 2 的幂（`nextPow2(ceil(frame * resolution - 1e-6))`）并按这对尺寸做池 key，**一个 pass 是按「档位」计费而不是按画幅计费的**：781x850 的视口在 1.5x 下光栅化成 1172x1275，落进 2048x2048 的档，16MB 的纹理里 71% 从来没画过东西。Tempera 同时挂着若干这样的全屏 pass，加上反色 filter 的 backdrop 拷贝，浪费是成倍的。
 
 代价因此是**阶梯式而不是线性的**，这一点最容易估错：Intel 核显实测，窗口从 640x640 放大到 700x700（面积 +18%）会把常驻 GEM 从 628MB 抬到 822MB（+31%），只因为 1.5x700 越过了 1024，所有池化目标同时在两个轴上翻倍——画面本身没有任何变化配得上这个涨幅。
 

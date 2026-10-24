@@ -1,11 +1,12 @@
 import React from 'react';
-import type { LibraryActionId, LibraryCollectionSurfaceProps } from '../../../core/contracts/suite';
+import type { LibraryActionId, LibraryCollectionSurfaceProps } from '../../../core/suite/suite.contract';
 import { useGridMorphPlan } from '../transitions/useGridMorphPlan';
 import { useGridStayPlayback } from '../shared/useGridStayPlayback';
+import { useNavigationPageKey } from '../../../../components/app/playing-song-locator/useNavigationPageKey';
 import GridView from './GridView';
 
 // src/library/suites/grid/collection/GridCollectionSurface.tsx
-// 网格的集合 surface：把宿主交给任何 suite 的同一份输入（core/contracts/suite 的 LibraryCollectionSurfaceProps）
+// 网格的集合 surface：把宿主交给任何 suite 的同一份输入（core/suite/suite.contract 的 LibraryCollectionSurfaceProps）
 // 接到 GridView 的旧 props 上。网格专属的部分在这里补：移形换影的入场计划（自己从转场 store 读）。
 // 变更动作（删歌、订阅、改名……）经变更控制器（mutations）；标题、副标题的取法原样搬自 GridViewOverlayHost。
 // fb3：「留在原处」时卡片的播放经 useGridStayPlayback（正在播放的那首切换暂停 / 继续，卡片按播放状态画）。
@@ -27,6 +28,7 @@ const GridCollectionSurface: React.FC<LibraryCollectionSurfaceProps> = ({
     onOpenArtist,
 }) => {
     const morphPlan = useGridMorphPlan();
+    const navigationKey = useNavigationPageKey();
     const stayPlayback = useGridStayPlayback(playback.playTrack, playback);
     // 卡片上的专辑 / 歌手链接只在网格声明了 open-album / open-artist 时出现（声明 ∩ 曲目上能解析出的目录引用）。
     const declares = (action: LibraryActionId) => declaredActions.actions.includes(action);
@@ -55,6 +57,7 @@ const GridCollectionSurface: React.FC<LibraryCollectionSurfaceProps> = ({
             isDaylight={isDaylight}
             isInteractive={isInteractive}
             morphPlan={morphPlan}
+            navigationKey={navigationKey}
             declaredActions={declaredActions}
         />
     );

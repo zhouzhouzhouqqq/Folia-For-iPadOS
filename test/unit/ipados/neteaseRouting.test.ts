@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { neteaseApi } from '../../../src/services/netease';
+import { neteaseApi } from '../../../src/services/onlineMusic/netease/netease';
 import { requestNeteaseDirect } from '../../../src/services/onlineMusic/neteaseDirect/transport';
 
 // Verify the real service chooses the device adapter without requiring remote configuration.

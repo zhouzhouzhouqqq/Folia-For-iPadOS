@@ -125,16 +125,7 @@ const resolveOpenAICompatibleModel = (apiUrl: string, configuredModel?: string) 
         return trimmedModel;
     }
 
-    try {
-        const hostname = new URL(apiUrl).hostname.toLowerCase();
-        if (hostname === 'api.deepseek.com' || hostname.endsWith('.deepseek.com')) {
-            return DEEPSEEK_DEFAULT_MODEL;
-        }
-    } catch {
-        // Fall back to the generic OpenAI default when URL parsing fails.
-    }
-
-    return DEFAULT_OPENAI_MODEL;
+    return detectOpenAICompatibleProvider(apiUrl) === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : DEFAULT_OPENAI_MODEL;
 };
 
 const providerSupportsStructuredOutputs = (provider: OpenAICompatibleProvider) => provider === 'openai';

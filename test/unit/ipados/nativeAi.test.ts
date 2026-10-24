@@ -16,7 +16,7 @@ vi.mock('../../../src/platform/ios/ai', () => ({ FoliaAI: {
     getSettings: async () => state.settings, request: state.request, cancel: state.cancel,
 } }));
 vi.mock('../../../src/platform/ios/dataConsent', () => ({ requireNativeAiConsent: state.consent }));
-import { generateThemeFromLyrics } from '../../../src/services/gemini';
+import { generateThemeFromLyrics } from '../../../src/services/aiText';
 import { segmentLyricsWithAi } from '../../../src/services/lyricSegmentationAi';
 import { nativeAIFetch, testNativeAIConnection } from '../../../src/services/nativeAi/client';
 import { generateNativeAITheme, segmentNativeAILyrics } from '../../../src/services/nativeAi/generation';
@@ -42,7 +42,7 @@ describe('native AI theme integration', () => {
         const start = source.indexOf('function buildThemeSystemPrompt(');
         const end = source.indexOf('\nconst fsp =', start);
         const schemaStart = source.indexOf('function getGeminiResponseSchema()');
-        const schemaEnd = source.indexOf('\nasync function generateGeminiTheme', schemaStart);
+        const schemaEnd = source.indexOf('\nconst THEME_JSON_SCHEMA_NAME', schemaStart);
         const context = vm.createContext({});
         const themeSchemaStart = source.indexOf('const THEME_JSON_SCHEMA =');
         vm.runInContext(source.slice(themeSchemaStart, start), context);

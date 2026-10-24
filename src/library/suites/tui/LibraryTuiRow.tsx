@@ -5,12 +5,12 @@ import { isSongUnavailable } from '../../../services/onlineMusic/songAvailabilit
 import { getSongArtistLabel } from '../../../services/onlineMusic/songMetadata';
 import { formatTime } from '../../../utils/appPlaybackHelpers';
 import { canResolveSongCatalogRef } from '../../../services/onlineMusic/catalogRefs';
-import { resolveTrackAlbumLink, resolveTrackArtistLinks, type TrackArtistLink } from '../../core/model/trackLinks';
+import { resolveTrackAlbumLink, resolveTrackArtistLinks, type TrackArtistLink } from '../../core/shared/trackLinks';
 
 // src/library/suites/tui/LibraryTuiRow.tsx
 // TUI 的一行：序号、歌名、歌手、专辑、时长，等宽排列。单击移动焦点，双击播放，[+] 入队；
 // 本地歌在集合支持时多一个 [i]（手动匹配在线信息，打开宿主挂载的对话框）。删除请求还没回来的行标 `~` 并变淡。
-// 歌手名与专辑名在能解析出目录引用时是按钮（P4.4，规则与网格卡片同一份：core/model/trackLinks），点了打开嵌套的
+// 歌手名与专辑名在能解析出目录引用时是按钮（P4.4，规则与网格卡片同一份：core/shared/trackLinks），点了打开嵌套的
 // 歌手页 / 专辑；样式与歌手页歌曲行上的链接一致（data-tui-link）。
 
 export const LIBRARY_TUI_ROW_HEIGHT = 28;

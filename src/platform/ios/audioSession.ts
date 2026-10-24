@@ -53,15 +53,18 @@ export function configureIOSWebAudioSession(): boolean {
     }
 }
 
-/** Restore the existing graph on return, while respecting a user pause and real OS interruptions. No background polling. */
+/** Recover the existing graph on lifecycle events, including background suspension. No background polling. */
 export function bindIOSAudioContextLifecycle(context: AudioContext, isPlaybackRequested: () => boolean): () => void {
     if (!isNativeIOS()) return () => {};
     const session = webAudioSession();
     let disposed = false;
     let resuming = false;
     const resume = () => {
-        if (disposed || resuming || document.visibilityState !== 'visible' || !isPlaybackRequested()
+        if (disposed || resuming || !isPlaybackRequested()
             || session?.state === 'interrupted' || context.state === 'closed' || context.state === 'running') return;
+        // A hidden page can still receive the suspension event before WebKit freezes its JS.
+        // Recover only an active playback session there; never acquire focus over another app.
+        if (document.visibilityState !== 'visible' && session?.state !== 'active') return;
         if ((context.state as string) === 'interrupted' && session?.state !== 'active') return;
         configureIOSWebAudioSession();
         resuming = true;
@@ -72,7 +75,7 @@ export function bindIOSAudioContextLifecycle(context: AudioContext, isPlaybackRe
     const visibility = () => {
         console.info('[iOS audio] visibility', document.visibilityState, 'context', context.state,
             'session', session?.type ?? 'unavailable', session?.state ?? 'unknown', 'requested', isPlaybackRequested());
-        if (document.visibilityState === 'visible') resume();
+        resume();
     };
     document.addEventListener('visibilitychange', visibility);
     window.addEventListener('pageshow', resume);

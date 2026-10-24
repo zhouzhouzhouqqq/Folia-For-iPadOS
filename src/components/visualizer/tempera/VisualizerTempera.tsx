@@ -7,7 +7,7 @@ import { loadTemperaLayerImageBlobs } from '../../../services/temperaLayerImages
 import { resolveThemeFontStack, resolveThemeFontWeight } from '../../../utils/fontStacks';
 import { getLineRenderEndTime } from '../../../utils/lyrics/renderHints';
 import type { VisualizerSharedProps } from '../definition';
-import { useVisualizerPixiHost } from '../pixiRuntimeHost';
+import { useVisualizerPixiHost } from '../pixi/pixiRuntimeHost';
 import { useVisualizerRuntime } from '../runtime';
 import { useVisualizerSongCommit } from '../songHandover';
 import VisualizerShell from '../VisualizerShell';
@@ -150,7 +150,9 @@ const VisualizerTempera: React.FC<VisualizerSharedProps> = (props) => {
         const placements = layerImagesRef.current;
         const injected = injectedAssetsRef.current;
         if (placements.length === 0) {
-            setImageBlobs(new Map());
+            // The map is part of the runtime's rebuild key: a new empty one in place of the empty one
+            // it mounted with threw away the WebGL runtime being made and made another.
+            setImageBlobs(blobs => (blobs.size === 0 ? blobs : new Map()));
             return undefined;
         }
         let active = true;
@@ -182,8 +184,9 @@ const VisualizerTempera: React.FC<VisualizerSharedProps> = (props) => {
         hostRef,
         label: 'Tempera',
         // Only inputs that genuinely need a new WebGL context and texture pool. The song is
-        // handed to the live runtime instead - see TemperaPixiRuntime.swapSong.
-        rebuildKey: [currentTime, imageBlobs, lyricsFontScale, staticMode],
+        // handed to the live runtime instead - see TemperaPixiRuntime.swapSong. Post-processing
+        // decides whether the canvas is antialiased, which is fixed when the context is made.
+        rebuildKey: [currentTime, imageBlobs, lyricsFontScale, staticMode, temperaTuning.postProcessEnabled],
         song: songContext,
         create: async (host, song, signal) => {
             const { TemperaPixiRuntime } = await import('./createTemperaPixiRuntime');

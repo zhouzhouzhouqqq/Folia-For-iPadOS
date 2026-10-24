@@ -52,11 +52,35 @@ describe('iPad WebKit playback audio session', () => {
         expect(configureIOSWebAudioSession()).toBe(false);
     });
     it('resumes only the existing context on return to the foreground', async () => {
+        session.state = 'inactive';
         bind(); visibility('hidden');
         expect(context.resume).not.toHaveBeenCalled();
         visibility('visible'); await Promise.resolve();
         expect(context.resume).toHaveBeenCalledTimes(1);
         expect(session.type).toBe('playback');
+    });
+    it('recovers a suspended graph in the background while its playback session stays active', async () => {
+        context.state = 'running'; bind(); visibility('hidden');
+        expect(context.resume).not.toHaveBeenCalled();
+        context.state = 'suspended'; context.dispatchEvent(new Event('statechange'));
+        await Promise.resolve();
+        expect(context.resume).toHaveBeenCalledTimes(1);
+        expect(context.state).toBe('running');
+    });
+    it.each(['inactive', 'interrupted'])('does not steal an %s session in the background', state => {
+        session.state = state; bind(); visibility('hidden');
+        context.dispatchEvent(new Event('statechange'));
+        expect(context.resume).not.toHaveBeenCalled();
+    });
+    it('recovers after a background interruption ends only while playback is still requested', async () => {
+        session.state = 'interrupted'; context.state = 'interrupted'; bind(); visibility('hidden');
+        expect(context.resume).not.toHaveBeenCalled();
+        session.state = 'active'; session.dispatchEvent(new Event('statechange'));
+        await Promise.resolve(); await Promise.resolve();
+        expect(context.resume).toHaveBeenCalledTimes(1);
+        requested = false; context.state = 'suspended';
+        context.dispatchEvent(new Event('statechange'));
+        expect(context.resume).toHaveBeenCalledTimes(1);
     });
     it.each(['paused', 'closed', 'running', 'interrupted'] as const)('respects %s instead of forcing playback', reason => {
         if (reason === 'paused') requested = false;

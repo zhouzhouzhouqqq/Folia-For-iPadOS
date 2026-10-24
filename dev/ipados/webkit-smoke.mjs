@@ -13,16 +13,16 @@ const cases = inventory.modes.map(mode => ({ id: `${mode.kind}-${mode.id}`, quer
 for (const effect of ['fluted-glass', 'paper-texture', 'halftone-dots', 'lens-distortion']) cases.push({ id: `nomand-${effect}`, query: `probe=ipadosBackgrounds&background=nomand&effect=${effect}`, selector: '[data-probe-background="nomand"]' });
 for (const display of ['dithering', 'mesh']) cases.push({ id: `latent-${display}`, query: `probe=ipadosBackgrounds&background=latent&latent=${display}`, selector: '[data-probe-background="latent"]' });
 const browser = await webkit.launch({ headless: true });
-const context = await browser.newContext({ viewport: { width: 1024, height: 768 }, deviceScaleFactor: 1, hasTouch: true, serviceWorkers: 'block' });
+const context = await browser.newContext({ viewport: { width: 1024, height: 768 }, deviceScaleFactor: 1, hasTouch: true });
 const results = [];
 try {
-    for (const item of cases) {
+    for (const item of cases.filter(item => !process.env.FOLIA_SMOKE_FILTER || item.id.includes(process.env.FOLIA_SMOKE_FILTER))) {
         const page = await context.newPage(); const errors = []; const consoleErrors = [];
         page.on('pageerror', error => errors.push(error.message));
         page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text()); });
         let result;
         try {
-            await page.goto(`http://127.0.0.1:4173/dev-probe.html?${item.query}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.goto(`${process.env.FOLIA_SMOKE_URL || 'http://127.0.0.1:4173'}/dev-probe.html?${item.query}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
             await page.locator(item.selector).waitFor({ state: 'visible', timeout: 45000 });
             await page.waitForTimeout(1800);
             const initial = await page.screenshot();

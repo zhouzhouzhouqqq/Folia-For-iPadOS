@@ -4,7 +4,7 @@ import {
     destroyPixiContainerChildren,
     destroyPixiDisplayTree,
     unloadPixiDisplayTree,
-} from '@/components/visualizer/pixiDisplayResources';
+} from '@/components/visualizer/pixi/pixiDisplayResources';
 import { SonnetPixiRuntime } from '@/components/visualizer/sonnet/createSonnetPixiRuntime';
 import { SonnetOutroBlur } from '@/components/visualizer/sonnet/sonnetOutroBlur';
 import { TemperaPixiRuntime } from '@/components/visualizer/tempera/createTemperaPixiRuntime';

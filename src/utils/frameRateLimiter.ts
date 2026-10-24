@@ -69,7 +69,7 @@ export const createFrameRateLimitedRaf = (
     let frameRate = initialFrameRate;
     let nextHandle = 1;
     let nativeFrameHandle: number | null = null;
-    let lastProcessedTimestamp = 0;
+    let nextFrameDeadline: number | null = null;
     const callbacks = new Map<number, AnimationFrameCallback>();
 
     const scheduleNativeFrame = () => {
@@ -83,12 +83,22 @@ export const createFrameRateLimitedRaf = (
     const processNativeFrame = (timestamp: number) => {
         nativeFrameHandle = null;
 
-        if (!shouldProcessFrameAtRate(timestamp, lastProcessedTimestamp, frameRate)) {
-            scheduleNativeFrame();
-            return;
+        if (frameRate !== 'off') {
+            if (nextFrameDeadline !== null && timestamp + FRAME_INTERVAL_TOLERANCE_MS < nextFrameDeadline) {
+                scheduleNativeFrame();
+                return;
+            }
+            const interval = 1000 / frameRate;
+            if (nextFrameDeadline === null) {
+                nextFrameDeadline = timestamp + interval;
+            } else {
+                // Keep the ideal cadence instead of anchoring it to a late display tick. A 90 FPS
+                // cap on a 120 Hz display otherwise drifts down to 60 FPS. Skip missed slots after
+                // suspension; never flush several animation frames on one display tick.
+                const slots = Math.max(1, Math.floor((timestamp + FRAME_INTERVAL_TOLERANCE_MS - nextFrameDeadline) / interval) + 1);
+                nextFrameDeadline += slots * interval;
+            }
         }
-
-        lastProcessedTimestamp = timestamp;
         const frameHandles = Array.from(callbacks.keys());
 
         for (const handle of frameHandles) {
@@ -123,7 +133,7 @@ export const createFrameRateLimitedRaf = (
         },
         setFrameRate: (nextFrameRate) => {
             frameRate = nextFrameRate;
-            lastProcessedTimestamp = 0;
+            nextFrameDeadline = null;
 
             if (nativeFrameHandle !== null) {
                 nativeCancelAnimationFrame(nativeFrameHandle);
@@ -153,6 +163,20 @@ export const setGlobalVisualizerFrameRate = (frameRate: VisualizerFrameRate) => 
     }
 
     installedLimiter.setFrameRate(frameRate);
+};
+
+// Asks for the display's next frame, past the cap. For work that has to land in the same frame as
+// something the cap does not hold back: a library that took `requestAnimationFrame` before the cap
+// was switched on (framer-motion does, when its module loads) keeps running on every display frame.
+export const requestUncappedAnimationFrame = (callback: AnimationFrameCallback): number => {
+    const frameWindow = window as WindowWithVisualizerFrameRateLimiter;
+    return (frameWindow.__foliaNativeRequestAnimationFrame ?? window.requestAnimationFrame).call(window, callback);
+};
+
+// Cancels a frame asked for with `requestUncappedAnimationFrame`.
+export const cancelUncappedAnimationFrame = (handle: number) => {
+    const frameWindow = window as WindowWithVisualizerFrameRateLimiter;
+    (frameWindow.__foliaNativeCancelAnimationFrame ?? window.cancelAnimationFrame).call(window, handle);
 };
 
 export const restoreGlobalVisualizerFrameRateLimiter = () => {

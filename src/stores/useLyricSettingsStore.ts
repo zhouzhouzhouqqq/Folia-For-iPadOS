@@ -12,7 +12,7 @@ import i18n from '../i18n/config';
 import { type LocalLyricsPriority, type LyricProviderSource } from '../types';
 import { getLyricProviderPreferenceLabel } from '../utils/lyrics/lyricSourceLabels';
 import { normalizeLocalLyricFormatOrder, type LocalLyricFileFormat } from '../utils/lyrics/localLyricFormatOrder';
-import { migratePreferredLyricSource } from '../utils/lyrics/sourcePriority';
+import { DEFAULT_PREFERRED_LYRIC_SOURCE, migratePreferredLyricSource } from '../utils/lyrics/sourcePriority';
 import { DEFAULT_LYRIC_STAFF_ABSORB_MODE, DEFAULT_LYRIC_STAFF_MIN_DWELL_SECONDS, DEFAULT_LYRIC_STAFF_POLICY, LYRIC_STAFF_MIN_DWELL_RANGE, type LyricStaffAbsorbMode, type LyricStaffPolicy } from '../utils/lyrics/staffCreditsPolicy';
 import { getStoredBoolean, getStoredString, setStoredBoolean } from './storagePrimitives';
 import { setStatusMessage } from './useStatusMessageStore';
@@ -62,7 +62,7 @@ const readStoredLocalLyricFormatOrder = (): LocalLyricFileFormat[] => {
 };
 
 const readStoredPreferredAlternativeLyricSource = (): LyricProviderSource => {
-    if (typeof window === 'undefined') return 'qq';
+    if (typeof window === 'undefined') return DEFAULT_PREFERRED_LYRIC_SOURCE;
     const versioned = localStorage.getItem(PREFERRED_LYRIC_SOURCE_STORAGE_KEY_V2);
     const legacy = localStorage.getItem('preferred_alternative_lyric_source');
     const migrated = migratePreferredLyricSource(versioned, legacy);

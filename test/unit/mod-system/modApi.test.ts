@@ -27,7 +27,9 @@ const createApi = (permissions: string[], overrides: Record<string, unknown> = {
     modId: 'test-mod',
     manifest: { id: 'test-mod', permissions },
     dataStore: createModDataStore(tempDir()),
-    hostInfo: { folium: { major: 1, minor: 0 }, folia: '0.7.8' },
+    dataDir: '/user-data/mods-data/test-mod',
+    hostInfo: { folium: { major: 1, minor: 6 }, folia: '0.7.8' },
+    getUserFolder: (name: string) => `/home/${name}`,
     emitLog: () => {},
     getPlaybackSnapshot: () => ({ song: null }),
     registerDisposer: () => {},
@@ -43,31 +45,39 @@ afterEach(() => {
 });
 
 describe('mod api permission gate', () => {
-    it('refuses the playback snapshot without runtime.playback', () => {
-        expect(() => createApi([]).runtime.getPlaybackSnapshot()).toThrow('permission-denied:runtime.playback');
+    it('refuses the playback snapshot without playback.read', () => {
+        expect(() => createApi([]).runtime.getPlaybackSnapshot()).toThrow('permission-denied:playback.read');
     });
 
-    it('returns the playback snapshot once runtime.playback is declared', () => {
-        expect(createApi(['runtime.playback']).runtime.getPlaybackSnapshot()).toEqual({ song: null });
+    it('returns the playback snapshot once playback.read is declared', () => {
+        expect(createApi(['playback.read']).runtime.getPlaybackSnapshot()).toEqual({ song: null });
     });
 
-    it('rejects every storage operation without filesystem.data', async () => {
+    it('rejects every storage operation without storage', async () => {
         const api = createApi([]);
-        await expect(api.storage.data.get('k')).rejects.toThrow('permission-denied:filesystem.data');
-        await expect(api.storage.data.set('k', 1)).rejects.toThrow('permission-denied:filesystem.data');
-        await expect(api.storage.data.has('k')).rejects.toThrow('permission-denied:filesystem.data');
-        await expect(api.storage.data.delete('k')).rejects.toThrow('permission-denied:filesystem.data');
-        await expect(api.storage.data.keys()).rejects.toThrow('permission-denied:filesystem.data');
+        await expect(api.storage.get('k')).rejects.toThrow('permission-denied:filesystem.data');
+        await expect(api.storage.set('k', 1)).rejects.toThrow('permission-denied:filesystem.data');
+        await expect(api.storage.has('k')).rejects.toThrow('permission-denied:filesystem.data');
+        await expect(api.storage.delete('k')).rejects.toThrow('permission-denied:filesystem.data');
+        await expect(api.storage.keys()).rejects.toThrow('permission-denied:filesystem.data');
     });
 
-    it('round-trips storage once filesystem.data is declared', async () => {
+    it('round-trips storage once storage is declared', async () => {
         const api = createApi(['filesystem.data']);
-        await api.storage.data.set('answer', 42);
-        expect(await api.storage.data.get('answer')).toBe(42);
-        expect(await api.storage.data.has('answer')).toBe(true);
-        expect(await api.storage.data.keys()).toEqual(['answer']);
-        await api.storage.data.delete('answer');
-        expect(await api.storage.data.has('answer')).toBe(false);
+        await api.storage.set('answer', 42);
+        expect(await api.storage.get('answer')).toBe(42);
+        expect(await api.storage.has('answer')).toBe(true);
+        expect(await api.storage.keys()).toEqual(['answer']);
+        await api.storage.delete('answer');
+        expect(await api.storage.has('answer')).toBe(false);
+    });
+
+    it('rejects a video export without render.export, and hands one over once it is declared', async () => {
+        const requestExport = vi.fn(() => Promise.resolve({ ok: true }));
+        await expect(createApi([], { requestExport }).render.exportVideo({})).rejects.toThrow('permission-denied:render.export');
+        expect(requestExport).not.toHaveBeenCalled();
+        await expect(createApi(['render.export'], { requestExport }).render.exportVideo({ fps: 30 })).resolves.toEqual({ ok: true });
+        expect(requestExport).toHaveBeenCalledWith({ fps: 30 });
     });
 
     it('never lets a mod widen its own permissions through the frozen manifest', async () => {
@@ -77,11 +87,11 @@ describe('mod api permission gate', () => {
         } catch {
             // Frozen in strict mode; either way the gate below must still hold.
         }
-        await expect(api.storage.data.get('k')).rejects.toThrow('permission-denied:filesystem.data');
+        await expect(api.storage.get('k')).rejects.toThrow('permission-denied:filesystem.data');
     });
 });
 
-describe('mod api file paths (Folium 1.5)', () => {
+describe('mod api file paths (api.storage.paths)', () => {
     const createPathsApi = (permissions: string[]) => {
         const userData = tempDir();
         const filesDir = path.join(userData, 'mods-data', 'test-mod', 'files');
@@ -95,7 +105,7 @@ describe('mod api file paths (Folium 1.5)', () => {
         expect(Object.isFrozen(api.storage.paths)).toBe(true);
     });
 
-    it('throws permission-denied synchronously on read without filesystem.data, creating nothing', () => {
+    it('throws permission-denied synchronously on read without storage, creating nothing', () => {
         const { api, filesDir, cacheDir } = createPathsApi([]);
         expect(() => api.storage.paths.data).toThrow('permission-denied:filesystem.data');
         expect(() => api.storage.paths.cache).toThrow('permission-denied:filesystem.data');
@@ -127,12 +137,12 @@ describe('mod api file paths (Folium 1.5)', () => {
         expect(api.storage.paths.data).toBe(filesDir);
     });
 
-    // 1.4's api serialized cleanly, so walking it must not read the gated, directory-creating getters.
+    // The api serializes cleanly, so walking it must not read the gated, directory-creating getters.
     it('is skipped when the api is serialized or spread, without the permission', () => {
         const { api, filesDir, cacheDir } = createPathsApi([]);
         expect('data' in api.storage.paths && 'cache' in api.storage.paths).toBe(true);
         expect(Object.keys(api.storage.paths)).toEqual([]);
-        expect(JSON.parse(JSON.stringify(api.storage))).toEqual({ data: {}, paths: {} });
+        expect(JSON.parse(JSON.stringify(api.storage))).toEqual({ paths: {} });
         expect(() => JSON.stringify(api)).not.toThrow();
         expect({ ...api.storage.paths }).toEqual({});
         expect(Object.assign({}, api.storage.paths)).toEqual({});
@@ -220,8 +230,22 @@ describe('mod api rpc and host info', () => {
 
     it('exposes the frozen host version info', () => {
         const api = createApi([]);
-        expect(api.host).toEqual({ folium: { major: 1, minor: 0 }, folia: '0.7.8' });
+        expect(api.host).toEqual({ folium: { major: 1, minor: 6 }, folia: '0.7.8' });
         expect(Object.isFrozen(api.host)).toBe(true);
+    });
+
+    it('gives the mod its data folder, and asks for a user folder only when it is read', () => {
+        const getUserFolder = vi.fn((name: string) => {
+            if (name === 'music') throw new Error('Failed to get \'music\' path');
+            return `/home/${name}`;
+        });
+        const api = createApi([], { getUserFolder });
+        expect(getUserFolder).not.toHaveBeenCalled();
+        expect('data' in api.paths).toBe(false);
+        expect([api.paths.documents, api.paths.downloads, api.paths.videos]).toEqual(['/home/documents', '/home/downloads', '/home/videos']);
+        // A folder the system does not have fails the read, not the mod's start.
+        expect(() => api.paths.music).toThrow('music');
+        expect(Object.isFrozen(api.paths)).toBe(true);
     });
 
     it('no longer offers command registration on the Node side', () => {
@@ -230,11 +254,11 @@ describe('mod api rpc and host info', () => {
 });
 
 describe('mod api lifecycle', () => {
-    it('forwards deactivate handlers to the loader', () => {
+    it('forwards onDispose handlers to the loader', () => {
         const registerDisposer = vi.fn();
         const api = createApi([], { registerDisposer });
         const handler = () => {};
-        api.lifecycle.onDeactivate(handler);
+        api.onDispose(handler);
         expect(registerDisposer).toHaveBeenCalledWith(handler);
     });
 });

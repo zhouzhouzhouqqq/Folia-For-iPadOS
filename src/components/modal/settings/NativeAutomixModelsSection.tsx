@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FoliaAutomix, type NativeAutomixModel } from '../../../platform/ios/automix';
-import { modelsPresent, refreshModelAvailability, subscribeModelAvailability } from '../../../services/automix/modelAvailability';
+import { modelsPresent, refreshModelAvailability, subscribeModelAvailability } from '../../../services/analysis/modelAvailability';
 import { cancelNativeInference, nativeInferenceError, subscribeNativeInferenceError } from '../../../services/automix/nativeInference';
 
 // iPad model management within the original transition section; every installed file is SHA-256 verified natively.

@@ -5,10 +5,15 @@ import { useTranslation } from 'react-i18next';
 import type { Theme } from '@/types';
 import { SettingsToggle } from '../../components/modal/settings/SettingsRow';
 import type { ModRuntimeInfo } from '../types';
-import { ModSurfaceRenderer } from '../ModSurfaceRenderer';
+import { ModSurfaceRenderer } from './ModSurfaceRenderer';
+import { modSettingsRowId } from '../useModsStore';
+import { setFoliumFaultNoticeMuted, useFoliumStatusStore } from '../runtime/status';
+import { ModCostLines, ModSlowMark } from './ModCostLines';
+import { isModSlow, type ModCost } from './modCost';
 import type { ModManagerClasses } from './modManagerClasses';
 import { translateModError } from './modErrors';
 import { MOD_FILES_PERMISSION, ModStorageUsage, type ModNotice } from './ModStorageUsage';
+import { useFoliumOldNameStore } from '../folium/deprecated/warnings';
 
 // src/mods/manager/ModListItem.tsx
 // One mod as a row of the manager's list card. The row expands in place to show the mod's
@@ -19,13 +24,13 @@ export { translateModError };
 
 /*
  * Everything the trust dialog listed for this mod, as chips: permissions,
- * experimental opt-ins, embeddable origins, and the internals pin.
+ * experimental opt-ins, embeddable origins, and the Folia versions it needs.
  */
 const describeModGrants = (mod: ModRuntimeInfo): string[] => [
     ...mod.permissions,
     ...(mod.experimental ?? []).map((feature) => `experimental:${feature}`),
     ...(mod.embedOrigins ?? []).map((origin) => `embed:${origin}`),
-    ...(mod.folia ? [`internals:${mod.folia}`] : []),
+    ...(mod.folia ? [`folia:${mod.folia}`] : []),
 ];
 
 /*
@@ -118,12 +123,15 @@ const SignatureNotice: React.FC<{ mod: ModRuntimeInfo; isDaylight: boolean; clas
 
 const StatusIcon: React.FC<{ status: string; isDaylight: boolean }> = ({ status, isDaylight }) => {
     if (status === 'loaded') return <CircleCheck size={15} className={`${isDaylight ? 'text-emerald-600' : 'text-emerald-300'} shrink-0`} />;
-    if (status === 'disabled') return <CircleOff size={15} className={`${isDaylight ? 'text-zinc-400' : 'text-white/35'} shrink-0`} />;
+    // 'skipped' (this run was started without mods) is not running and not broken: it reads as off.
+    if (status === 'disabled' || status === 'skipped') return <CircleOff size={15} className={`${isDaylight ? 'text-zinc-400' : 'text-white/35'} shrink-0`} />;
     return <TriangleAlert size={15} className={`${isDaylight ? 'text-red-600' : 'text-red-300'} shrink-0`} />;
 };
 
 type ModListItemProps = {
     mod: ModRuntimeInfo;
+    /** What the mod costs, as last read by the manager; absent until the first read is in. */
+    cost?: ModCost;
     expanded: boolean;
     selected: boolean;
     selectionMode: boolean;
@@ -138,10 +146,18 @@ type ModListItemProps = {
     onNotice: (notice: ModNotice) => void;
 };
 
+const NO_OLD_NAMES: readonly string[] = [];
+
 export const ModListItem: React.FC<ModListItemProps> = ({
-    mod, expanded, selected, selectionMode, isLast, isDaylight, theme, classes, onToggleExpand, onToggleEnabled, onToggleSelected, onNotice,
+    mod, cost, expanded, selected, selectionMode, isLast, isDaylight, theme, classes, onToggleExpand, onToggleEnabled, onToggleSelected, onNotice,
 }) => {
+    // Only a running mod has a cost to show.
+    const runningCost = mod.status === 'loaded' ? cost : undefined;
     const { t } = useTranslation();
+    const noticeMuted = useFoliumStatusStore((state) => state.mutedNotices.includes(mod.id));
+    // Folium 1.6 only: the old names the mod uses, its mod.json's and main entry's, then its client's (folium/deprecated/).
+    const clientOldNames = useFoliumOldNameStore((state) => state.byMod[mod.id] ?? NO_OLD_NAMES);
+    const oldNames = [...(mod.warnings ?? []), ...clientOldNames];
     const grants = describeModGrants(mod);
     const meta = [mod.id, `v${mod.version ?? '-'}`, mod.author].filter(Boolean).join(' · ');
 
@@ -154,7 +170,7 @@ export const ModListItem: React.FC<ModListItemProps> = ({
     };
 
     return (
-        <div className={isLast ? '' : `border-b ${classes.divider}`}>
+        <div className={isLast ? '' : `border-b ${classes.divider}`} data-settings-row={modSettingsRowId(mod.id)}>
             <div
                 role="button"
                 tabIndex={0}
@@ -182,6 +198,7 @@ export const ModListItem: React.FC<ModListItemProps> = ({
                     <div className="flex items-center gap-1.5 min-w-0">
                         <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{mod.name}</span>
                         <SignatureBadge mod={mod} isDaylight={isDaylight} />
+                        {isModSlow(runningCost) ? <ModSlowMark isDaylight={isDaylight} /> : null}
                     </div>
                     <div className="text-[11px] opacity-50 truncate" style={{ color: 'var(--text-secondary)' }}>{meta}</div>
                 </div>
@@ -245,6 +262,33 @@ export const ModListItem: React.FC<ModListItemProps> = ({
                                     <span className="break-all">{translateModError(t, mod.error, 'unknown')}</span>
                                 </div>
                             ) : null}
+                            {/* Folium 1.6 only: the old names above (electron/modSystem/deprecated.cjs, src/mods/folium/deprecated/). */}
+                            {oldNames.length > 0 ? (
+                                <div className={`flex items-start gap-2 text-xs rounded-lg border px-3 py-2 ${classes.warning}`}>
+                                    <TriangleAlert size={14} className="mt-px shrink-0" />
+                                    <div className="flex min-w-0 flex-col gap-1">
+                                        <span>{t('mods.oldNames')}</span>
+                                        {oldNames.map((warning) => (
+                                            <span key={warning} className="break-words opacity-80">{warning}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : null}
+
+                            {/* The notice a failing mod raises can be turned off from the notice itself; this turns it back on. */}
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-xs opacity-75" style={{ color: 'var(--text-primary)' }}>{t('mods.faultNoticeSwitch')}</span>
+                                <SettingsToggle
+                                    checked={!noticeMuted}
+                                    onChange={() => setFoliumFaultNoticeMuted(mod.id, !noticeMuted)}
+                                    offClass={classes.toggleOff}
+                                    onColor={theme.secondaryColor}
+                                    ariaLabel={t('mods.faultNoticeSwitch')}
+                                />
+                            </div>
+
+                            {runningCost ? <ModCostLines cost={runningCost} isDaylight={isDaylight} /> : null}
+
                             {/* Mounted with the expanded row, so the directories are only counted when looked at. */}
                             {mod.permissions.includes(MOD_FILES_PERMISSION) ? (
                                 <ModStorageUsage mod={mod} isDaylight={isDaylight} classes={classes} onNotice={onNotice} />
@@ -254,7 +298,9 @@ export const ModListItem: React.FC<ModListItemProps> = ({
                                 <ModSurfaceRenderer modId={mod.id} theme={theme} isDaylight={isDaylight} />
                             ) : (
                                 <div className="text-xs opacity-50" style={{ color: 'var(--text-secondary)' }}>
-                                    {mod.enabled ? t('mods.notLoaded') : t('mods.modDisabledHint')}
+                                    {mod.status === 'skipped'
+                                        ? t('mods.skippedThisRun')
+                                        : mod.enabled ? t('mods.notLoaded') : t('mods.modDisabledHint')}
                                 </div>
                             )}
                         </div>

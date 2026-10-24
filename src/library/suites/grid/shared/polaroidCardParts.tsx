@@ -4,7 +4,7 @@ import { Disc, Pause, Play, Plus, X } from 'lucide-react';
 import type { SongResult, UnifiedSong } from '../../../../types';
 import { getSizedCoverUrl } from '../../../../utils/coverUrl';
 import { canResolveSongCatalogRef } from '../../../../services/onlineMusic/catalogRefs';
-import { resolveTrackArtistTargetId } from '../../../core/model/trackLinks';
+import { resolveTrackArtistTargetId } from '../../../core/shared/trackLinks';
 import type { GridPlaybackMark } from './useGridStayPlayback';
 
 // src/library/suites/grid/shared/polaroidCardParts.tsx

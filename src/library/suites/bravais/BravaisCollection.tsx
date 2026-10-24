@@ -2,19 +2,20 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { useIsPresent } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import type { SongResult } from '../../../types';
-import type { LibraryActionId, LibraryCollectionSurfaceProps } from '../../core/contracts/suite';
-import { collectionKey } from '../../core/model/collectionIdentity';
-import { buildCoreSurfaceParams, buildGridSurfaceState, runGridSurfaceAction } from '../../core/model/collectionSurface';
-import { resolveDeclaredMutationActions } from '../../core/model/librarySuites';
-import { resolveTrackAlbumLink, resolveTrackArtistLinks } from '../../core/model/trackLinks';
-import { useCollectionResourceState } from '../../core/bindings/useCollectionResourceState';
-import { useCollectionView } from '../../core/bindings/useCollectionView';
-import { useCollectionActions } from '../../core/bindings/useCollectionActions';
-import { useCollectionMutationSnapshot } from '../../core/bindings/useCollectionMutations';
-import { useLocalTrackSortStore } from '../../core/state/useLocalTrackSortStore';
+import type { LibraryActionId, LibraryCollectionSurfaceProps } from '../../core/suite/suite.contract';
+import { collectionKey } from '../../core/collection/collectionIdentity';
+import { buildCoreSurfaceParams, buildGridSurfaceState, runGridSurfaceAction } from '../../core/collection/collectionSurface';
+import { resolveDeclaredMutationActions } from '../../core/suite/librarySuites';
+import { resolveTrackAlbumLink, resolveTrackArtistLinks } from '../../core/shared/trackLinks';
+import { useCollectionResourceState } from '../../core/collection/resource/useCollectionResourceState';
+import { useCollectionView } from '../../core/collection/useCollectionView';
+import { useCollectionActions } from '../../core/collection/mutations/useCollectionActions';
+import { useCollectionMutationSnapshot } from '../../core/collection/mutations/useCollectionMutations';
+import { useLocalTrackSortStore } from '../../core/directory/useLocalTrackSortStore';
 import { useGridSurfaceRegistration } from '../../../hooks/useGridSurfaceRegistration';
 import { canResolveSongCatalogRef } from '../../../services/onlineMusic/catalogRefs';
-import type { BravaisItem, BravaisLayer, BravaisSeamModel } from './bravaisLayer';
+import { useNavigationPageKey } from '../../../components/app/playing-song-locator/useNavigationPageKey';
+import type { BravaisItem, BravaisLayer, BravaisLayerLocate, BravaisSeamModel } from './bravaisLayer';
 import { collectQueuedKeys, findNowPlayingKey, projectCollectionTracks } from './bravaisProjection';
 import { describeBravaisTrack } from './describeBravaisTrack';
 import type { BravaisPlaylistScope } from './bravaisFormModel';
@@ -142,8 +143,8 @@ const BravaisCollection: React.FC<LibraryCollectionSurfaceProps> = ({
     // 表单态与结果提示。
     const displayTitle = mutationSnapshot.renamedTo ?? collection.name;
     const notice = useBravaisMutationNotice();
-    const latest = useRef({ trackByKey, actions, view, onOpenAlbum, onOpenArtist, onBack, onDone, declaredActions, focus });
-    latest.current = { trackByKey, actions, view, onOpenAlbum, onOpenArtist, onBack, onDone, declaredActions, focus };
+    const latest = useRef({ trackByKey, actions, view, onOpenAlbum, onOpenArtist, onBack, onDone, declaredActions, focus, filter });
+    latest.current = { trackByKey, actions, view, onOpenAlbum, onOpenArtist, onBack, onDone, declaredActions, focus, filter };
     const tracksFor = useCallback((scope: BravaisPlaylistScope): SongResult[] => {
         if (scope.kind === 'collection') return latest.current.view.playableTracks;
         const track = latest.current.trackByKey.get(scope.entryKey);
@@ -231,8 +232,25 @@ const BravaisCollection: React.FC<LibraryCollectionSurfaceProps> = ({
             onDone: () => latest.current.onDone(),
             onPlayScope: () => latest.current.actions.playScope(),
             onEnqueueScope: () => latest.current.actions.enqueueScope(),
+            clearFilter: () => latest.current.filter.setQuery(''),
         };
     }, []);
+
+    // 「定位正在播放」：与网格的集合页同一个页键（导航栈栈顶的那一份），列表全不全的读法也与网格相同（GridView）。
+    const navigationPageKey = useNavigationPageKey();
+    const locatePageKey = navigationPageKey ?? sessionKey;
+    const isFiltered = Boolean(filter.query || filter.committedQuery);
+    const cardsStillArriving = snapshot
+        ? snapshot.status === 'idle' || snapshot.status === 'loading' || snapshot.sync.status === 'syncing'
+        : false;
+    const hasReadFailed = Boolean(snapshot?.error || snapshot?.sync.status === 'interrupted');
+    const locate = useMemo<BravaisLayerLocate>(() => ({
+        pageKey: locatePageKey,
+        isFiltered,
+        cardsStillArriving,
+        hasReadFailed,
+        clearFilter: callbacks.clearFilter,
+    }), [callbacks, cardsStillArriving, hasReadFailed, isFiltered, locatePageKey]);
 
     const scopeEnabled = actions.capabilities.scope.enabled;
     const declaresScope = declaredActions.actions.includes('play-scope');
@@ -280,7 +298,8 @@ const BravaisCollection: React.FC<LibraryCollectionSurfaceProps> = ({
         onPopTo: popTo,
         wall,
         entries,
-    }), [callbacks, entries, focus.initialKey, isActive, items, popTo, nowPlayingKey, queuedKeys, seam, sessionKey, view.isFilterActive, wall]);
+        locate,
+    }), [callbacks, entries, focus.initialKey, isActive, items, locate, popTo, nowPlayingKey, queuedKeys, seam, sessionKey, view.isFilterActive, wall]);
     useBravaisLayerRegistration('top', layer, isPresent);
 
     // 不可见的锚点：铺满但不接指针，画面全在 stage 里。Ponder 的页面标记（bravais-wall）要有尺寸才参与解析。

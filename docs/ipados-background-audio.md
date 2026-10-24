@@ -57,3 +57,6 @@
 4. 如仍失败，记录iPad型号/iPadOS、是立刻还是下一首停，以及Xcode的 `[iOS audio]` / `AudioSession` 日志。它们不包含账号Cookie、音频URL或个人文件内容。
 
 若日志显示缺少网页 AudioSession API，或声明后WebKit仍中断/挂起，不应承诺所有旧系统能用本修复。后续需以实际系统日志决定是否开发原生音频后端，并先验证全部DSP、双deck混音、分析器数据和统一状态的兼容设计；不得偷换为无音效AVPlayer。当前尚未实施原生音频引擎。
+## 2026-10-22 补充：后台同图恢复
+
+用户反馈后台偶尔无声、进度仍继续。`bindIOSAudioContextLifecycle` 原来拒绝所有 hidden 页面恢复，现在只在播放意图仍为真且 `navigator.audioSession.state === 'active'` 时接受后台 context/session/visibility 恢复事件。用户暂停、inactive/interrupted 会话不抢占焦点，宿主仍不调用 `setActive(true)`，不启动第二个播放器、不改动原 DSP/AutoMix/分析图。事件边界已有单测，后台实际可听仍待构建 4 真机复测；冻结的网页不能靠 JS 事件恢复保证长播。同步处理的 iPhone 13 Pro highwater 重载证据及所有验证边界见 [手机故障跟踪](ipados-phone-playback-reload.md)。

@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 // test/unit/electron/qqBackend.test.ts
 // QQ 后端：拉起步骤、打包缺包时的 unavailable、以及挂在包内部的诊断钩子（用假的包文件，不加载真包）。
 
-const { createQqBackend, installQqLoginHooks } = require('../../../electron/qqBackend.cjs') as {
+const { createQqBackend, describeFailureError, installQqLoginHooks } = require('../../../electron/qq/qqBackend.cjs') as {
+    describeFailureError: (error: unknown) => { stack?: string[] };
     createQqBackend: (options: Record<string, unknown>) => {
         start: () => Promise<void>;
         stop: () => Promise<void>;
@@ -117,6 +118,23 @@ describe('QQ login hooks', () => {
         });
         expect(result.installed).toEqual([]);
         expect(result.error).toBe('qr service: layout changed; logger: layout changed');
+    });
+});
+
+describe('QQ failure stack', () => {
+    it('keeps only the part of each frame inside the package, so no user folder is stored', () => {
+        const error = new Error('failed');
+        error.stack = [
+            'Error: failed',
+            '    at QrLoginService.failSession (C:\\Users\\Jane Doe\\AppData\\Local\\Programs\\folia\\resources\\app.asar\\node_modules\\@yakult-green-tea\\qq-music-api\\dist\\src\\qrLogin.node.js:185:23)',
+            '    at C:\\Users\\Jane Doe\\AppData\\Local\\Programs\\folia\\resources\\app.asar\\electron\\qq\\qqBackend.cjs:80:9',
+            '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)',
+        ].join('\n');
+        expect(describeFailureError(error).stack).toEqual([
+            'at QrLoginService.failSession (@yakult-green-tea/qq-music-api/dist/src/qrLogin.node.js:185:23)',
+            'at electron/qq/qqBackend.cjs:80:9',
+            'at process.processTicksAndRejections (node:internal/process/task_queues:105:5)',
+        ]);
     });
 });
 

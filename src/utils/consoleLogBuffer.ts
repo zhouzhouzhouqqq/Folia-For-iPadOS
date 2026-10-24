@@ -131,6 +131,23 @@ const push = (level: ConsoleLevel, args: unknown[]) => {
     listeners.forEach(listener => listener());
 };
 
+/**
+ * Lines the desktop main process wrote to its own console, into the same buffer.
+ *
+ * Not offered to the sink: the main process writes its own lines to the runtime log file, and a
+ * line sent back there would be in the file twice. Placed by the time each was written, because a
+ * line crosses the process boundary a few milliseconds late and the first batch a window receives
+ * was written before the window existed.
+ */
+export const recordMainProcessLines = (lines: ReadonlyArray<{ at: number; level: ConsoleLevel; text: string }>) => {
+    if (!capturing || !lines.length) return;
+    entries = entries
+        .concat(lines.map(({ at, level, text }) => ({ id: nextId += 1, at, level, text, scope: readScope(text) })))
+        .sort((a, b) => a.at - b.at);
+    if (entries.length > LIMIT) entries = entries.slice(entries.length - LIMIT);
+    listeners.forEach(listener => listener());
+};
+
 export const getConsoleLogEntries = () => entries;
 
 export const subscribeToConsoleLog = (listener: () => void) => {

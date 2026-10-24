@@ -58,6 +58,8 @@ const createHarness = (readings: Partial<Record<AutomixDeckId, FakeAnalyserReadi
 
     const activeDeckChanges: AutomixDeckId[] = [];
     const tailSrcChanges: (string | null)[] = [];
+    /** How each release said the transition ended. */
+    const tailEnds: (string | undefined)[] = [];
     const autoplayHolds: boolean[] = [];
     const advanceTrack = vi.fn();
 
@@ -69,7 +71,10 @@ const createHarness = (readings: Partial<Record<AutomixDeckId, FakeAnalyserReadi
         getElement: deck => asElement(elements[deck]),
         getChain: deck => chains[deck],
         onActiveDeckChange: deck => { activeDeckChanges.push(deck); },
-        onTailSrcChange: src => { tailSrcChanges.push(src); },
+        onTailSrcChange: (src, opts) => {
+            tailSrcChanges.push(src);
+            if (src === null) tailEnds.push(opts?.end);
+        },
         onAutoplayHoldChange: held => { autoplayHolds.push(held); },
         advanceTrack,
         // Always empty, so every other test here keeps taking the master crossfade it was written
@@ -101,7 +106,7 @@ const createHarness = (readings: Partial<Record<AutomixDeckId, FakeAnalyserReadi
 
     return {
         session, elements, chains, context, stemAsks,
-        activeDeckChanges, tailSrcChanges, autoplayHolds, advanceTrack, arm,
+        activeDeckChanges, tailSrcChanges, tailEnds, autoplayHolds, advanceTrack, arm,
     };
 };
 
@@ -614,6 +619,34 @@ describe('automix session', () => {
         expect(harness.session.getPhase()).toBe('idle');
         expect(harness.elements.A.pause).toHaveBeenCalled();
         expect(finalTarget(harness.chains.B.fadeNode)).toBe(1);
+    });
+
+    // The screen continues the incoming track's lyric clock only across a hand-over. Told it was one
+    // after a skip, it carries the skipped-to track's clock over from the track it replaced.
+    it('says which way each transition ended', () => {
+        const finished = createHarness();
+        finished.arm();
+        finished.session.handleActiveDeckPlaying('local:next-song');
+        vi.advanceTimersByTime(5_200);
+        expect(finished.tailEnds).toEqual(['handedOver']);
+
+        const cancelled = createHarness();
+        cancelled.arm();
+        cancelled.session.handleActiveDeckPlaying('local:next-song');
+        cancelled.session.abort(true);
+        expect(cancelled.tailEnds).toEqual(['cancelled']);
+
+        const skipped = createHarness();
+        skipped.arm();
+        skipped.session.handleActiveDeckPlaying('local:next-song');
+        skipped.session.handleSongChanged('local:something-else');
+        expect(skipped.tailEnds).toEqual(['dropped']);
+
+        const refused = createHarness();
+        refused.arm();
+        refused.session.handleActiveDeckPlaying('local:some-other-song');
+        vi.advanceTimersByTime(1_000);
+        expect(refused.tailEnds).toEqual(['dropped']);
     });
 
     it('leaves the blend alone for the two songs the blend is between', () => {

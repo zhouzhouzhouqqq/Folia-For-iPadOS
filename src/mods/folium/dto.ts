@@ -12,7 +12,7 @@ import { buildLineRenderHints, getLineRenderHints } from '@/utils/lyrics/renderH
 import { isValidWordSegmentation } from '@/utils/lyrics/wordSegmentation';
 import { getLineBackgroundVocals } from '@/components/visualizer/harmonyRuntime';
 import { getPlaybackSourceRef } from '@/utils/appPlaybackGuards';
-import type { PlaybackFailureReason } from '@/types/playbackFailure';
+import type { OnlineFailureCaseId } from '@/types/onlineMusic';
 import type {
     FoliumBackgroundVocal,
     FoliumLine,
@@ -210,25 +210,27 @@ export const toFoliumSong = (song: SongResult | null | undefined): FoliumSong | 
 
 // Host reason codes are not API: mods see five coarse classes. A Record so a new host reason fails
 // the type check until it is classed here.
-const FOLIUM_PLAYBACK_FAILURE_REASONS: Readonly<Record<PlaybackFailureReason, FoliumPlaybackFailureReason>> = Object.freeze({
-    'not-signed-in': 'auth',
-    'session-expired': 'auth',
-    'membership-required': 'restricted',
+const FOLIUM_PLAYBACK_FAILURE_REASONS: Readonly<Record<OnlineFailureCaseId, FoliumPlaybackFailureReason>> = Object.freeze({
+    'sign-in-needed': 'auth',
+    'subscription-required': 'restricted',
     'purchase-required': 'restricted',
     'entitlement-required': 'restricted',
     'preview-only': 'restricted',
     'region-restricted': 'restricted',
+    'not-public': 'restricted',
     'taken-down': 'taken-down',
-    network: 'network',
-    timeout: 'network',
-    'service-unavailable': 'network',
-    'rate-limited': 'network',
-    'invalid-response': 'unknown',
+    unreachable: 'network',
+    'local-service-stopped': 'network',
+    'retry-later': 'network',
+    'not-configured': 'unknown',
+    'no-audio': 'unknown',
+    'audio-unplayable': 'unknown',
+    refused: 'unknown',
     unknown: 'unknown',
 });
 
 /** The coarse Folium class of a host failure reason; no reason (a path without one) is `unknown`. */
-export const toFoliumPlaybackFailureReason = (reason: PlaybackFailureReason | null | undefined): FoliumPlaybackFailureReason => (
+export const toFoliumPlaybackFailureReason = (reason: OnlineFailureCaseId | null | undefined): FoliumPlaybackFailureReason => (
     reason && Object.prototype.hasOwnProperty.call(FOLIUM_PLAYBACK_FAILURE_REASONS, reason)
         ? FOLIUM_PLAYBACK_FAILURE_REASONS[reason]
         : 'unknown'

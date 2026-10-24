@@ -4,23 +4,23 @@ import type {
     LibraryAccountController,
     LibraryAccountSnapshot,
     LibraryProviderSwitchCleanupPort,
-} from '../core/contracts/account';
-import { createProviderAccountController } from '../core/services/providerAccountController';
-import { createProviderAccountDeps } from '../core/services/providerAccountDeps';
-import { useLibraryAccountSelector } from '../core/bindings/useLibraryAccount';
+} from '../core/account/account.contract';
+import { createProviderAccountController } from '../core/account/providerAccountController.service';
+import { createProviderAccountDeps } from '../core/account/providerAccountDeps.service';
+import { useLibraryAccountSelector } from '../core/account/useLibraryAccount';
 import { useSearchNavigationStore } from '../../stores/useSearchNavigationStore';
 
 // src/library/app/useLibraryAccountController.ts
-// 应用持有的在线账户 controller（Library v2 · A4）：App 里调用一次——per-provider 的刷新器与登出只有 App 有。
-// controller 只建一次，寿命跟着调用方（App 卸载时 dispose）；刷新、登出与切换清理经 ref 指向每次渲染的最新实现，
-// 所以 controller 不随渲染重建。另外承担原 useOnlineProviderPlatform 的副作用：搜索浮层的在线来源跟着当前平台走。
+// 应用持有的在线账户 controller（Library v2 · A4）：App 里调用一次——退出前的确认框与清空播放器的句柄只有 App 有。
+// controller 只建一次，寿命跟着调用方（App 卸载时 dispose）；退出、那一问与清空播放器经 ref 指向每次渲染的最新实现，
+// 所以 controller 不随渲染重建。读账号走默认装配（omni.readAccount）。另外：搜索浮层的在线来源跟着当前平台走。
 
 export type LibraryAccountHostTables = {
-    /** per-provider 账户刷新（App 的 onlineProviderRefreshers）；没有刷新器的平台（mod 源）不刷新。 */
-    refreshers: Partial<Record<OnlineProviderId, () => Promise<unknown>>>;
-    /** per-provider 登出（App 的 onlineProviderLogouts）；没有登出实现的平台 no-op。 */
-    logouts: Partial<Record<OnlineProviderId, () => Promise<void>>>;
-    /** 确认切换后的清理（createLibraryAccountSwitchCleanupPort）。 */
+    /** 退出一个平台的登录（App 的 useProviderSignOut：omni.signOutAccount 与「已退出登录」的提示）。 */
+    logout: (providerId: OnlineProviderId) => Promise<void>;
+    /** 退出之前问用的人（App 的 useProviderSignOut 的确认框）；回 false 就不退。 */
+    confirmLogout: (request: { providerId: OnlineProviderId; emptiesPlayer: boolean }) => Promise<boolean>;
+    /** 平台换了时清空播放器（createLibraryAccountSwitchCleanupPort）。 */
     switchCleanup: LibraryProviderSwitchCleanupPort;
 };
 
@@ -32,14 +32,10 @@ export const useLibraryAccountController = (tables: LibraryAccountHostTables): L
     tablesRef.current = tables;
 
     const createController = () => createProviderAccountController(createProviderAccountDeps({
-        providerAccounts: {
-            // 没有刷新器时 resolve undefined：controller 不把它当失败，也不算一次刷新。
-            refresh: async providerId => await tablesRef.current.refreshers[providerId]?.(),
-            logout: async providerId => {
-                await tablesRef.current.logouts[providerId]?.();
-            },
-        },
+        logout: providerId => tablesRef.current.logout(providerId),
+        confirmLogout: request => tablesRef.current.confirmLogout(request),
         switchCleanup: {
+            holdsSongs: () => tablesRef.current.switchCleanup.holdsSongs(),
             resetForProviderSwitch: (next, previous) => tablesRef.current.switchCleanup.resetForProviderSwitch(next, previous),
         },
     }));

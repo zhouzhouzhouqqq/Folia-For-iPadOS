@@ -1,9 +1,9 @@
 import { createQrLoginService, createMqttListenOver, NODE_RUNTIME_CAPABILITIES, operations,
-    setLegacyHttpTransport, createFetchLegacyTransport, guessYouLikeResult, recommendPlaylistsResult } from './vendor/qq.js';
+    setLegacyHttpTransport, createFetchLegacyTransport, guessYouLikeResult, recommendPlaylistsResult, catalog, radio, radar, relations, searchResult } from './vendor/qq.js';
 import { createNativeHttp } from './http';
 import { loadSecureState } from './state';
 import { OnlineProviderError } from '../../../types/onlineMusic';
-import type { QqOperation, QqParams } from '../qqTransport';
+import type { QqOperation, QqParams } from '../qq/qqTransport';
 import { removeProviderSessionValue, writeProviderSessionValue } from '../providerStorage';
 
 // The locked upstream auth/operation implementations run locally; only their IO is replaced.
@@ -67,7 +67,22 @@ export async function requestQqDirect(operation: QqOperation, params: QqParams, 
     const token = secure.state.token || undefined;
     let result: any;
     try {
-        if (operation === 'user_guess_you_like') result = await guessYouLikeResult(await service.resolveSession(token));
+        const session = () => service.resolveSession(token);
+        const catalogRequests: Partial<Record<QqOperation, () => Promise<any>>> = {
+            recommend_new_songs: () => catalog.newSongsResult(params.area),
+            recommend_new_albums: () => catalog.newAlbumsResult(params),
+            recommend_toplists: () => catalog.toplistsResult(),
+            recommend_toplist: () => catalog.toplistSongsResult(params),
+            recommend_categories: () => catalog.playlistCategoriesResult(),
+            recommend_category_playlists: () => catalog.categoryPlaylistsResult(params),
+            recommend_radar: async () => radar.radarResult(await session(), radar.radarPageOf(params.page)),
+            radio_list: async () => radio.radioListResult(await session(), params),
+            radio_tracks: async () => radio.radioTracksResult(await session(), params.id, params),
+            song_similar: async () => relations.similarSongsResult(await session(), params.id),
+            search: async () => searchResult(params, await session()),
+        };
+        if (catalogRequests[operation]) result = await catalogRequests[operation]!();
+        else if (operation === 'user_guess_you_like') result = await guessYouLikeResult(await service.resolveSession(token));
         else if (operation === 'recommend_playlists') result = await recommendPlaylistsResult(await service.resolveSession(token), Number(params.limit) || 30);
         else result = await operations[operation]({ runtime: 'node', method: payload ? 'POST' : 'GET', body: async () => payload,
             query: (key: string) => params[key] === undefined ? undefined : String(params[key]), queryRaw: (key: string) => params[key],
@@ -97,8 +112,8 @@ export async function requestQqDirect(operation: QqOperation, params: QqParams, 
         if (error instanceof OnlineProviderError) throw error;
         const status = error.httpStatus ?? error.statusCode;
         if (status === 401 || operation === 'logout') { delete secure.state.token; secure.save(); await secure.flush(); removeProviderSessionValue('qq', 'direct-account'); }
-        throw new OnlineProviderError(status === 401 ? 'auth-required' : status === 429 ? 'rate-limited' : 'network',
-            `QQ ${operation}: ${error.message || '请求失败'}`, 'qq', undefined, status, Number.isSafeInteger(error.retryAfterMs) && error.retryAfterMs >= 0 ? error.retryAfterMs : undefined,
+        throw new OnlineProviderError(status === 401 ? 'auth-required' : status === 429 ? 'network' : 'network',
+            status ? `QQMusicApi request failed: ${status}` : `QQ ${operation}: ${error.message || '请求失败'}`, 'qq', error, status, Number.isSafeInteger(error.retryAfterMs) && error.retryAfterMs >= 0 ? error.retryAfterMs : undefined,
             { stage: operation.startsWith('login_qr') ? 'qr-login' : 'native-direct' });
     }
 }

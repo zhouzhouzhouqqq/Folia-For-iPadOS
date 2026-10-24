@@ -1,7 +1,6 @@
 import React from 'react';
-import type { LibraryActionId, LibraryArtistActionId, LibraryHomeActionId, LibrarySuiteManifest } from '../../core/contracts/suite';
-import type { LibraryNavigationContext } from '../../core/contracts/suite';
-import type { LibraryAccountActionId } from '../../core/contracts/account';
+import type { LibraryActionId, LibraryArtistActionId, LibraryHomeActionId, LibrarySuiteManifest } from '../../core/suite/suite.contract';
+import type { LibraryNavigationContext } from '../../core/suite/suite.contract';
 
 // src/library/suites/bravais/entry.ts
 // bravais suite（library v2 的正式新 UI，设计稿不在仓库里）：用户始终站在一面墙前，导航与筛选都是
@@ -52,7 +51,6 @@ const BravaisStage = React.lazy(() => import('./BravaisStage'));
 const BravaisHome = React.lazy(() => import('./BravaisHome'));
 const BravaisCollection = React.lazy(() => import('./BravaisCollection'));
 const BravaisArtist = React.lazy(() => import('./BravaisArtist'));
-const BravaisAccount = React.lazy(() => import('./BravaisAccount'));
 
 // 集合页（B7 齐了 grid 的 23 个，入口见设计稿 §10.2）：聚焦卡主按钮（播放 / 入队）、文字链接（专辑 / 歌手）与「⋯」
 // （移出 / 不喜欢、手动匹配、加入歌单）；缝里的播放全部 / 入队、过滤输入位（缝自己的，墙上直接打字）、收藏星标、元数据行的续传、
@@ -91,7 +89,9 @@ const COLLECTION_ACTIONS: readonly LibraryActionId[] = [
 //   底部的播放 / 入队 / 建歌单（表单态）/ 移除所选（确认态）；根节点行悬停的重新扫描、移除根（确认态）、恢复忽略。
 // - 管理隐藏：缝里常驻的「管理隐藏」按钮进入的视图（只看隐藏）；歌单类磁贴右上角的眼睛按钮切换隐藏。
 // - 本地窄缝「⋯」的导入文件夹 / 刷新 / 导入歌单文件；Navidrome 窄缝的刷新。
-// 在线账户（平台切换、登录）在 B10 的 account surface 里声明。
+// 在线账户：首页在线页签窄缝里只有一个账户入口，点了打开共用的登录窗口（src/components/login）；换平台、登录、
+// 登出、选方式、失败详情与本地服务重启都在窗口里。bravais 不声明 account surface：切换确认
+// 整体回退到 grid 的确认框（registry 的回退规则）。
 const HOME_ACTIONS: readonly LibraryHomeActionId[] = [
     'directory-filter',
     'directory-select',
@@ -124,22 +124,6 @@ const ARTIST_ACTIONS: readonly LibraryArtistActionId[] = [
     'edit-entity',
     'open-album',
     'open-artist',
-];
-
-// 账户（B10，设计稿 §10.7）：7 个动作全部声明，登录与确认都在缝里完成（account surface = BravaisAccount）。
-// - account-select / account-logout：首页在线页签窄缝的平台切换（provider 列表 + 当前平台 + 登出，规则同 grid 的切换器）。
-// - account-login / account-login-method：选中未登录的平台后缝强制拉到完整宽度、翻成登录态（二维码、状态行、重试 / 关闭）；
-//   QQ 式多方式先在缝里选方式；冷却期间重试禁用并显示秒数。
-// - account-switch-confirm：缝翻成确认态（切换 / 取消），确认后立即翻回。
-// - account-login-diagnostics / account-backend-restart：登录失败后的次级按钮（诊断复制、网易本地后端重启）。
-const ACCOUNT_ACTIONS: readonly LibraryAccountActionId[] = [
-    'account-login',
-    'account-login-method',
-    'account-switch-confirm',
-    'account-select',
-    'account-logout',
-    'account-login-diagnostics',
-    'account-backend-restart',
 ];
 
 // 外观动作（suite-chrome，只出现在命令面板里）：缝的三级开口、在这里裂开缝、定位正在播放。
@@ -225,7 +209,6 @@ const bravais: LibrarySuiteManifest = {
         home: { component: BravaisHome, actions: HOME_ACTIONS },
         collection: { component: BravaisCollection, actions: COLLECTION_ACTIONS },
         artist: { component: BravaisArtist, actions: ARTIST_ACTIONS },
-        account: { component: BravaisAccount, actions: ACCOUNT_ACTIONS },
     },
     chromeActions: CHROME_ACTIONS,
     // B11（设计稿 §10.8）：换层的翻牌由 stage 观察导航深度驱动（应用内返回、浏览器后退、N1 折回、面包屑跳层都是一次

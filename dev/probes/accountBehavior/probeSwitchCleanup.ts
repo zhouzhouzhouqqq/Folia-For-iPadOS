@@ -1,4 +1,4 @@
-import type { LibraryProviderSwitchCleanupPort } from '../../../src/library/core/contracts/account';
+import type { LibraryProviderSwitchCleanupPort } from '../../../src/library/core/account/account.contract';
 import { createLibraryAccountSwitchCleanupPort } from '../../../src/library/app/createLibraryAccountPort';
 import { recordAccountCall } from './fakeAuthProviders';
 
@@ -9,10 +9,14 @@ import { recordAccountCall } from './fakeAuthProviders';
 const realCleanup = createLibraryAccountSwitchCleanupPort(() => ({
     audioRef: { current: null },
     automixRef: { current: null },
+    shouldAutoPlay: { current: false },
     setLyrics: () => {},
+    setIsLyricsLoading: () => {},
 }));
 
 export const probeSwitchCleanup: LibraryProviderSwitchCleanupPort = {
+    // The probe player always holds songs, so every switch is asked first (the account tests assert the ask).
+    holdsSongs: () => true,
     resetForProviderSwitch: (nextProviderId, previousProviderId) => {
         recordAccountCall({ op: 'switch-cleanup', providerId: nextProviderId });
         return realCleanup.resetForProviderSwitch(nextProviderId, previousProviderId);

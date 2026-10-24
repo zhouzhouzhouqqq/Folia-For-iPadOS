@@ -9,6 +9,7 @@ import { useBravaisSeamStore } from './bravaisSeamLevel';
 import { resolveSeamContentIdentity, resolveVariantWidth, type BravaisSeamContentVariant } from './bravaisSeamTarget';
 import { clearSeamFlipPhase, playSeamFlipIn, playSeamFlipOut } from './bravaisSeamMotion';
 import type { BravaisFrameState } from './useBravaisFrame';
+import type { BravaisWallShape } from './bravaisWallShape';
 
 // src/library/suites/bravais/useBravaisSeam.ts
 // 缝（设计稿 §5）：锚点（块边界的世界 x，React state——墙按它分左右两半）、开口宽度的补间（只写帧状态）、
@@ -36,6 +37,7 @@ export const useBravaisSeam = ({
     reducedTransitions,
     tweenCamera,
     checkCull,
+    getShape,
 }: {
     frameRef: MutableRefObject<BravaisFrameState>;
     renderFrame: () => void;
@@ -51,6 +53,8 @@ export const useBravaisSeam = ({
     tweenCamera: (center: WallViewCenter) => void;
     /** 开口变了（可见的世界范围随之变了）：让相机检查要不要重新裁剪；force = 开口落定，按含开口的范围裁剪一次。 */
     checkCull: (force?: boolean) => void;
+    /** 墙此刻的形状（缝开在它的块边界上）。 */
+    getShape: () => BravaisWallShape;
 }) => {
     const level = useBravaisSeamStore(state => state.level);
     const [anchorX, setAnchorState] = useState<number | null>(null);
@@ -77,7 +81,7 @@ export const useBravaisSeam = ({
      * 要张开 `width` 的缝：选块边界、算相机的最小让位（相对 `center`，返回让位后的视图中心）。
      * poster（歌手海报）：照样从块边界裂开，相机把它带到视口最左边（bravaisFrame 的 planPosterOpening）。
      */
-    const planOpening = useCallback((center: WallViewCenter, width: number, preferAnchor: boolean, poster = false) => {
+    const planOpening = useCallback((center: WallViewCenter, width: number, preferAnchor: boolean, poster = false, shape = getShape()) => {
         const { view, anchorX: current } = frameRef.current;
         if (!view) return { anchorX: current, center };
         if (poster) {
@@ -88,10 +92,12 @@ export const useBravaisSeam = ({
             openWidth: width,
             view,
             metrics: BRAVAIS_METRICS,
+            // 缝开在墙此刻形状的块边界上（探索形状的块含街）。
+            blockWidth: shape.blockSize.width,
             preferX: preferAnchor && current !== null ? current : undefined,
         });
         return { anchorX: plan.x, center: { x: plan.cameraX, y: center.y } };
-    }, [frameRef]);
+    }, [frameRef, getShape]);
 
     /** 开口补间到目标宽度（每帧只写帧状态与 DOM；途中快到裁剪边缘时补裁剪，落定时按含开口的可见范围裁剪一次）。 */
     const tweenWidth = useCallback((to: number, from = frameRef.current.openWidth) => {

@@ -8,6 +8,8 @@ import { getViewLineX, type WallView, type WallViewCenter } from './wallView';
 // screen when both fit (the prototype's `revealRect`). The split rides with the world, so a move
 // that pushed it off an edge would also squeeze it shut; between "rect visible" and "split stays",
 // the rect wins. Vertically the rect clears `bottomInset` - the player bar's safe area.
+// `centered` asks for the rect in the middle of the screen instead (locate, as a grid's page centres
+// its card), under the same two limits: on screen, and the split kept on screen where both fit.
 
 export type RevealRect = { x: number; y: number; width: number; height: number };
 
@@ -25,6 +27,8 @@ export type RevealInput = {
     pad?: number;
     /** Screen px the rect's bottom edge must stay above (player bar safe area); defaults to pad. */
     bottomInset?: number;
+    /** Move the rect to the middle of the screen, not just onto it. */
+    centered?: boolean;
 };
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -39,6 +43,7 @@ export const resolveRevealCenter = ({
     seamWidth,
     pad = 24,
     bottomInset = pad,
+    centered = false,
 }: RevealInput): WallViewCenter => {
     const lineX = getViewLineX(view);
     const scale = view.scale;
@@ -50,6 +55,8 @@ export const resolveRevealCenter = ({
 
     const fitLow = rect.x + rect.width - (view.width - pad - lineX - offset) / scale;
     const fitHigh = rect.x - (pad - lineX - offset) / scale;
+    // Where the centre would go: where it is (the smallest move), or where the rect's middle is at the screen's.
+    const wantX = centered ? rectCenterX - (view.width / 2 - lineX - offset) / scale : center.x;
     let x: number;
     if (hasSeam) {
         const need = seamWidth / 2 + SEAM_EDGE_MARGIN;
@@ -57,13 +64,15 @@ export const resolveRevealCenter = ({
         const seamHigh = anchorX! + (lineX - need) / scale;
         const low = Math.max(fitLow, seamLow);
         const high = Math.min(fitHigh, seamHigh);
-        x = low <= high ? clamp(center.x, low, high) : clamp(center.x, Math.min(fitLow, fitHigh), Math.max(fitLow, fitHigh));
+        x = low <= high ? clamp(wantX, low, high) : clamp(wantX, Math.min(fitLow, fitHigh), Math.max(fitLow, fitHigh));
     } else {
-        x = clamp(center.x, Math.min(fitLow, fitHigh), Math.max(fitLow, fitHigh));
+        x = clamp(wantX, Math.min(fitLow, fitHigh), Math.max(fitLow, fitHigh));
     }
 
     const yLow = rect.y + rect.height - (view.height / 2 - bottomInset) / scale;
     const yHigh = rect.y - (pad - view.height / 2) / scale;
-    const y = yLow <= yHigh ? clamp(center.y, yLow, yHigh) : rect.y + rect.height / 2;
+    // Centred: the rect's middle halfway between the top margin and the player bar's safe area.
+    const wantY = centered ? rect.y + rect.height / 2 - ((pad + view.height - bottomInset) / 2 - view.height / 2) / scale : center.y;
+    const y = yLow <= yHigh ? clamp(wantY, yLow, yHigh) : rect.y + rect.height / 2;
     return { x, y };
 };

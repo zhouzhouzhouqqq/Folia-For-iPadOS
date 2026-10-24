@@ -1,5 +1,6 @@
 import type { QueueAddBehavior, SongResult } from '../types';
 import { getPlaybackSongKey } from './appPlaybackGuards';
+import { queueIndexOf } from './playbackNeighbors';
 
 // src/utils/queueAddBehavior.ts
 
@@ -52,9 +53,7 @@ export const applyQueueAddBehavior = ({
         };
     }
 
-    const anchorIndex = currentSong
-        ? queueWithoutTargets.findIndex(song => getPlaybackSongKey(song) === currentSongKey)
-        : -1;
+    const anchorIndex = queueIndexOf(queueWithoutTargets, currentSong);
 
     if (anchorIndex === -1) {
         const nextQueue = [...targetSongs, ...queueWithoutTargets];

@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import { describe, expect, it, vi } from 'vitest';
-import { KUGOU_OPERATIONS } from '../../../src/services/onlineMusic/kugouTransport';
+import { KUGOU_OPERATIONS } from '../../../src/services/onlineMusic/kugou/kugouTransport';
 
 // test/unit/electron/kugouApiBridge.test.ts
 
@@ -10,7 +10,7 @@ const {
     SESSION_KEY,
     createKugouApiBridge,
     OPERATION_MODULES,
-} = require('../../../electron/kugouApiBridge.cjs');
+} = require('../../../electron/kugou/kugouApiBridge.cjs');
 
 const createStore = () => {
     const values = new Map<string, unknown>();

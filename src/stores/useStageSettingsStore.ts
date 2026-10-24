@@ -56,7 +56,6 @@ export type StageSettingsState = {
     stageTrackPillOnHome: boolean;
     /** OBS 浏览器源有客户端连接时，主窗口是否继续渲染重动画（默认 false = 主窗口切到 still） */
     obsKeepMainWindowAnimation: boolean;
-    handleToggleNowPlayingStage: (enable: boolean) => void;
     // Web stage-source tri-state mutually-exclusive selection: null disables, else one of 'now-playing' or 'playercap'. Electron uses stageStatus.source.
     setWebStageSource: (source: 'now-playing' | 'playercap' | null) => void;
     setPlayerCapHost: (host: string) => void;
@@ -114,14 +113,6 @@ export const useStageSettingsStore = create<StageSettingsState>((set, get) => ({
         setStoredBoolean('playercap_sticky', sticky);
         set({ playerCapSticky: sticky });
     },
-    handleToggleNowPlayingStage: (enable) => {
-        setStoredBoolean('enable_now_playing_stage', enable);
-        set({ enableNowPlayingStage: enable });
-        setStatusMessage({
-            type: 'info',
-            text: i18n.t('notifications.' + (enable ? 'stageModeOn' : 'stageModeOff')),
-        });
-    },
     setWebObsThemeMode: (mode) => {
         if (typeof window !== 'undefined') localStorage.setItem('web_obs_theme_mode', mode);
         set({ webObsThemeMode: mode });
@@ -167,7 +158,6 @@ export const selectStageSettingsSnapshot = (state: StageSettingsState) => ({
     stageTrackPillTimeoutSec: state.stageTrackPillTimeoutSec,
     stageTrackPillOnHome: state.stageTrackPillOnHome,
     obsKeepMainWindowAnimation: state.obsKeepMainWindowAnimation,
-    handleToggleNowPlayingStage: state.handleToggleNowPlayingStage,
     setWebStageSource: state.setWebStageSource,
     setPlayerCapHost: state.setPlayerCapHost,
     setPlayerCapPlayer: state.setPlayerCapPlayer,

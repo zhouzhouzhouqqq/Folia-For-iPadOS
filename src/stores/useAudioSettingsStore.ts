@@ -37,7 +37,7 @@ export const PLAYBACK_FADE_KEY = 'folia_playback_fade_enabled';
 
 /**
  * Whether a song that cannot be played for an account restriction or an unknown reason counts down to
- * a skip, like a taken-down one (services/playbackRecovery/playbackFailurePolicy). Off unless asked for.
+ * a skip, like a taken-down one (services/onlineMusic/failure/onlineFailureCase). Off unless asked for.
  */
 export const AUTO_SKIP_UNPLAYABLE_KEY = 'folia_auto_skip_unplayable';
 
@@ -47,7 +47,7 @@ export const DEFAULT_MEDIA_CACHE_LIMIT_GB = 5;
 export type AudioQuality = AudioQualityPreference;
 
 export const resolveStoredAudioQuality = (saved: string | null): AudioQuality => (
-    saved === 'standard' || saved === 'lossless' || saved === 'hires' ? saved : 'high'
+    saved === 'standard' || saved === 'ultra' || saved === 'lossless' || saved === 'hires' ? saved : 'high'
 );
 
 /**

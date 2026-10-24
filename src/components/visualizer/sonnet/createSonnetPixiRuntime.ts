@@ -3,7 +3,7 @@ import type { AudioBands, SonnetTuning, Theme } from '../../../types';
 import type { SonnetProgram } from './types';
 import { findSonnetParagraphIndexAtTime } from './sonnetProgram';
 import { buildSonnetScene, type SceneView } from './sonnetSceneBuilder';
-import { snapResolutionToTexturePool } from '../pixiTextureBudget';
+import { snapResolutionToTexturePool } from '../pixi/pixiTextureBudget';
 import {
     destroySonnetContainerChildren,
     destroySonnetDisplayTree,
@@ -14,9 +14,12 @@ import {
     hasSonnetCreditsMetadata,
     resolveSonnetCreditsFrame,
 } from './sonnetCredits';
-import { loadPixi } from '../loadPixi';
 import { PixiSceneCache } from '../pixiSceneCache';
+import { loadPixi } from '../pixi/loadPixi';
+import { linkPixiPrograms } from '../pixi/pixiProgramLinks';
+import { makePixiContext } from '../pixi/pixiWebGLContext';
 import { sonnetDebugState } from './sonnetDebug';
+import { createSonnetBeatFxReader } from './sonnetBeatFx';
 import { readSonnetModulation, type SonnetShotFrameContext, updateSonnetShot } from './sonnetShotFrame';
 import { findSonnetActiveShotIndex, resolveSonnetSceneTransitionFrame } from './sonnetSceneFrame';
 import { drawSonnetFrameOverlay } from './sonnetFrameOverlay';
@@ -70,6 +73,8 @@ export interface SonnetRuntimeOptions {
     program: SonnetProgram;
     theme: Theme;
     tuning: SonnetTuning;
+    /** 智能动感模式 (SmartBeatSettings.enabled); its strengths reach the frame through the beat clock. */
+    smartBeatEnabled: boolean;
     currentTime: MotionValue<number>;
     audioPower?: MotionValue<number>;
     audioBands?: AudioBands;
@@ -99,6 +104,8 @@ export class SonnetPixiRuntime {
     private readonly iconUrls = new Set<string>();
     private activeParagraphIndex = -1;
     private destroyed = false;
+    /** 智能动感模式 frame reader; yields null unless it is on and the track's beats are installed. */
+    private readonly readBeatFx = createSonnetBeatFxReader();
     /**
      * An in-flight song handover. Driven by the wall clock, unlike every other transition here:
      * those derive their progress from absolute playback time so a seek stays stable, but that
@@ -134,20 +141,30 @@ export class SonnetPixiRuntime {
 
     static async create(options: SonnetRuntimeOptions) {
         const pixi = await loadPixi();
+        // The options the WebGL context is made with, ahead of Pixi (makePixiContext).
+        const contextOptions = {
+            backgroundAlpha: 0,
+            // With post-processing the scene is drawn into the filter's own multisampled target and
+            // the canvas only gets the filtered picture and the frame marks: its 4-sample buffers
+            // would cost about 190 MB of video memory for those. The marks' edges are then not
+            // smoothed. postProcessEnabled is part of the host's rebuild key, so the switch applies.
+            antialias: !options.tuning.postProcessEnabled,
+            powerPreference: 'high-performance',
+        } as const;
+        const context = await makePixiContext(pixi, contextOptions, options.signal);
         const app = new pixi.Application();
         const width = Math.max(options.host.clientWidth, 320);
         const height = Math.max(options.host.clientHeight, 240);
         await app.init({
             width,
             height,
-            backgroundAlpha: 0,
-            antialias: true,
+            ...contextOptions,
+            ...context,
             autoDensity: true,
             resolution: snapResolutionToTexturePool(width, height, options.tuning.textureResolution),
             autoStart: false,
             sharedTicker: false,
             preference: 'webgl',
-            powerPreference: 'high-performance',
         });
         const runtime = new SonnetPixiRuntime(pixi, options, app);
         runtime.sceneContainer = new pixi.Container();
@@ -160,26 +177,40 @@ export class SonnetPixiRuntime {
             runtime.destroy();
             throw new DOMException('Sonnet runtime creation was cancelled', 'AbortError');
         }
-        options.host.appendChild(app.canvas);
-        app.canvas.style.cssText = 'width:100%;height:100%;display:block';
         await runtime.preloadIcons();
         if (options.signal?.aborted) {
             runtime.destroy();
             throw new DOMException('Sonnet runtime creation was cancelled', 'AbortError');
         }
-        runtime.install();
+        await runtime.install();
+        if (options.signal?.aborted) {
+            runtime.destroy();
+            throw new DOMException('Sonnet runtime creation was cancelled', 'AbortError');
+        }
         return runtime;
     }
 
-    private install() {
+    /**
+     * The first frame, in steps the page runs between: the first scene is built in a task of its own,
+     * its shader programs are linked while the page goes on (linkPixiPrograms), and only then does the
+     * canvas go on the page, drawn. Returns early when the creation is cancelled meanwhile.
+     */
+    private async install() {
+        await new Promise((resolve) => { window.setTimeout(resolve); });
+        if (this.options.signal?.aborted) return;
         this.resizeToHost();
+        this.renderFrame();
+        await linkPixiPrograms(this.pixi, this.app.renderer, this.app.stage, 'Sonnet', this.options.signal);
+        if (this.options.signal?.aborted) return;
+        this.options.host.appendChild(this.app.canvas);
+        this.app.canvas.style.cssText = 'width:100%;height:100%;display:block';
         this.app.ticker.add(this.renderFrame);
         this.resizeObserver = new ResizeObserver(() => {
             if (this.destroyed || !this.resizeToHost()) return;
             if (this.options.paused) this.renderOnce();
         });
         this.resizeObserver.observe(this.options.host);
-        this.renderOnce();
+        this.app.renderer.render(this.app.stage);
         if (!this.options.paused) this.app.start();
     }
 
@@ -298,6 +329,7 @@ export class SonnetPixiRuntime {
             host: this.options.host,
             theme: song.theme,
             tuning: this.options.tuning,
+            smartBeatEnabled: this.options.smartBeatEnabled,
             lyricsFontScale: this.options.lyricsFontScale,
             staticMode: this.options.staticMode,
             transparentBackground: this.options.transparentBackground,
@@ -352,12 +384,16 @@ export class SonnetPixiRuntime {
             finalParagraph?.endTime ?? Number.POSITIVE_INFINITY,
         );
         const hasCredits = this.creditsContainer.children.length > 0;
+        // Read once per frame, before any shot, so every consumer sees the same envelopes.
+        const beatFx = this.options.staticMode ? null : this.readBeatFx(this.options.audioBands, this.options.smartBeatEnabled);
         const shotFrameContext: SonnetShotFrameContext = {
             tuning: this.options.tuning,
+            smartBeatEnabled: this.options.smartBeatEnabled,
             theme: this.options.theme,
             audioBands: this.options.audioBands,
             audioPower: this.options.audioPower,
             mod: this.mod,
+            beatFx,
         };
 
         this.sceneCache.forEach((scene, index) => {
@@ -415,8 +451,17 @@ export class SonnetPixiRuntime {
                 scene.transitionBlurFilter.enabled = transitionFrame.blur > 0.01;
             }
             if (scene.transitionGlitchEffect) {
-                scene.transitionGlitchEffect.update(transitionFrame.glitch * transitionGlitchScale, transitionFrame.glitchSeed);
-                scene.transitionGlitchEffect.filter.enabled = transitionFrame.glitch > 0.01;
+                const transitionGlitch = transitionFrame.glitch * transitionGlitchScale;
+                // The downbeat tear shares this filter; the stronger of the two drives it.
+                const beatTearWins = !!beatFx && beatFx.tear > transitionGlitch;
+                const glitchAmount = beatTearWins ? beatFx!.tear : transitionGlitch;
+                scene.transitionGlitchEffect.update(
+                    glitchAmount,
+                    beatTearWins ? beatFx!.tearSeed : transitionFrame.glitchSeed,
+                );
+                scene.transitionGlitchEffect.filter.enabled = beatTearWins
+                    ? glitchAmount > 0.01
+                    : transitionFrame.glitch > 0.01;
             }
 
             if (isFinalScene && hasCredits) {
@@ -601,13 +646,30 @@ export class SonnetPixiRuntime {
     /**
      * Applies a settings change to the live runtime. Every scene is rebuilt against the new
      * tuning, but the WebGL context, the canvas and the icon textures stay; the settings that
-     * shape those (`textureResolution`, `showOnlyText`, `showBackgroundDecor`) are part of the
+     * shape those (`textureResolution`, `showOnlyText`, `showBackgroundDecor`, and
+     * `postProcessEnabled` for the canvas's antialiasing) are part of the
      * host's rebuild key instead.
      */
     setTuning(tuning: SonnetTuning) {
         if (this.destroyed || this.options.tuning === tuning) return;
         this.options.tuning = tuning;
-        // Staged against the old tuning, so it can no longer be adopted.
+        this.rebuildScenes();
+    }
+
+    /**
+     * Switches 智能动感模式. Scenes are built with or without its MG onset pop and tear filter, so they
+     * are rebuilt like a tuning change; the 轻拍 / 重拍 strengths never come here, the beat clock
+     * applies them to the signals every frame.
+     */
+    setSmartBeatEnabled(enabled: boolean) {
+        if (this.destroyed || this.options.smartBeatEnabled === enabled) return;
+        this.options.smartBeatEnabled = enabled;
+        this.rebuildScenes();
+    }
+
+    /** Rebuilds every scene against the current options on the live context. */
+    private rebuildScenes() {
+        // Staged against the old options, so it can no longer be adopted.
         if (this.songSwap?.staged) {
             this.destroyScene(this.songSwap.staged.scene);
             this.songSwap.staged = null;

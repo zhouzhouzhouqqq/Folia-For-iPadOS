@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from 'react';
 import { planFlip, type FlipOrigin } from '../../../components/wall/flipPlan';
-import { nearestSeamBoundaryX } from '../../../components/wall/seamPlan';
 import { getViewWorldBounds, type WallView, type WallViewCenter } from '../../../components/wall/wallView';
-import { getWallSlot, parseWallSlotKey, type WallSlot } from '../../../components/wall/wallSlots';
+import type { WallSlot } from '../../../components/wall/wallSlots';
 import type { WallCameraRange } from '../../../components/wall/finiteWall';
-import type { LibraryNavigationContext } from '../../core/contracts/suite';
+import type { LibraryNavigationContext } from '../../core/suite/suite.contract';
 import { BRAVAIS_METRICS, BRAVAIS_REDUCED_FADE_MS } from './bravaisConstants';
+import {
+    isGrownExploreShape,
+    moveStartSlotKey,
+    nearestShapeBoundaryX,
+    resolveLayerShape,
+    resolveShiftStart,
+    shapeSlotFromKey,
+    splitGrownSlots,
+    type BravaisWallShape,
+} from './bravaisWallShape';
 import {
     createBravaisDisplay,
     diffDisplays,
@@ -23,14 +32,14 @@ import { decideDataUpdate } from './bravaisDisplayUpdate';
 import { canReuseFinitePlan, planBravaisFinite, resolveFiniteCameraRange, type BravaisFiniteState } from './bravaisFiniteWall';
 import { findDisplayItemSlot } from './bravaisItemSlots';
 import type { BravaisLayer } from './bravaisLayer';
-import { readBravaisLayout, writeBravaisLayout } from './bravaisLayoutMemory';
+import { fitBravaisLayoutToShape, readBravaisLayout, writeBravaisLayout } from './bravaisLayoutMemory';
 import { resolveReservedPerBlock, type BravaisWallLook } from './bravaisLook';
 import { releasePanelOnLayerChange } from './bravaisPanelHistory';
 import { maskRemovedEntries } from './bravaisRemoval';
 import { takeBravaisPendingOrigin } from './bravaisStageStore';
 import { takeBravaisRemovalOrigin } from './bravaisUiStore';
 import type { BravaisFrameState } from './useBravaisFrame';
-import { planWallWave, WALL_WAVE_IN_MS, WALL_WAVE_MAX_DELAY_MS } from './bravaisWallWave';
+import { planWallWave, WALL_WAVE_EXIT_TOTAL_MS, WALL_WAVE_IN_MS, WALL_WAVE_MAX_DELAY_MS } from './bravaisWallWave';
 import { isSourceOrigin, layerMatchesNavigation, resolveShiftKind, type BravaisShiftKind } from './bravaisShift';
 
 // src/library/suites/bravais/useBravaisDisplay.ts
@@ -49,6 +58,11 @@ import { isSourceOrigin, layerMatchesNavigation, resolveShiftKind, type BravaisS
 // 回到来源是整墙出场（exit，下面的首页层在搜索页 / 淡出的首页之下落回）；栈里有重复的集合时「同一个键、深度变了」
 // 也算换层（面包屑跳回同名的那一层）。降低动态效果（reducedTransitions）时波次换成从起点 / 缝开始的翻牌、由磁贴淡入淡出，
 // 落定时刻按 0.18s 算。每次换层在显示上记一个 shift（种类 + 序号），stage 根节点据此标记。
+// 换形状（bravaisWallShape：块 ↔ 探索的地，或探索页的 section 变了）：slot 的矩形整套换掉，不能原地翻。先在旧形状上
+// 整墙出场（换层时是这次换层自己的波次 / 淡出，目标全是墙面），按住到出场放完（期间来的数据先不上墙），再换上新形状：
+// 缝锚点挪到新形状最近的块边界、相机跟着平移同样的距离（缝在屏幕上不动），换层时再像平常一样给新开口排相机，
+// 磁贴按新形状重新挂载、整墙入场落回。探索页的 section 补到（isGrownExploreShape）不走这两段：原地换上新形状，
+// 换了地的块重新挂载落回（只给新挂载的磁贴的入场），没换的不动。
 
 /** 翻牌只排视口外扩这么多（世界单位）以内的磁贴。 */
 const FLIP_OVERSCAN = 160;
@@ -71,7 +85,8 @@ export type BravaisDisplayControls = {
     /** 这一层的缝是不是歌手海报（planOpening 换成把缝带到最左边的相机）。 */
     posterFor: (layer: BravaisLayer) => boolean;
     setAnchor: (x: number | null) => void;
-    planOpening: (center: WallViewCenter, width: number, preferAnchor: boolean, poster?: boolean) => { anchorX: number | null; center: WallViewCenter };
+    /** shape：缝开在哪种形状的块边界上（缺省是显示着的那一层的形状）。 */
+    planOpening: (center: WallViewCenter, width: number, preferAnchor: boolean, poster?: boolean, shape?: BravaisWallShape) => { anchorX: number | null; center: WallViewCenter };
     isAnchorOnScreen: () => boolean;
     moveTo: (center: WallViewCenter, forceRecull?: boolean) => void;
     tweenTo: (center: WallViewCenter) => void;
@@ -83,12 +98,34 @@ export type BravaisDisplayControls = {
     restoreFocus: (slotKey: string | null) => void;
     /** 挂载时不跑整墙入场（翻牌交接从 Lattice 回来：磁贴由交接翻进来）。只在第一次显示时问。 */
     suppressEntrance?: () => boolean;
+    /** 显示写进这个 ref（stage 的其余部分在换形状的同一次提交里就能读到新形状）；不给就用自己的。 */
+    displayRef?: MutableRefObject<BravaisDisplay | null>;
 };
 
-const slotFromKey = (key: string | null): WallSlot | null => {
-    const address = key ? parseWallSlotKey(key) : null;
-    return address ? getWallSlot(address.column, address.row, address.slotIndex, BRAVAIS_METRICS) : null;
+/** 换形状按住的那一段放完之后要做的事：新形状上的起点、相机与焦点。 */
+type ShapeChange = {
+    startSlotKey: string | null;
+    /** 落定时的相机（返回时是记忆里的）与锚点（锚点会挪到新形状的块边界上，相机跟着平移）。 */
+    center: WallViewCenter;
+    anchorX: number | null;
+    /** 相机补间过去（返回、换页签）；否则直接就位。 */
+    tween: boolean;
+    focusKey: string | null;
+    focusFromSession: boolean;
+    /** 换层：落定时像平常的换层一样给开口排相机（缝可见就沿用它的边界）；数据让形状变了时不给（不排）。 */
+    preferAnchor?: boolean;
 };
+
+/** 一层的布局记忆，已经搬到这一层的形状上（首页各页签共用一份，记着的可能是另一种形状的）。 */
+const readLayoutFor = (layer: BravaisLayer) => {
+    const memory = readBravaisLayout(layer.sessionKey);
+    return memory && fitBravaisLayoutToShape(memory, resolveLayerShape(layer.shape, null));
+};
+
+/** 一个起点 slot 搬到这一层的形状上（起点是旧墙上的 slot）。 */
+const startOnLayerShape = (key: string | null, from: BravaisWallShape, layer: BravaisLayer) => (
+    moveStartSlotKey(key, from, resolveLayerShape(layer.shape, null))
+);
 
 /**
  * 同一层的数据更新：还在翻的磁贴（目标没变、这次又没安排它）保留原来的安排，不被打断。B9：整墙入场还在进行时
@@ -119,7 +156,8 @@ const mergeFlipSteps = (
 
 export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisDisplayControls) => {
     const [display, setDisplay] = useState<BravaisDisplay | null>(null);
-    const displayRef = useRef<BravaisDisplay | null>(null);
+    const ownDisplayRef = useRef<BravaisDisplay | null>(null);
+    const displayRef = controls.displayRef ?? ownDisplayRef;
     const displayedDepthRef = useRef(controls.navigation.depth);
     /** 显示着的那一层打开时的导航来源（回到深度 0 时据此判断是不是回到搜索 / 播放页）。 */
     const displayedOriginRef = useRef(controls.navigation.origin);
@@ -129,6 +167,8 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
     latestControls.current = controls;
     // 移除的第一段在放：期间来的层先不上墙，放完一次换上最新的（holdRelease 让 effect 重跑）。
     const holdRef = useRef<{ timer: ReturnType<typeof setTimeout>; origin: FlipOrigin } | null>(null);
+    // 换形状的出场在放：放完时把要做的事交给 effect（与移除同一个 holdRef 按住数据更新）。
+    const releasedShapeRef = useRef<ShapeChange | null>(null);
     const releasedOriginRef = useRef<FlipOrigin | null>(null);
     const [holdRelease, setHoldRelease] = useState(0);
     // 翻牌在放（含移除按住旧帧的那一段）：给 stage 根节点挂 data-bravais-settling，探针据此等墙落定再操作。
@@ -165,7 +205,8 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
         const committed: BravaisDisplay = {
             ...next,
             shift: shift ? { kind: shift, seq: (shiftSeqRef.current += 1) } : previous?.shift ?? null,
-            entrance: next.entrance ?? (shift ? null : carried),
+            // 显式给了 null（换形状的出场）就不沿用还在放的入场。
+            entrance: next.entrance !== undefined ? next.entrance : shift ? null : carried,
         };
         if (shift) displayedOriginRef.current = latestControls.current.navigation.origin;
         displayRef.current = committed;
@@ -181,16 +222,17 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
             anchorX: frameRef.current.anchorX,
             startSlotKey: current.startSlotKey,
             focusSlotKey: getFocusedSlotKey(),
+            shapeKind: current.shape.kind,
         });
     }, []);
 
-    const planFlipFor = useCallback((before: BravaisDisplay | null, after: BravaisDisplay, origin: FlipOrigin) => {
+    const planFlipFor = useCallback((before: BravaisDisplay | null, after: BravaisDisplay, origin: FlipOrigin, slots?: readonly WallSlot[]) => {
         const { frameRef, slotsRef } = latestControls.current;
         const { view, center, openWidth } = frameRef.current;
         if (!view) return null;
         flipTokenRef.current += 1;
         const plan = planFlip({
-            changes: diffDisplays(before, after, slotsRef.current),
+            changes: diffDisplays(before, after, slots ?? slotsRef.current),
             origin,
             visible: getViewWorldBounds(center, view, { seamWidth: openWidth, overscan: FLIP_OVERSCAN }),
             metrics: BRAVAIS_METRICS,
@@ -254,6 +296,67 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
         return findDisplayItemSlot(next, key, { x: anchorX ?? center.x, y: center.y })?.key ?? null;
     }, []);
 
+    /**
+     * 换形状的第一段：旧形状上整墙出场（目标全是墙面；降低动效时是淡出），按住到出场放完，再由 effect 换上新形状。
+     * shift 给了就是一次换层（种类记在这一次上，第二段沿用它）。
+     */
+    const beginShapeChange = useCallback((previous: BravaisDisplay, layer: BravaisLayer, depth: number, change: ShapeChange, shift?: BravaisShiftKind) => {
+        const { reducedTransitions, frameRef, collapseFocusCard } = latestControls.current;
+        collapseFocusCard();
+        // 移除放完时记下的翻牌起点是旧形状上的：丢掉。
+        releasedOriginRef.current = null;
+        const outgoing: BravaisDisplay = {
+            ...previous,
+            layer: { ...layer, items: [], shape: undefined },
+            finite: null,
+            hiddenKeys: undefined,
+            entrance: null,
+        };
+        const seam = pointOrigin({ x: frameRef.current.anchorX ?? frameRef.current.center.x, y: frameRef.current.center.y });
+        const flips = reducedTransitions ? planFlipFor(previous, outgoing, seam) : planWaveFor(previous, outgoing);
+        waveUntilRef.current = 0;
+        commit({ ...outgoing, flips: flips?.steps ?? outgoing.flips, flipToken: flipTokenRef.current }, depth, shift);
+        markSettling(flips?.durationMs);
+        const release = () => {
+            releasedShapeRef.current = change;
+            holdRef.current = null;
+            setHoldRelease(value => value + 1);
+        };
+        if (!flips || flips.steps.size === 0) {
+            release();
+            return;
+        }
+        const holdMs = reducedTransitions ? BRAVAIS_REDUCED_FADE_MS / 2 : WALL_WAVE_EXIT_TOTAL_MS;
+        holdRef.current = { origin: seam, timer: setTimeout(release, holdMs + REMOVAL_SETTLE_MS) };
+    }, [commit, markSettling, planFlipFor, planWaveFor]);
+
+    /** 换形状的第二段：锚点挪到新形状的块边界（相机平移同样的距离），磁贴按新形状重新挂载、整墙入场。 */
+    const finishShapeChange = useCallback((layer: BravaisLayer, change: ShapeChange) => {
+        const controlsNow = latestControls.current;
+        const { frameRef, wallLook } = controlsNow;
+        const draft = { ...createBravaisDisplay(layer, change.startSlotKey, undefined, wallLook), finite: resolveFinite(layer, null) };
+        let center = change.center;
+        if (change.anchorX !== null) {
+            const anchorX = nearestShapeBoundaryX(draft.shape, change.anchorX);
+            center = { ...center, x: center.x + anchorX - change.anchorX };
+            frameRef.current.anchorX = anchorX;
+        }
+        // 换层：与平常的换层同一套开口规划（缝不在屏内时另开一道、歌手海报带到最左边、开口变宽时相机让位）。
+        const width = change.preferAnchor === undefined ? 0 : controlsNow.openWidthFor(layer);
+        if (width > 0) {
+            const plan = controlsNow.planOpening(center, width, change.preferAnchor!, controlsNow.posterFor(layer), draft.shape);
+            frameRef.current.anchorX = plan.anchorX;
+            center = plan.center;
+        }
+        if (change.anchorX !== null || width > 0) controlsNow.setAnchor(frameRef.current.anchorX);
+        if (change.tween) controlsNow.tweenTo(center);
+        else controlsNow.moveTo(center, true);
+        const entrance = planEntrance();
+        commit({ ...draft, entrance }, displayedDepthRef.current);
+        if (entrance) markSettling(entrance.until - entrance.startedAt);
+        controlsNow.restoreFocus(change.focusFromSession ? focusSessionEntry(draft) ?? change.focusKey : change.focusKey);
+    }, [commit, focusSessionEntry, markSettling, planEntrance, resolveFinite]);
+
     useLayoutEffect(() => {
         const controlsNow = latestControls.current;
         const { frameRef, slotsRef } = controlsNow;
@@ -275,14 +378,15 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
         // 第一次（stage 挂载）：按记忆摆好相机与锚点，直接画出当前层，不跑翻牌。B11：从搜索 / 播放页打开集合时
         // （播放页回来 stage 才挂载）整墙入场。
         if (!previous) {
-            const memory = readBravaisLayout(layer.sessionKey);
+            const memory = readLayoutFor(layer);
             let center = memory?.center ?? frameRef.current.center;
-            frameRef.current.anchorX = memory?.anchorX ?? nearestSeamBoundaryX(center.x, BRAVAIS_METRICS);
-            if (width > 0) center = controlsNow.planOpening(center, width, true, controlsNow.posterFor(layer)).center;
+            const draft = createBravaisDisplay(layer, memory?.startSlotKey ?? null, undefined, wallLook);
+            // 没有记忆时锚点按相机落到这一层形状的块边界上（记忆里的已经搬好）。
+            frameRef.current.anchorX = nearestShapeBoundaryX(draft.shape, memory?.anchorX ?? center.x);
+            if (width > 0) center = controlsNow.planOpening(center, width, true, controlsNow.posterFor(layer), draft.shape).center;
             controlsNow.setAnchor(frameRef.current.anchorX);
             controlsNow.moveTo(center, true);
             releasePanelOnLayerChange('first', layer.key);
-            const draft = createBravaisDisplay(layer, memory?.startSlotKey ?? null, undefined, wallLook);
             const entering = depth > 0 && isSourceOrigin(navigation.origin) && !controlsNow.suppressEntrance?.();
             const entrance = entering ? planEntrance() : null;
             const next = { ...draft, finite: resolveFinite(layer, null), entrance };
@@ -292,8 +396,46 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
             return;
         }
 
+        // 换形状的出场放完了：同一层（期间没换层）就换上新形状。
+        const shapeChange = releasedShapeRef.current;
+        releasedShapeRef.current = null;
+        if (shapeChange && previous.layer.key === layer.key && !sameKeyShift) {
+            finishShapeChange(layer, shapeChange);
+            return;
+        }
+
         // 同一层的数据更新（含透光换档 / 换窗数：层没变但显示的透光偏好变了，按 update 翻）。
         if (previous.layer.key === layer.key && !sameKeyShift) {
+            // 数据让形状变了（探索页的 section 到了 / 变了）：不原地翻，走换形状的两段。
+            const startSlotKey = startOnLayerShape(previous.startSlotKey ?? nearestToSeam(), previous.shape, layer);
+            const grown = resolveLayerShape(layer.shape, previous.startSlotKey);
+            if (grown.id !== previous.shape.id && isGrownExploreShape(previous.shape, grown)) {
+                // section 补到了：原地换上新形状（起点、原点照旧）。换了地的块重新挂载、按新的入场落回；留在原地的块上
+                // 同一序号的条目变了，照平常的数据更新从起点翻。屏内没有块换地就不排入场（之后平移进来的磁贴不落回）。
+                releasedOriginRef.current = null;
+                controlsNow.collapseFocusCard();
+                const draft = { ...createBravaisDisplay(layer, previous.startSlotKey, undefined, wallLook), finite: resolveFinite(layer, previous.finite) };
+                const { kept, remounted } = splitGrownSlots(previous.shape, draft.shape, slotsRef.current);
+                const start = shapeSlotFromKey(previous.shape, previous.startSlotKey);
+                const fresh = planFlipFor(previous, draft, pointOrigin(start ? { x: start.centerX, y: start.centerY } : seamPoint()), kept);
+                const flips = mergeFlipSteps(previous, draft, fresh?.steps ?? new Map(), kept, performance.now() < waveUntilRef.current);
+                const entrance = remounted.length > 0 ? planEntrance() : null;
+                // 没排入场时不给 entrance：还在放的入场照常沿用（commit）。
+                commit({ ...draft, flips, flipToken: flipTokenRef.current, ...(entrance ? { entrance: { ...entrance, mountsOnly: true } } : {}) }, displayedDepthRef.current);
+                markSettling(Math.max(fresh?.durationMs ?? 0, entrance ? entrance.until - entrance.startedAt : 0));
+                return;
+            }
+            if (resolveLayerShape(layer.shape, startSlotKey).id !== previous.shape.id) {
+                beginShapeChange(previous, layer, displayedDepthRef.current, {
+                    startSlotKey,
+                    center: { ...frameRef.current.center },
+                    anchorX: frameRef.current.anchorX,
+                    tween: false,
+                    focusKey: null,
+                    focusFromSession: false,
+                });
+                return;
+            }
             const released = releasedOriginRef.current;
             releasedOriginRef.current = null;
             const dataDecision = released ? { kind: 'update' as const } : decideDataUpdate(previous, layer);
@@ -304,7 +446,7 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
                 commit({ ...previous, layer }, displayedDepthRef.current);
                 return;
             }
-            const start = slotFromKey(previous.startSlotKey);
+            const start = shapeSlotFromKey(previous.shape, previous.startSlotKey);
             const startPoint = start ? { x: start.centerX, y: start.centerY } : seamPoint();
 
             if (decision.kind === 'removal') {
@@ -312,7 +454,7 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
                 const originKey = takeBravaisRemovalOrigin(layer.key)
                     ?? findDisplayItemSlot(previous, [...decision.removed][0], seamPoint())?.key
                     ?? null;
-                const originSlot = slotFromKey(originKey);
+                const originSlot = shapeSlotFromKey(previous.shape, originKey);
                 const origin = pointOrigin(originSlot ? { x: originSlot.centerX, y: originSlot.centerY } : seamPoint());
                 const masked = maskRemovedEntries(previous, decision.removed);
                 const flip = planFlipFor(previous, masked, origin);
@@ -372,12 +514,14 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
         releasePanelOnLayerChange(kind === 'enter' ? 'push' : kind === 'exit' ? 'back' : kind, layer.key);
 
         let center = frameRef.current.center;
+        // 墙上此刻按它分左右两半的锚点（换形状时出场期间留在这里，返回 / 入场记忆里的锚点等第二段再用）。
+        const shownAnchorX = frameRef.current.anchorX;
         let startSlotKey: string | null;
         let origin: FlipOrigin;
         let focusKey: string | null = null;
         let focusFromSession = false;
         if (leaving) {
-            const memory = readBravaisLayout(layer.sessionKey);
+            const memory = readLayoutFor(layer);
             center = memory?.center ?? center;
             if (memory?.anchorX !== undefined && memory.anchorX !== null) frameRef.current.anchorX = memory.anchorX;
             // B8：记忆里的起点是 null（这一层第一次画时没有起点，循环偏移按 0 算）也照记忆恢复，墙回到离开时的样子；
@@ -387,23 +531,47 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
             focusKey = memory?.focusSlotKey ?? null;
             focusFromSession = !focusKey;
         } else {
-            const memory = pending ? null : readBravaisLayout(layer.sessionKey);
+            const memory = pending ? null : readLayoutFor(layer);
             // 整墙入场回到这一层上次离开时的位置（相机与缝的锚点一起，起点磁贴才在屏内）。
             if (kind === 'enter' && memory?.center) {
                 center = memory.center;
                 if (memory.anchorX !== null) frameRef.current.anchorX = memory.anchorX;
             }
-            startSlotKey = pending?.slotKey ?? memory?.startSlotKey ?? nearestToSeam();
-            const start = slotFromKey(startSlotKey);
-            origin = pointOrigin(start ? { x: start.centerX, y: start.centerY } : seamPoint());
+            // 起点：被点的那张、离缝最近的是旧墙上的 slot，搬到新形状上；记忆里的（换页签前记下的）readLayoutFor 已经搬好，
+            // 不再搬第二次。翻牌从它开始。
+            const remembered = pending ? null : memory?.startSlotKey ?? null;
+            const start = resolveShiftStart(
+                remembered === null ? { onPrevious: pending?.slotKey ?? nearestToSeam() } : { remembered },
+                previous.shape,
+                layer.shape,
+            );
+            startSlotKey = start.key;
+            origin = pointOrigin(start.slot ? { x: start.slot.centerX, y: start.slot.centerY } : seamPoint());
             if (hadKeyboardFocus) focusKey = startSlotKey;
             // 不是从一张磁贴打开的（从别处、换 suite 时正开着）：焦点落在会话记着的那一项上。
             focusFromSession = !pending && !hadKeyboardFocus;
         }
+        // 换形状：这次换层先在旧形状上整墙出场，相机、锚点与新内容等出场放完再一起换（finishShapeChange）。
+        if (resolveLayerShape(layer.shape, startSlotKey).id !== previous.shape.id) {
+            const anchorX = frameRef.current.anchorX;
+            // 与下面平常的换层同一个判断（此刻的锚点在不在屏内），落定时据此排开口。
+            const preferAnchor = leaving || controlsNow.isAnchorOnScreen();
+            frameRef.current.anchorX = shownAnchorX;
+            beginShapeChange(previous, layer, depth, {
+                startSlotKey,
+                center,
+                anchorX,
+                tween: leaving,
+                focusKey,
+                focusFromSession,
+                preferAnchor,
+            }, kind);
+            return;
+        }
         // 缝保持张开：可见就沿用它的块边界，新开口放不下时相机最小让位（完全收起时不为看不见的缝平移相机）。
         if (width > 0) {
             const preferAnchor = leaving || controlsNow.isAnchorOnScreen();
-            const plan = controlsNow.planOpening(center, width, preferAnchor, controlsNow.posterFor(layer));
+            const plan = controlsNow.planOpening(center, width, preferAnchor, controlsNow.posterFor(layer), previous.shape);
             frameRef.current.anchorX = plan.anchorX;
             center = plan.center;
         }
@@ -426,7 +594,7 @@ export const useBravaisDisplay = (layer: BravaisLayer | null, controls: BravaisD
         markSettling(entrance ? entrance.until - entrance.startedAt : flips?.durationMs);
         if (kind !== 'enter') controlsNow.tweenTo(center);
         controlsNow.restoreFocus(focusFromSession ? focusSessionEntry(draft) ?? focusKey : focusKey);
-    }, [commit, controls.navigation, controls.view, controls.wallLook, focusSessionEntry, holdRelease, layer, markSettling, planEntrance, planFlipFor, planWaveFor, remember, resolveFinite]);
+    }, [beginShapeChange, commit, controls.navigation, controls.view, controls.wallLook, finishShapeChange, focusSessionEntry, holdRelease, layer, markSettling, planEntrance, planFlipFor, planWaveFor, remember, resolveFinite]);
 
     // stage 卸载（离开首页约 350ms 后）：记下当前层，回来时按它恢复；还在按住的移除第一段丢掉。
     useEffect(() => () => {

@@ -26,7 +26,7 @@ import {
     X,
     type LucideIcon,
 } from 'lucide-react';
-import { relativeRectStyle } from './ponderSurfaceGeometry';
+import { relativeRectStyle } from './relativeRectStyle';
 import {
     BRAVAIS_SEAM_TABS,
     BRAVAIS_TOOLS_QUICK,

@@ -5,11 +5,11 @@ import {
     runGridSurfaceAction,
     type CoreSurfaceInputs,
     type GridSurfaceParams,
-} from '../../../src/library/core/model/collectionSurface';
-import { EMPTY_COLLECTION_MUTATION_SNAPSHOT } from '../../../src/library/core/model/collectionMutationCapabilities';
+} from '../../../src/library/core/collection/collectionSurface';
+import { EMPTY_COLLECTION_MUTATION_SNAPSHOT } from '../../../src/library/core/collection/mutations/collectionMutationCapabilities';
 import { resolveLibrarySurfaceActions } from '../../../src/library/registry';
-import type { CollectionMutationController, CollectionMutationSnapshot } from '../../../src/library/core/contracts/mutations';
-import type { LibraryCapability } from '../../../src/library/core/contracts/capability';
+import type { CollectionMutationController, CollectionMutationSnapshot } from '../../../src/library/core/collection/mutations/mutations.contract';
+import type { LibraryCapability } from '../../../src/library/core/shared/capability.contract';
 
 // test/unit/command-palette/gridSurfaceHandle.test.ts
 // 分支规则只写在这里一处，命令侧只问 availableActions。所以「哪个分支给哪些动作」必须由测试兜住：

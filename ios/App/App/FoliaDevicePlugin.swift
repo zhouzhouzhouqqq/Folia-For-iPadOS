@@ -18,6 +18,7 @@ public final class FoliaDevicePlugin: CAPPlugin, CAPBridgedPlugin, UIDocumentPic
         CAPPluginMethod(name: "configureAudio", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setMusicControls", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "publishNowPlaying", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "prepareMediaArtwork", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showOutputPicker", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getStorage", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "importLibrary", returnType: CAPPluginReturnPromise),
@@ -149,11 +150,27 @@ public final class FoliaDevicePlugin: CAPPlugin, CAPBridgedPlugin, UIDocumentPic
         ]
         // Artwork is accepted only as bounded image bytes from the current renderer, never fetched with credentials here.
         if let raw = call.getString("artwork"), let data = Data(base64Encoded: raw), data.count <= 4_000_000,
-           let image = UIImage(data: data) {
+           let thumbnail = FoliaArtwork.thumbnail(data) {
+            let image = UIImage(cgImage: thumbnail)
             artworkItem = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
         }
         if let artworkItem { MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPMediaItemPropertyArtwork] = artworkItem }
         call.resolve()
+    }
+
+    @objc func prepareMediaArtwork(_ call: CAPPluginCall) {
+        guard let raw = call.getString("data"), raw.utf8.count <= 5_333_336,
+              let data = Data(base64Encoded: raw) else {
+            call.reject("Invalid artwork", "INVALID_ARTWORK"); return
+        }
+        fileQueue.async {
+            autoreleasepool {
+                guard let result = FoliaArtwork.jpeg(data) else {
+                    call.reject("Artwork could not be decoded", "INVALID_ARTWORK"); return
+                }
+                call.resolve(["data": result.base64EncodedString()])
+            }
+        }
     }
 
     // Choose music navigation without claiming WebKit's audio focus, metadata, or command targets.

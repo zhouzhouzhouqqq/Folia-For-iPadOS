@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Lock, LockOpen } from 'lucide-react';
+import type { Theme } from '../../types';
+import { SettingsKitThemeContext } from '../modal/settings/kit/kitTheme';
+import { SheetLayerContext } from '../shared/Sheet';
 import TitlebarDragZone from '../TitlebarDragZone';
 import WindowControls from '../WindowControls';
+import { usePlayerOverlayRoot, usePlayerOverlayReservation } from '../../hooks/usePlayerOverlayLayout';
+import type { FoliumLayoutRect } from '../../mods/folium/contract';
 
 // Shared shell for the app container, Electron titlebar, and mounted audio node.
 type AppShellProps = {
@@ -20,9 +25,21 @@ type AppShellProps = {
     showMainWindowClickThroughToggle: boolean;
     onToggleMainWindowClickThrough: () => void;
     isDaylight: boolean;
+    theme: Theme;
     audioElement: React.ReactNode;
     children: React.ReactNode;
 };
+
+const TITLEBAR_REVEAL_HEIGHT = 56;
+const titlebarRevealArea = (bounds: FoliumLayoutRect): FoliumLayoutRect => ({
+    left: bounds.left, top: bounds.top, width: bounds.width, height: TITLEBAR_REVEAL_HEIGHT,
+});
+
+// 透明播放窗口的圆角应该跟宿主系统的窗口圆角一致。Windows 11 原生窗口圆角是 8px，
+// 之前写死的 18px 让 Folia 窗口和桌面其他窗口看着不像同一套；其余平台沿用原来的半径。
+export const resolveWindowCornerRadius = (platform: string): string => (
+    platform === 'win32' ? '8px' : '18px'
+);
 
 const AppShell: React.FC<AppShellProps> = ({
     appStyle,
@@ -38,11 +55,19 @@ const AppShell: React.FC<AppShellProps> = ({
     showMainWindowClickThroughToggle,
     onToggleMainWindowClickThrough,
     isDaylight,
+    theme,
     audioElement,
     children,
 }) => {
     const { t } = useTranslation();
+    const layoutRootRef = useRef<HTMLDivElement>(null);
+    usePlayerOverlayRoot(layoutRootRef, isPlayerView, { top: usesCustomWindowChrome ? TITLEBAR_REVEAL_HEIGHT : 0, right: 0, bottom: 0, left: 0 });
+    usePlayerOverlayReservation('window-titlebar-reveal', 'window', titlebarRevealArea, usesCustomWindowChrome);
+    // Light or dark and the theme, for the shared parts that colour themselves wherever they open (a dialog's sheet).
+    const kitTheme = useMemo(() => ({ isDaylight, theme }), [isDaylight, theme]);
+    const [sheetLayer, setSheetLayer] = useState<HTMLDivElement | null>(null);
     const [isWindowMaximized, setIsWindowMaximized] = useState(false);
+    const [isWindowFullscreen, setIsWindowFullscreen] = useState(false);
     const hasFullscreenTitlebarButton = isElectronWindow && !hideFullscreenButton;
 
     useEffect(() => {
@@ -75,7 +100,46 @@ const AppShell: React.FC<AppShellProps> = ({
         };
     }, [useCustomWindowRadius]);
 
-    const shouldApplyWindowRadius = useCustomWindowRadius && !isWindowMaximized;
+    // 全屏不等于「最大化」，不排除它，透明播放窗口在全屏下仍会保留圆角、露出背后的桌面。
+    // 与 WindowControls 一样，先读一次再订阅 enter/leave-full-screen 事件，覆盖菜单和快捷键触发的全屏。
+    useEffect(() => {
+        if (!useCustomWindowRadius || !window.electron?.isWindowFullscreen) {
+            setIsWindowFullscreen(false);
+            return;
+        }
+
+        let isCancelled = false;
+        let fullscreenEventReceived = false;
+
+        const unsubscribe = window.electron!.onWindowFullscreenChanged(fullscreen => {
+            fullscreenEventReceived = true;
+            if (!isCancelled) {
+                setIsWindowFullscreen(fullscreen);
+            }
+        });
+
+        const syncFullscreenState = async () => {
+            try {
+                const nextValue = await window.electron!.isWindowFullscreen();
+                if (!isCancelled && !fullscreenEventReceived) {
+                    setIsWindowFullscreen(nextValue);
+                }
+            } catch {
+                if (!isCancelled && !fullscreenEventReceived) {
+                    setIsWindowFullscreen(false);
+                }
+            }
+        };
+
+        void syncFullscreenState();
+
+        return () => {
+            isCancelled = true;
+            unsubscribe();
+        };
+    }, [useCustomWindowRadius]);
+
+    const shouldApplyWindowRadius = useCustomWindowRadius && !isWindowMaximized && !isWindowFullscreen;
     const areTitlebarControlsVisible = isTitlebarRevealed || alwaysShowMainWindowTitlebar;
     const shouldRenderTitlebarBackdrop = !isPlayerView || (useCustomWindowRadius && !isMainWindowClickThroughEnabled);
     const titlebarBackdropClassName = `absolute inset-0 backdrop-blur-sm ${
@@ -90,10 +154,11 @@ const AppShell: React.FC<AppShellProps> = ({
 
     return (
         <div
+            ref={layoutRootRef}
             className="fixed inset-0 w-full h-full flex flex-col overflow-hidden font-sans transition-colors duration-500"
             style={{
                 ...appStyle,
-                borderRadius: shouldApplyWindowRadius ? '18px' : undefined,
+                borderRadius: shouldApplyWindowRadius ? resolveWindowCornerRadius(window.electron?.platform ?? '') : undefined,
                 boxShadow: showTransparentWindowBorder ? 'inset 0 0 0 1px rgba(255,255,255,0.24)' : undefined,
             }}
         >
@@ -152,7 +217,13 @@ const AppShell: React.FC<AppShellProps> = ({
             )}
 
             {audioElement}
-            {children}
+            <SettingsKitThemeContext.Provider value={kitTheme}>
+                <SheetLayerContext.Provider value={sheetLayer}>
+                    {children}
+                </SheetLayerContext.Provider>
+            </SettingsKitThemeContext.Provider>
+            {/* Dialogs are drawn here: after every page and window of the app, inside its colour variables. */}
+            <div ref={setSheetLayer} />
         </div>
     );
 };

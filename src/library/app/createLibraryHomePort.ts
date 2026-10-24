@@ -1,7 +1,7 @@
 import i18n from '../../i18n/config';
-import type { LibraryHomePort, LibraryHomeScanProgress } from '../core/contracts/homeModel';
+import type { LibraryHomePort, LibraryHomeScanProgress } from '../core/home/homeModel.contract';
 import type { HomeSurfaceProps } from '../../components/app/home/homeSurfaceTypes';
-import { translateHomeMessage } from '../core/model/homeSources';
+import { translateHomeMessage } from '../core/home/homeSources';
 import { importFolder, resyncAllFolders, LOCAL_MUSIC_SCAN_PROGRESS_EVENT } from '../../services/localMusicService';
 import { getLocalLibraryAvailability } from '../../services/localLibraryAvailability';
 import { importLocalPlaylistFile } from '../../services/localPlaylistFileService';

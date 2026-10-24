@@ -43,6 +43,8 @@ const CommandPaletteQueueList: React.FC<CommandPaletteQueueListProps> = ({
     const listRef = useListRef(null);
     const hasPositionedRef = React.useRef(false);
     const currentSongKey = currentSong ? getPlaybackSongKey(currentSong) : null;
+    // Looks among the palette's rows, which a typed query thins out, so this is not queueIndexOf.
+    // The row that is the very object playing comes first, as in utils/queueBatchOperations.ts.
     const currentMatchIndex = React.useMemo(() => {
         if (!currentSong) {
             return -1;

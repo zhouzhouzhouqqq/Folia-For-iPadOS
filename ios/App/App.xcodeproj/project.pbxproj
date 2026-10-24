@@ -39,6 +39,7 @@
 		F011A6000000000000000002 /* MusicProviders/ProviderSecurity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A6000000000000000001 /* MusicProviders/ProviderSecurity.swift */; };
 		F011A6000000000000000012 /* MusicProviders/ProviderHTTP.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A6000000000000000011 /* MusicProviders/ProviderHTTP.swift */; };
 		F011A6000000000000000022 /* MusicProviders/FoliaMusicProvidersPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A6000000000000000021 /* MusicProviders/FoliaMusicProvidersPlugin.swift */; };
+		F011A7000000000000000002 /* FoliaArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = F011A7000000000000000001 /* FoliaArtwork.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -78,6 +79,7 @@
 		F011A6000000000000000001 /* MusicProviders/ProviderSecurity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicProviders/ProviderSecurity.swift; sourceTree = "<group>"; };
 		F011A6000000000000000011 /* MusicProviders/ProviderHTTP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicProviders/ProviderHTTP.swift; sourceTree = "<group>"; };
 		F011A6000000000000000021 /* MusicProviders/FoliaMusicProvidersPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicProviders/FoliaMusicProvidersPlugin.swift; sourceTree = "<group>"; };
+		F011A7000000000000000001 /* FoliaArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoliaArtwork.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,6 +124,7 @@
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				F011A2000000000000000001 /* FoliaRecording.swift */,
+				F011A7000000000000000001 /* FoliaArtwork.swift */,
 				F011A0000000000000000011 /* FoliaDevicePlugin.swift */,
 				F011A6000000000000000001 /* MusicProviders/ProviderSecurity.swift */,
 				F011A6000000000000000011 /* MusicProviders/ProviderHTTP.swift */,
@@ -243,6 +246,7 @@
 				F011A5000000000000000002 /* Automix/AutomixModelManifest.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				F011A2000000000000000002 /* FoliaRecording.swift in Sources */,
+				F011A7000000000000000002 /* FoliaArtwork.swift in Sources */,
 				F011A0000000000000000012 /* FoliaDevicePlugin.swift in Sources */,
 				F011A6000000000000000002 /* MusicProviders/ProviderSecurity.swift in Sources */,
 				F011A6000000000000000012 /* MusicProviders/ProviderHTTP.swift in Sources */,
@@ -397,14 +401,14 @@
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.7.19;
+				MARKETING_VERSION = 0.7.21;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = org.folia.personal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -418,14 +422,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.7.19;
+				MARKETING_VERSION = 0.7.21;
 				PRODUCT_BUNDLE_IDENTIFIER = org.folia.personal;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";

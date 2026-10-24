@@ -6,6 +6,7 @@ import { volumeCommand } from './volumeCommand';
 import { fmModeCommand } from './fmModeCommand';
 import type { CommandPaletteCommand } from '../types';
 import { createToggleCommand, createReplayGainCommand, createSoundPresetCommand } from '../commandFactories';
+import { canShuffleQueue } from '../../../utils/playbackNeighbors';
 
 // src/components/command-palette/commands/playbackCommands.ts
 // Commands in the `playback` group: transport, queue, volume, Personal FM mode, ReplayGain, and
@@ -116,7 +117,12 @@ export const playbackCommands: CommandPaletteCommand[] = [
         context => context.playback.toggleMute(),
         { icon: VolumeX },
     ),
-    createToggleCommand('playback-shuffle', 'playback', 'Shuffle queue', 'Shuffle current play queue', ['shuffle', '打乱', '打乱队列'], context => context.playback.shuffleQueue(), { icon: Shuffle, executeShortcut: 'r', isAvailable: context => !context?.playback.isFmMode }),
+    createToggleCommand('playback-shuffle', 'playback', 'Shuffle queue', 'Shuffle current play queue', ['shuffle', '打乱', '打乱队列'], context => context.playback.shuffleQueue(), {
+        icon: Shuffle,
+        executeShortcut: 'r',
+        // The palette's context does not say whether the stage is playing, so that part is false.
+        isAvailable: context => (context ? canShuffleQueue(context.playback.queue.length, context.playback.isFmMode, false) : true),
+    }),
     {
         id: 'playback-clear-queue',
         isAvailable: context => (context ? !context.playback.isFmMode && context.playback.queue.length > 0 : true),

@@ -70,6 +70,8 @@ export function buildVisualSettingsConfig(): Record<string, unknown> {
     // (its generated family resolves nowhere else), so it is not carried.
     lyricsCustomFontFamily: storeTypographySettings.lyricsCustomFont?.source === 'system' ? storeTypographySettings.lyricsCustomFont.family : null,
     visualizerTunings: collectVisualizerTunings(storeVisualizer as unknown as Record<string, unknown>),
+    // Frozen: the 13 lyric-style tunings below predate the visualizerTunings bundle, which carries any
+    // new style. Do not add a lyric style here.
     classicTuning: storeVisualizer.classicTuning,
     cadenzaTuning: storeVisualizer.cadenzaTuning,
     partitaTuning: storeVisualizer.partitaTuning,
@@ -85,6 +87,7 @@ export function buildVisualSettingsConfig(): Record<string, unknown> {
     monetTuning: storeVisualizer.monetTuning,
     pendoloTuning: storeVisualizer.pendoloTuning,
     sonnetTuning: storeVisualizer.sonnetTuning,
+    smartBeat: storeVisualizer.smartBeat,
     temperaTuning: storeVisualizer.temperaTuning,
     lumiereTuning: storeVisualizer.lumiereTuning,
     urlBackgroundList: storeVisualizer.urlBackgroundList,

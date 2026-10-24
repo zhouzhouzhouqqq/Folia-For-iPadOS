@@ -6,7 +6,7 @@ const root = fileURLToPath(new URL('../../../', import.meta.url));
 export default defineConfig({
     testDir: `${root}test/component`,
     testMatch: /trackTitleNavigator.*\.spec\.ts/,
-    outputDir: `${root}../../work/transport-playwright`,
+    outputDir: `${root}test-results/ipados-transport`,
     workers: 1,
     timeout: 60_000,
     expect: { timeout: 10_000 },

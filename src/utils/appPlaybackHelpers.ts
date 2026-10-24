@@ -69,6 +69,18 @@ export const toSafeRemoteUrl = (url: string | null | undefined): string | null |
 
     try {
         const parsedUrl = new URL(normalizedUrl);
+        // QQ's authenticated vkey response still advertises its CDN over HTTP. The native
+        // provider transport upgrades its own probe requests, but the final HTMLAudioElement
+        // request is made by WebKit and would otherwise be blocked by ATS/mixed-content rules.
+        // Limit this rewrite to the two media host families accepted by QQ's CDN selector;
+        // unrelated QQ API and image URLs must retain their original semantics.
+        if (
+            parsedUrl.protocol === 'http:'
+            && (parsedUrl.hostname.endsWith('.qqmusic.qq.com') || parsedUrl.hostname.endsWith('.tc.qq.com'))
+        ) {
+            parsedUrl.protocol = 'https:';
+            return parsedUrl.toString();
+        }
         if (
             parsedUrl.protocol === 'http:' &&
             parsedUrl.hostname.startsWith('fs.') &&

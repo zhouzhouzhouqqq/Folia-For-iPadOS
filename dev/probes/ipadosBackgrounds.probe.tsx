@@ -24,7 +24,7 @@ function BackgroundProbe() {
             config: { mode, common: { useCoverColorBg: true, opacity: 1 },
                 nomand: { tuning: { ...DEFAULT_NOMAND_BACKGROUND_TUNING, effect: (query.get('effect') || 'dithering') as NomandBackgroundEffect } },
                 latent: { tuning: { ...DEFAULT_LATENT_BACKGROUND_TUNING, displayMode: (query.get('latent') || 'both') as LatentBackgroundDisplayMode } }, sora: { tuning: DEFAULT_SORA_BACKGROUND_TUNING },
-                url: { items: [{ id: 'local', url: `${location.origin}/dev/ipados/animated-background.html`, note: 'Local animated iframe' }], selectedId: 'local' } },
+                url: { items: [{ id: 'local', url: `${location.origin}/dev-probes/animated-background.html`, note: 'Local animated iframe' }], selectedId: 'local' } },
         })}
     </div>;
 }

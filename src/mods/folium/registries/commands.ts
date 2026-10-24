@@ -1,8 +1,9 @@
 import { create } from 'zustand';
-import type { FoliumCommandDef, FoliumParam } from '../contract';
-import { mergeFoliumParamValues, sanitizeFoliumParams } from '../params';
-import { createFoliumRegistry, type FoliumRegistryEntry } from '../registry';
-import { reportFoliumIssue } from '../status';
+import type { FoliumCommandDef, FoliumSetting } from '../contract';
+import { mergeFoliumParamValues, sanitizeFoliumParams } from '../../params/params';
+import { createFoliumRegistry, type FoliumRegistryEntry } from '../../runtime/registry';
+import { timeFoliumMod } from '../../runtime/guard';
+import { reportFoliumIssue } from '../../runtime/status';
 
 // src/mods/folium/registries/commands.ts
 // `folium.registries.commands`: actions a mod offers to the user. A command
@@ -12,15 +13,15 @@ import { reportFoliumIssue } from '../status';
 
 export interface StoredFoliumCommand {
     def: FoliumCommandDef;
-    params: FoliumParam[];
+    params: FoliumSetting[];
 }
 
 export const commandsRegistry = createFoliumRegistry<FoliumCommandDef, StoredFoliumCommand>('commands', {
-    validate: (def) => {
+    validate: (def, { modId }) => {
         if (typeof def.run !== 'function') {
             throw new Error('commands.register: run must be a function');
         }
-        return { def, params: sanitizeFoliumParams(def.params) };
+        return { def, params: sanitizeFoliumParams(def.params, modId) };
     },
 });
 
@@ -74,7 +75,8 @@ export const runFoliumCommand = async (
     setRunState(entry.id, { running: true, lastError: null, lastResult: null });
     try {
         const merged = Object.freeze(mergeFoliumParamValues(entry.def.params, values));
-        const result = await entry.def.def.run({ values: merged });
+        // Timed and counted by the gate; the card below is what shows a failure.
+        const result = await timeFoliumMod(entry.modId, `command ${entry.id}`, () => entry.def.def.run({ values: merged }));
         setRunState(entry.id, { running: false, lastError: null, lastResult: summarizeResult(result) });
         return { ok: true, result };
     } catch (error) {

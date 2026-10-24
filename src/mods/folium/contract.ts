@@ -1,18 +1,20 @@
 // src/mods/folium/contract.ts
-// The public Folium 1 contract: every type a mod can observe lives here and
+// The public Folium contract: every type a mod can observe lives here and
 // nowhere else. Host-internal types (Line, Theme, SongResult, store shapes)
 // never appear in this file; the host projects them into these DTOs.
 //
-// Stability rule (mods/README.md): inside folium 1.x this file only grows.
-// Removing a field or changing its meaning requires folium 2.
+// Stability rule (mods/README.md): inside folium 1.x what a mod can use only
+// grows. The names Folium 2 removes still work in 1.x through deprecated/ (its
+// header lists them); this file holds only the names that stay, and one shape
+// that goes: FoliumLegacyLyricsResult, which getLyrics may still answer.
 
 /** The Folium version this host implements; mods read it at runtime as `folium.host.folium`. */
-export const FOLIUM_VERSION = Object.freeze({ major: 1, minor: 5 });
+export const FOLIUM_VERSION = Object.freeze({ major: 1, minor: 6 });
 
 /** `modid:name`, like a Forge ResourceLocation. The mod id part is added by the host. */
 export type FoliumId = string;
 
-/** Localized text keyed by locale (`zh-CN`, `en`, `in`); the host falls back to `en`, then to any entry. */
+/** Localized text keyed by locale (`zh-CN`, `zh-TW`, `en`, `in`); the host falls back to `en`, then to any entry. */
 export type FoliumLabel = Record<string, string | undefined>;
 
 /** Undoes a registration, subscription or mount. Safe to call more than once. */
@@ -152,10 +154,7 @@ export interface FoliumLine {
     isChorus?: boolean;
     /** The chorus effect builtin modes draw for it. */
     chorusEffect?: 'bars' | 'circles' | 'beams';
-    /**
-     * Background vocals. The host's legacy single `backgroundVocal` is folded
-     * in here, so this is the only place to look.
-     */
+    /** Background vocals. */
     backgroundVocals?: FoliumBackgroundVocal[];
     /** The user's saved word split; `join('')` equals `fullText`. See `folium.lyrics.segmentWords`. */
     wordSegments?: string[];
@@ -201,13 +200,17 @@ export interface FoliumTheme {
 /**
  * A song as mods see it. Pass it back to the host (playSong, enqueue, beforePlay.replaceWith) only when it
  * carries a `ref`.
+ *
+ * To keep data of your own per song, key it on `source` and `id` together when `id` is not null (an id is
+ * unique only within its source); for a song without an id, on `title` and `artist`. `ref` is no key: it
+ * is valid for one session only.
  */
 export interface FoliumSong {
-    /** The song id at its source, as a string; null when unknown. */
+    /** The song id at its source, as a string; unique only within `source`; null when unknown. */
     id: string | null;
     /** Song title. */
     title: string;
-    /** Artists joined with ` / `. */
+    /** Artists joined with ` / `, in the order the source gives them; '' when there are none. */
     artist: string;
     /** Album name. */
     album: string | null;
@@ -224,10 +227,10 @@ export interface FoliumSong {
 /** The host player state. */
 export type FoliumPlaybackState = 'playing' | 'paused' | 'stopped';
 
-/** Folium 1.5: the repeat mode. `all` repeats the queue, `one` the current song. */
+/** The repeat mode. `all` repeats the queue, `one` the current song. */
 export type FoliumLoopMode = 'off' | 'all' | 'one';
 
-/** Folium 1.5: one entry of the play queue, as `folium.playback.getQueue()` lists it. */
+/** One entry of the play queue, as `folium.playback.getQueue()` lists it. */
 export interface FoliumQueueItem {
     /** The song; its `ref` works with playSong, enqueue and playQueueItem. */
     readonly song: FoliumSong;
@@ -235,7 +238,7 @@ export interface FoliumQueueItem {
     readonly index: number;
 }
 
-/** Folium 1.5: a page of the play queue, from `folium.playback.getQueue()`. */
+/** A page of the play queue, from `folium.playback.getQueue()`. */
 export interface FoliumQueueSnapshot {
     /** The requested page, in queue order; each item carries its absolute `index`. */
     readonly items: readonly FoliumQueueItem[];
@@ -269,16 +272,16 @@ export interface FoliumPlaybackSnapshot {
     theme: FoliumTheme | null;
     /** The current lyric animation mode id. */
     visualizerMode: string | null;
-    /** Folium 1.5: output volume, 0–1. */
+    /** Output volume, 0–1. */
     volume: number;
-    /** Folium 1.5: the mute switch, separate from `volume`. */
+    /** The mute switch, separate from `volume`. */
     muted: boolean;
-    /** Folium 1.5: the repeat mode. */
+    /** The repeat mode. */
     loopMode: FoliumLoopMode;
 }
 
 /**
- * Folium 1.4: lyric formats the host parses, the same parsers as local lyric files. These and nothing
+ * Lyric formats the host parses, the same parsers as local lyric files. These and nothing
  * else: lyrics in any other form (a platform's JSON, SRT, ASS, a custom word-timing scheme) are the mod's
  * to convert into one of them first. QRC and KRC are the decrypted plain text; the host does not decrypt.
  *
@@ -289,7 +292,7 @@ export interface FoliumPlaybackSnapshot {
 export type FoliumLyricFormat = 'lrc' | 'enhanced-lrc' | 'yrc' | 'qrc' | 'krc' | 'ttml' | 'vtt' | 'awlrc';
 
 /**
- * Folium 1.4: one lyric document in its raw text, parsed by the host's local lyric file pipeline.
+ * One lyric document in its raw text, parsed by the host's local lyric file pipeline.
  * Each text is at most 1,048,576 characters.
  */
 export interface FoliumLyricsTrack {
@@ -307,7 +310,7 @@ export interface FoliumLyricsTrack {
 }
 
 /**
- * Folium 1.4: lyrics a provider hands the host. With both tracks the host shows `wordByWord`, and falls
+ * Lyrics a provider hands the host. With both tracks the host shows `wordByWord`, and falls
  * back to `main` when it is missing or parses to no lines; a `wordByWord` track without its own
  * translation or romanization borrows the ones on `main`.
  */
@@ -327,8 +330,9 @@ export interface FoliumLyricsResult {
 }
 
 /**
- * The Folium 1.3 `getLyrics` answer: plain LRC, parsed as plain LRC. Deprecated in Folium 1.4 in favor of
- * FoliumLyricsResult; Folium 2 drops it.
+ * The Folium 1.3 `getLyrics` answer: plain LRC, parsed as plain LRC. Deprecated in favor of
+ * FoliumLyricsResult; Folium 2 drops it. A mod that answers it is told so once in its row in Settings.
+ * @deprecated Answer a FoliumLyricsResult: `{ main: { format: 'lrc', text, translationText } }`.
  */
 export interface FoliumLegacyLyricsResult {
     /** LRC text. */
@@ -337,7 +341,7 @@ export interface FoliumLegacyLyricsResult {
     translationLrc?: string;
 }
 
-/** Folium 1.4: what `folium.lyrics.parse` returns. */
+/** What `folium.lyrics.parse` returns. */
 export interface FoliumParsedLyrics {
     /** The parsed lines; empty when the text holds none. The host's lyric display filter is not applied. */
     lines: readonly FoliumLine[];
@@ -347,11 +351,15 @@ export interface FoliumParsedLyrics {
 
 // ---------------------------------------------------------------- Parameters
 
-/** Field kinds: a slider, a text box, a switch, or a choice among `options`. */
-export type FoliumParamType = 'number' | 'text' | 'boolean' | 'select';
+/**
+ * Field kinds: a slider (a number), a text box (a string), a switch (a boolean), a choice among `options`
+ * (the chosen option's `value`), or a colour, shown as the app's own colour picker (a `#rrggbb` string,
+ * in lower case).
+ */
+export type FoliumSettingType = 'number' | 'text' | 'boolean' | 'select' | 'color';
 
 /** One choice of a `select` field. */
-export interface FoliumParamOption {
+export interface FoliumSettingOption {
     /** The stored value. */
     value: string;
     /** What the user sees. */
@@ -362,19 +370,31 @@ export interface FoliumParamOption {
  * One declarative field. The same schema drives settings sections, visualizer
  * settings, tunings of builtin modes and command parameters, and it is the only
  * source of keys, defaults and validation for the values it describes.
+ *
+ * A field the host cannot use (no key, a key used twice, an unknown type, a
+ * default of the wrong kind, a select without options) is dropped, and the
+ * mod's row in Settings > Mods says which and why (`settings <key>`).
+ *
+ * Values read back are typed `unknown` (FoliumSettingValues). The host has
+ * already checked each against its field, so a read can be cast once to the
+ * shape the schema declares: a JSDoc `@type` cast in plain JS, or
+ * `as { speed: number; tint: string }` in TypeScript.
  */
-export interface FoliumParam {
+export interface FoliumSetting {
     /** Value key, unique within the schema. */
     key: string;
     /** Field kind. */
-    type: FoliumParamType;
+    type: FoliumSettingType;
     /** Field label. */
     label: FoliumLabel;
     /** Help text. */
     description?: FoliumLabel;
     /** Fields sharing a group label render together under that heading. */
     group?: FoliumLabel;
-    /** Used until the user changes the field; also what `reset` restores. */
+    /**
+     * Used until the user changes the field; also what `reset` restores. Its kind must match `type`; a
+     * `color` default must be `#rrggbb`. Without one: `min` or 0, false, the first option, '' or `#ffffff`.
+     */
     defaultValue?: string | number | boolean;
     /** `number`: lower bound (values are clamped). */
     min?: number;
@@ -385,24 +405,24 @@ export interface FoliumParam {
     /** `text`: placeholder. */
     placeholder?: string;
     /** `select`: the choices; values outside them are rejected. */
-    options?: FoliumParamOption[];
+    options?: FoliumSettingOption[];
 }
 
-/** Values keyed by field `key`, defaults merged. Read-only; write through `FoliumParamAccess.set`. */
-export type FoliumParamValues = Readonly<Record<string, unknown>>;
+/** Values keyed by field `key`, defaults merged. Read-only; write through `FoliumSettingAccess.set`. */
+export type FoliumSettingValues = Readonly<Record<string, unknown>>;
 
 /** Read/write access to one schema's persisted values (defaults already merged). */
-export interface FoliumParamAccess {
+export interface FoliumSettingAccess {
     /** The fields, as registered (invalid declarations dropped). */
-    readonly schema: readonly FoliumParam[];
-    /** Current values, defaults merged. */
-    get(): FoliumParamValues;
+    readonly schema: readonly FoliumSetting[];
+    /** Current values, defaults merged. The same object until a value changes. */
+    get(): FoliumSettingValues;
     /** Validated against the schema: unknown keys are dropped, numbers clamped, selects checked. */
     set(patch: Record<string, unknown>): void;
     /** Restores every default. */
     reset(): void;
-    /** Called after any value changes. */
-    subscribe(listener: () => void): FoliumDisposer;
+    /** Calls `listener` after any value changes, whoever changed it (the user, `set`, `reset`, an import). */
+    onChange(listener: () => void): FoliumDisposer;
 }
 
 // ---------------------------------------------------------------- Host containers
@@ -412,34 +432,82 @@ export interface FoliumParamAccess {
  * creates it (inside a ShadowRoot for panels), passes theme colors as
  * `--folium-*` CSS custom properties, and calls the disposer when it removes the
  * container. Mods never query or mutate host DOM outside their container.
+ *
+ * `mount` may be `async` and return a promise of its disposer. A disposer that arrives after the host
+ * removed the container runs at once.
  */
-export type FoliumMount<Ctx> = (container: HTMLElement, ctx: Ctx) => void | FoliumDisposer;
+export type FoliumMount<Ctx> = (container: HTMLElement, ctx: Ctx) => void | FoliumDisposer | Promise<void | FoliumDisposer>;
 
-/** Context for panel-like containers (player panel tabs, settings panels). */
-export interface FoliumPanelContext {
+/** The size of a mount's container, as `onResize` reports it. */
+export interface FoliumSize {
+    /** Width, CSS pixels. */
+    readonly width: number;
+    /** Height, CSS pixels. */
+    readonly height: number;
+}
+
+/**
+ * Helpers every mount context carries. Each one keeps calling the function it is given until the mount
+ * ends, and the host stops it then, whether or not the mod kept the disposer it returned. A mount that
+ * throws, or whose promise rejects, has ended.
+ *
+ * A listener belongs to the mount that subscribed it: the same function given by two mounts runs once for
+ * each of them.
+ */
+export interface FoliumMountHelpers {
+    /**
+     * Calls `listener` when a value this context reads through a getter changes; each context says which.
+     * Read the new values through the getters inside the listener.
+     */
+    onChange(listener: () => void): FoliumDisposer;
+    /**
+     * Calls `listener` once for every frame the app draws, with the time the app's frame loop began that frame
+     * (milliseconds on the `performance.now()` clock; a little later than the number the browser passes to a
+     * `requestAnimationFrame` callback). It runs on the app's own frame loop, shared by every mod. A listener
+     * runs at most once a frame: one subscribed while a frame runs starts with the next frame.
+     */
+    onFrame(listener: (timestamp: number) => void): FoliumDisposer;
+    /** Calls `listener` with the container's size once it is laid out, and again whenever the size changes. */
+    onResize(listener: (size: FoliumSize) => void): FoliumDisposer;
+    /**
+     * Calls `listener` every `ms` milliseconds. `ms` is at least 16 and at most 2147483647 (the longest a
+     * browser timer can wait); for work on every frame use `onFrame`.
+     */
+    every(ms: number, listener: () => void): FoliumDisposer;
+    /**
+     * Runs `disposer` when the mount ends, after the disposer `mount` returned; at once when the mount has
+     * already ended. Returns nothing.
+     */
+    onDispose(disposer: FoliumDisposer): void;
+}
+
+/**
+ * Context for panel-like containers (player panel tabs, settings panels). `onChange` fires when the theme
+ * changes (a theme switch, day and night).
+ */
+export interface FoliumPanelContext extends FoliumMountHelpers {
     /** The UI locale, e.g. `zh-CN`. */
     readonly locale: string;
     /** The current theme. */
     getTheme(): FoliumTheme;
-    /** Called when the theme changes. */
-    subscribe(listener: () => void): FoliumDisposer;
 }
 
 /**
  * Context for a custom settings panel (`settingsPanel`): the panel draws the form, the schema still owns the
- * values.
+ * values. `onChange` fires when the theme changes; `settings.onChange` when a value does.
  */
 export interface FoliumSettingsPanelContext extends FoliumPanelContext {
     /** Read and write the values the schema describes. */
-    readonly params: FoliumParamAccess;
+    readonly settings: FoliumSettingAccess;
 }
 
-/** A clock in seconds. `on` fires while it runs; read it with `get` when you need it now. */
+/**
+ * A clock in seconds. Read it with `get` when you need the time now; to be called on every change, use the
+ * context's `onLyricTime` or `onPlaybackTime`.
+ */
 export interface FoliumClock {
     /** Current time, seconds. */
     get(): number;
-    /** Called with the time on every change. */
-    on(event: 'change', listener: (seconds: number) => void): FoliumDisposer;
 }
 
 /** What the host draws around the content. */
@@ -465,7 +533,7 @@ export interface FoliumAudioBands {
 }
 
 /**
- * Folium 1.2: the host's audio analyser, for audio-reactive content. Values
+ * The host's audio analyser, for audio-reactive content. Values
  * change every frame and nothing is announced: read them inside your own frame
  * loop. Previews feed a synthetic signal; silence (or no analyser) reads as 0.
  */
@@ -479,19 +547,15 @@ export interface FoliumAudio {
 }
 
 /**
- * Context for lyric-synced content (visualizers, stage layers).
- * Snapshot fields are fixed for one mount; the host remounts only when the
- * lyric data, the song or `staticMode` changes (or the preview line in static
- * mode). Everything else is read through getters, and `subscribe` fires when
- * any getter's value changes, including while paused, when `currentTime` is idle.
- */
-/**
- * Folium 1.3: the host's display settings for lyric content, named and valued
+ * The host's display settings for lyric content, named and valued
  * as builtin modes receive them. A mod that turns off `hostLayers.subtitles`
  * and draws its own reads the subtitle settings here.
  */
 export interface FoliumDisplay {
-    /** False while lyrics should not be drawn (e.g. the settings modal covers the player). */
+    /**
+     * False while lyrics should not be drawn (e.g. the settings modal covers the player, or the player page
+     * is not shown): a mod draws no lyric text then, as builtin modes do. Everything else may keep drawing.
+     */
     showText: boolean;
     /** The user's lyric size multiplier; builtin modes scale lyric text by it. */
     lyricsFontScale: number;
@@ -517,17 +581,21 @@ export interface FoliumDisplay {
     isPlayerChromeHidden: boolean;
     /** The player panel is open. */
     isPanelOpen: boolean;
-    /** Lyric layer opacity, 0..1. */
+    /**
+     * Lyric layer opacity, 0..1. The host already applies it to the layer a visualizer and the
+     * `player.stage.*` layers draw in: do not apply it again, or the content fades twice.
+     */
     visualizerOpacity: number;
 }
 
 /**
  * Context for lyric-synced content (visualizers, stage layers). Snapshot fields are fixed for one mount; the
  * host remounts only when the lyric data, the song or `staticMode` changes (or the preview line in static
- * mode). Everything else is read through getters, and `subscribe` fires when any getter's value changes,
- * including while paused, when `currentTime` is idle.
+ * mode). Everything else is read through getters, and `onChange` fires when the line index, pause, theme,
+ * subtitle theme, cover, display, settings, surface or duration change, including while paused, when the
+ * lyric clock stands still. The time itself comes through `onLyricTime`.
  */
-export interface FoliumStageContext {
+export interface FoliumStageContext extends FoliumMountHelpers {
     /** Lyrics of this song (fixed for the mount). */
     readonly lines: readonly FoliumLine[];
     /** This song (fixed for the mount). */
@@ -537,35 +605,56 @@ export interface FoliumStageContext {
     /** Only meaningful in static mode: the line the preview shows. */
     readonly staticLineIndex: number | null;
     /**
-     * Folium 1.3: the geometry seed builtin modes get (the displayed song's id,
+     * The geometry seed builtin modes get (the displayed song's id,
      * or a per-mode fallback). Stable per song, identical in previews, playback
      * and export, so seeded randomness matches everywhere.
      */
     readonly seed: string | null;
-    /** Folium 1.3: rendering inside a settings preview rather than the player page. */
+    /** Rendering inside a settings preview rather than the player page. */
     readonly isPreview: boolean;
-    /** The lyric clock. */
-    readonly currentTime: FoliumClock;
+    /**
+     * The lyric clock: the time lyric lines are timed in (`line.startTime`), seconds. It can differ from
+     * the playback position (the user's lyric offset, Stage sources); in previews it is the preview's own
+     * clock.
+     */
+    readonly lyricTime: FoliumClock;
+    /**
+     * The song's length, seconds; 0 while unknown (`onChange` fires when it becomes known). In a settings
+     * preview it is the preview's length, in the export window the exported song's. Progress through the
+     * song is `lyricTime.get() / getDuration()` when the duration is above 0; it can be off by the user's
+     * lyric offset, since the lyric clock is not the playback position.
+     */
+    getDuration(): number;
     /** Index into `lines` of the active line; -1 between lines. */
     getLineIndex(): number;
     /** Playback is paused. */
     isPaused(): boolean;
     /** The current theme. */
     getTheme(): FoliumTheme;
-    /** Folium 1.3: the theme the host's subtitles use; equals getTheme() where there is none. */
+    /** The theme the host's subtitles use; equals getTheme() where there is none. */
     getSubtitleTheme(): FoliumTheme;
-    /** Folium 1.3. */
+    /** Cover image URL of the displayed song, or null. */
     getCoverUrl(): string | null;
-    /** Folium 1.3. The same object until a value changes; `subscribe` announces changes. */
+    /** The host's display settings. The same object until a value changes; `onChange` announces changes. */
     getDisplay(): FoliumDisplay;
     /** This entry's settings values (defaults merged); empty without a schema. */
-    getSettings(): FoliumParamValues;
+    getSettings(): FoliumSettingValues;
     /** What the host draws around this content. */
     getSurface(): FoliumSurface;
-    /** Called when the line index, pause, theme, subtitle theme, cover, display, settings or surface change. */
-    subscribe(listener: () => void): FoliumDisposer;
-    /** Folium 1.2. */
+    /**
+     * EXPERIMENTAL (`player.layout`): frozen live-player geometry in viewport CSS pixels.
+     * Null without the manifest opt-in, outside the live player (including previews, OBS and export),
+     * or before a subscriber's first measurement. Reading never starts measurement; `onChange` also
+     * fires when the opted-in layout changes.
+     */
+    getLayout(): FoliumPlayerLayout | null;
+    /** The host's audio analyser. */
     readonly audio: FoliumAudio;
+    /**
+     * Calls `listener` with the lyric clock's time (`lyricTime`) on every change. The host stops it when
+     * the mount ends.
+     */
+    onLyricTime(listener: (seconds: number) => void): FoliumDisposer;
 }
 
 // ---------------------------------------------------------------- Registry definitions
@@ -584,7 +673,7 @@ export interface FoliumVisualizerDef {
      * Settings schema; the host renders the form under the mode picker, persists the values and includes them
      * in visual config import/export.
      */
-    settings?: FoliumParam[];
+    settings?: FoliumSetting[];
     /** Replaces the host-rendered form; values still follow `settings`. */
     settingsPanel?: FoliumMount<FoliumSettingsPanelContext>;
     /** Host-rendered layers around the visualizer. Both default to true. */
@@ -599,14 +688,14 @@ export interface FoliumTuningDef {
     target: string;
     /** Card title. */
     label: FoliumLabel;
-    /** Number params only; keys and ranges are checked against the target's whitelist. */
-    params: FoliumParam[];
+    /** Number fields only; keys and ranges are checked against the target's whitelist. */
+    settings: FoliumSetting[];
 }
 
 /** What a command receives when it runs. */
 export interface FoliumCommandContext {
     /** Validated parameter values (defaults merged). */
-    readonly values: FoliumParamValues;
+    readonly values: FoliumSettingValues;
 }
 
 /**
@@ -622,14 +711,20 @@ export interface FoliumCommandDef {
     description?: FoliumLabel;
     /** Extra search terms for the command palette (label texts are always included). */
     keywords?: string[];
-    /** Shown in the mods panel and the command palette; a palette entry with params opens a form. */
-    params?: FoliumParam[];
+    /**
+     * The command's parameters, asked for in a form before it runs (the mods panel's card, or the command
+     * palette, which opens the form for a command that has any).
+     */
+    params?: FoliumSetting[];
     /** Runs the command; the result is shown as a summary (a string, `{ outputPath }` or `{ message }`). */
     run(ctx: FoliumCommandContext): unknown | Promise<unknown>;
 }
 
-/** Lyric-free context for background types: they paint behind every mode, previews included. */
-export interface FoliumBackgroundContext {
+/**
+ * Lyric-free context for background types: they paint behind every mode, previews included. `onChange` fires
+ * when pause, theme, settings or cover change.
+ */
+export interface FoliumBackgroundContext extends FoliumMountHelpers {
     /** A still preview: draw one frame, do not animate. */
     readonly staticMode: boolean;
     /** Playback is paused. */
@@ -637,12 +732,10 @@ export interface FoliumBackgroundContext {
     /** The current theme. */
     getTheme(): FoliumTheme;
     /** This background's settings values (defaults merged). */
-    getSettings(): FoliumParamValues;
+    getSettings(): FoliumSettingValues;
     /** Cover image URL of the displayed song. */
     getCoverUrl(): string | null;
-    /** Called when pause, theme, settings or cover change. */
-    subscribe(listener: () => void): FoliumDisposer;
-    /** Folium 1.2. */
+    /** The host's audio analyser. */
     readonly audio: FoliumAudio;
 }
 
@@ -657,7 +750,7 @@ export interface FoliumBackgroundDef {
     /** Draws the background into its container. */
     mount: FoliumMount<FoliumBackgroundContext>;
     /** Settings schema, as for visualizers. */
-    settings?: FoliumParam[];
+    settings?: FoliumSetting[];
     /** Replaces the host-rendered form; values still follow `settings`. */
     settingsPanel?: FoliumMount<FoliumSettingsPanelContext>;
 }
@@ -671,7 +764,7 @@ export interface FoliumBackgroundDef {
 export type FoliumStageSlot = 'player.stage.back' | 'player.stage.front' | 'app.overlay';
 
 /**
- * A layer on the live player page (never in previews, OBS sources or the export window). Needs the `ui.stage`
+ * A layer on the live player page (never in previews, OBS sources or the export window). Needs the `stageLayers`
  * permission.
  */
 export interface FoliumStageLayerDef {
@@ -703,7 +796,7 @@ export interface FoliumSettingsSectionDef {
     /** Shown under the title. */
     description?: FoliumLabel;
     /** The fields. */
-    settings: FoliumParam[];
+    settings: FoliumSetting[];
     /** Replaces the host-rendered form; values still follow `settings`. */
     settingsPanel?: FoliumMount<FoliumSettingsPanelContext>;
 }
@@ -720,7 +813,7 @@ export interface FoliumPlayerPanelTabDef {
     mount: FoliumMount<FoliumPanelContext>;
 }
 
-/** Folium 1.5: an owned full-page tab appended to Grid and Bravais home navigation. */
+/** An owned full-page tab appended to Grid and Bravais home navigation. */
 export interface FoliumHomeTabDef {
     /** Local id; pass it to `folium.ui.openHomeTab`. */
     id: string;
@@ -732,10 +825,18 @@ export interface FoliumHomeTabDef {
     mount: FoliumMount<FoliumPanelContext>;
 }
 
-/** Progress-bar context shared by control buttons and progress layers. */
-export interface FoliumProgressContext {
-    /** The playback clock (audio time). */
-    readonly currentTime: FoliumClock;
+/**
+ * Progress-bar context shared by progress buttons and progress layers. `onChange` fires when the duration or
+ * the colors change (a new track, a theme switch).
+ */
+export interface FoliumProgressContext extends FoliumMountHelpers {
+    /** The playback clock: the position in the track's audio, seconds (what `seek` takes). */
+    readonly playbackTime: FoliumClock;
+    /**
+     * Calls `listener` with the playback clock's time (`playbackTime`) on every change. The host stops it
+     * when the mount ends.
+     */
+    onPlaybackTime(listener: (seconds: number) => void): FoliumDisposer;
     /** Track duration, seconds; 0 when unknown. */
     getDuration(): number;
     /** 0..1 position of a time on the track (0 when the duration is unknown). */
@@ -744,23 +845,25 @@ export interface FoliumProgressContext {
     seek(seconds: number): void;
     /** The host bar's colors, so mod UI can match it. */
     getColors(): { fill: string; track: string; text: string };
-    /** Called when the duration or the colors change. */
-    subscribe(listener: () => void): FoliumDisposer;
 }
 
-/** The side of the progress bar a control button sits on. */
-export type FoliumControlSlot = 'progress.leading' | 'progress.trailing';
+/** The side of the progress bar a progress button sits on. */
+export type FoliumProgressButtonSlot = 'progress.leading' | 'progress.trailing';
 
-/** A button next to the progress bar. All three host progress bars (floating controls x2, Lattice) show it. */
-export interface FoliumControlButtonDef {
+/**
+ * A button next to the progress bar. All three host progress bars (floating controls x2, Lattice) show it.
+ * A click inside the button stays in it: the host stops it from reaching the bar's surroundings (the
+ * floating capsule opens the player on a click), so the button need not stop propagation itself.
+ */
+export interface FoliumProgressButtonDef {
     /** Local id. */
     id: string;
     /** Left or right of the bar. */
-    slot: FoliumControlSlot;
+    slot: FoliumProgressButtonSlot;
     /** Order within the slot; default 500. */
     order?: number;
     /**
-     * Folium 1.3: leave the collapsed floating capsule alone. The button is not
+     * Leave the collapsed floating capsule alone. The button is not
      * mounted there, only on the expanded capsule and Lattice. Default false.
      */
     hideWhenCollapsed?: boolean;
@@ -771,6 +874,7 @@ export interface FoliumControlButtonDef {
 /**
  * A layer over the progress track. Its container is click-through so seeking
  * keeps working; elements that should take clicks set `pointer-events: auto`.
+ * As for progress buttons, the host keeps such a click inside the layer.
  */
 export interface FoliumProgressLayerDef {
     /** Local id. */
@@ -804,7 +908,7 @@ export interface FoliumRegistryHandle {
 /** What `settingsSections.register` returns: the handle plus the section's values. */
 export interface FoliumSettingsSectionHandle extends FoliumRegistryHandle {
     /** The section's values (defaults merged) and write access. */
-    readonly params: FoliumParamAccess;
+    readonly settings: FoliumSettingAccess;
 }
 
 /** Every registry has this one method. */
@@ -814,8 +918,9 @@ export interface FoliumRegistry<Def, Handle extends FoliumRegistryHandle = Foliu
 }
 
 /**
- * All registries, as `folium.registries`. UI-only ones (commands, stageLayers, playerPanelTabs, homeTabs,
- * controlButtons, progressLayers, styles) accept registrations and do nothing in the export window.
+ * All registries, as `folium.registries`. Some only make sense where there is app UI: they accept
+ * registrations and do nothing in the export window. The table of registries in docs/folium/api.md
+ * says which, and which need a permission.
  */
 export interface FoliumRegistries {
     /** Lyric animation modes. */
@@ -826,16 +931,16 @@ export interface FoliumRegistries {
     commands: FoliumRegistry<FoliumCommandDef>;
     /** Background types. */
     backgrounds: FoliumRegistry<FoliumBackgroundDef>;
-    /** Player page layers (`ui.stage`). */
+    /** Player page layers (`stageLayers`). */
     stageLayers: FoliumRegistry<FoliumStageLayerDef>;
     /** The mod's own settings. */
     settingsSections: FoliumRegistry<FoliumSettingsSectionDef, FoliumSettingsSectionHandle>;
     /** Player panel tabs. */
     playerPanelTabs: FoliumRegistry<FoliumPlayerPanelTabDef>;
-    /** Folium 1.5: full pages in home navigation; inert outside the main window. */
+    /** Full pages in home navigation. */
     homeTabs: FoliumRegistry<FoliumHomeTabDef>;
-    /** Progress bar buttons. */
-    controlButtons: FoliumRegistry<FoliumControlButtonDef>;
+    /** Buttons beside the progress bar. */
+    progressButtons: FoliumRegistry<FoliumProgressButtonDef>;
     /** Layers over the progress track. */
     progressLayers: FoliumRegistry<FoliumProgressLayerDef>;
     /** Mod CSS for public parts. */
@@ -848,7 +953,7 @@ export interface FoliumRegistries {
 export type FoliumEventPriority = 'highest' | 'high' | 'normal' | 'low' | 'lowest';
 
 /**
- * Folium 1.5: why a song failed to play, coarsely. `auth`: sign-in needed or expired. `restricted`:
+ * Why a song failed to play, coarsely. `auth`: sign-in needed or expired. `restricted`:
  * membership, purchase, entitlement, preview-only or region. `taken-down`: no longer offered. `network`:
  * network, timeout, service unavailable or rate limited. `unknown`: anything else. The host's own reason
  * codes are not API.
@@ -871,19 +976,19 @@ export interface FoliumNotificationEvents {
     'visualizer.modeChanged': { readonly mode: string };
     /** The theme or daylight mode changed. */
     'theme.changed': { readonly theme: FoliumTheme };
-    /** Folium 1.3: `playback.getState().liked` changed (a like or unlike, or a new song). */
+    /** `playback.getState().liked` changed (a like or unlike, or a new song). */
     'playback.likeChanged': { readonly liked: boolean };
-    /** Folium 1.5: the volume or the mute switch changed, whoever changed it. */
+    /** The volume or the mute switch changed, whoever changed it. */
     'playback.volumeChanged': { readonly volume: number; readonly muted: boolean };
-    /** Folium 1.5: the repeat mode changed. */
+    /** The repeat mode changed. */
     'playback.loopModeChanged': { readonly mode: FoliumLoopMode };
     /**
-     * Folium 1.5: the queue changed, or the displayed song moved within it. Only the outline: call
+     * The queue changed, or the displayed song moved within it. Only the outline: call
      * `playback.getQueue()` for the songs. Changes made in one task arrive as one event.
      */
     'playback.queueChanged': { readonly length: number; readonly currentIndex: number };
     /**
-     * Folium 1.5: a song failed to play; reported once, after the host's own retries. `phase` says
+     * A song failed to play; reported once, after the host's own retries. `phase` says
      * where it failed: `play`, the host got no playable source for the song just picked (sign-in,
      * membership, taken down, the address lookup failed, a missing local file); `restore`, the same
      * while restoring the last session; `mid-playback`, the player failed on the media itself (it
@@ -905,15 +1010,25 @@ export interface FoliumNotificationEvents {
  * shown. Assign `lines` to rewrite them; lines left untouched (same object)
  * keep all their host-side data, new or changed ones are built from the DTO.
  *
+ * It also runs when the lyric load of the current song ended with none (no
+ * lyrics found, an instrumental, a failed fetch), with `lines` empty: assign
+ * lines to give the song lyrics. Left empty, the song stays without lyrics, so
+ * a handler that only rewrites the lines it is given changes nothing there.
+ *
  * Always runs on untransformed lyrics, never on its own output: when the host
- * rebuilds lyrics already on screen (e.g. a word-segmentation update) it
- * starts again from the untransformed version, so handlers need not be
- * idempotent.
+ * rebuilds lyrics already on screen (a word-segmentation update,
+ * `folium.lyrics.refresh()`) it starts again from the untransformed version,
+ * so handlers need not be idempotent. A rebuild can come at any time, for
+ * whatever song is current then: key what you supply on `event.song`, never
+ * on "the last thing I parsed".
  */
 export interface FoliumLyricsTransformEvent {
-    /** The song the lyrics belong to. */
+    /**
+     * The song the lyrics belong to: the player's current song. During an automix blend that is the track
+     * the blend goes to, while the one it leaves is still the displayed song (`playback.getState().song`).
+     */
     readonly song: FoliumSong | null;
-    /** Assign a new array to rewrite the lyrics. */
+    /** Assign a new array to rewrite the lyrics. Empty when the song's lyric load ended with none. */
     lines: readonly FoliumLine[];
 }
 
@@ -974,7 +1089,11 @@ export type FoliumEventMap = FoliumNotificationEvents & FoliumHookEvents;
 export interface FoliumEvents {
     /**
      * Adds a handler; returns its disposer. Each handler runs in its own error boundary; a sync handler over
-     * 16 ms logs a warning.
+     * 16 ms logs a warning. The host removes the mod's handlers when the mod stops.
+     *
+     * Throws `unknown-event:<type>` for a name that is not an event type (the events table in
+     * docs/folium/api.md lists them), and `experimental-not-declared:<name>` for an experimental event whose
+     * opt-in the mod did not declare in mod.json `experimental`.
      */
     on<K extends keyof FoliumEventMap>(
         type: K,
@@ -986,15 +1105,15 @@ export interface FoliumEvents {
 // ---------------------------------------------------------------- Services
 
 /**
- * `folium.playback`. The readers (`getState`, and from Folium 1.5 `getVolume`, `getLoopMode` and `getQueue`)
+ * `folium.playback`. The readers (`getState`, `getVolume`, `getLoopMode` and `getQueue`)
  * need no permission; every other method needs the `playback.control` permission. All of it is unavailable
  * in the export window.
  */
 export interface FoliumPlaybackService {
     /**
-     * The displayed song, player state, position and duration (seconds).
-     * Folium 1.3: `liked` (the displayed song is liked; false with no song) and
-     * `canLike` (toggleLike would act now; the host's own like button greys out otherwise).
+     * The displayed song, player state, position and duration (seconds), `liked` (the displayed song is
+     * liked; false with no song) and `canLike` (toggleLike would act now; the host's own like button
+     * greys out otherwise).
      */
     getState(): {
         song: FoliumSong | null;
@@ -1013,7 +1132,7 @@ export interface FoliumPlaybackService {
     /** Seeks to a playback position (audio time), seconds. Needs `playback.control`. */
     seek(seconds: number): void;
     /**
-     * Folium 1.3: seeks to a point on the lyric clock, e.g. `line.startTime`,
+     * Seeks to a point on the lyric clock, e.g. `line.startTime`,
      * the way clicking a lyric line does in builtin modes. The host converts
      * lyric time to playback time (lyric offsets, lyrics-only stage sources);
      * `seek(line.startTime)` would land off by the offset. Ignored while the
@@ -1029,46 +1148,46 @@ export interface FoliumPlaybackService {
     /** Appends a song (by `ref`) to the queue. Needs `playback.control`. */
     enqueue(song: FoliumSong): boolean;
     /**
-     * Folium 1.3: shuffles the play queue, keeping the current song first.
+     * Shuffles the play queue, keeping the current song first.
      * False when there is nothing to shuffle (Personal FM, a queue of one,
      * external Stage playback). Needs `playback.control`.
      */
     shuffleQueue(): boolean;
     /**
-     * Folium 1.3: likes or unlikes the displayed song, like the host's like
+     * Likes or unlikes the displayed song, like the host's like
      * button, which also reports the result. False when `canLike` is false.
      * Needs `playback.control`.
      */
     toggleLike(): boolean;
-    /** Folium 1.5: output volume (0–1) and the mute switch, which is separate from it. */
+    /** Output volume (0–1) and the mute switch, which is separate from it. */
     getVolume(): { volume: number; muted: boolean };
     /**
-     * Folium 1.5: sets the volume, clamped to 0–1, the way the host's volume slider does; `muted` stays as
+     * Sets the volume, clamped to 0–1, the way the host's volume slider does; `muted` stays as
      * it is. Every call is saved, so set the value you settled on rather than animating through it.
      * Needs `playback.control`.
      */
     setVolume(volume: number): void;
     /**
-     * Folium 1.5: mutes or unmutes. A set rather than a toggle, so two windows acting at once cannot cancel
+     * Mutes or unmutes. A set rather than a toggle, so two windows acting at once cannot cancel
      * each other out. Needs `playback.control`.
      */
     setMuted(muted: boolean): void;
-    /** Folium 1.5: the repeat mode. */
+    /** The repeat mode. */
     getLoopMode(): FoliumLoopMode;
     /**
-     * Folium 1.5: sets the repeat mode; the host reports the change like its own repeat button does.
+     * Sets the repeat mode; the host reports the change like its own repeat button does.
      * Setting the mode already in effect does nothing. Needs `playback.control`.
      */
     setLoopMode(mode: FoliumLoopMode): void;
     /**
-     * Folium 1.5: a page of the play queue. `limit` defaults to 500, the most one call returns; without
+     * A page of the play queue. `limit` defaults to 500, the most one call returns; without
      * `offset` the page is centred on the displayed song. Song refs come from a pool of 2,000 shared with
      * every other song DTO, the least recently handed out dropped first: every ref of the page you just read
      * resolves, so read the pages you show rather than the whole queue.
      */
     getQueue(options?: { offset?: number; limit?: number }): FoliumQueueSnapshot;
     /**
-     * Folium 1.5: plays queue entry `index`, with the same playback and navigation as clicking it in the
+     * Plays queue entry `index`, with the same playback and navigation as clicking it in the
      * host's queue panel; if it fails to play, the retry and skip buttons follow the queue as it is when
      * pressed. In Personal FM, where the panel lists no queue, it plays the entry and FM stays on. With
      * `expectedRef`, resolves false without acting when that position no longer holds that song (the queue
@@ -1087,13 +1206,13 @@ export interface FoliumFileHandle {
     /** Size in bytes. */
     size: number;
     /**
-     * Folium 1.1: opaque id of a persisted grant (pickFile with `persist`, or
+     * Opaque id of a persisted grant (pickFile with `persist`, or
      * restoreFile). Store it to get the file back after a restart.
      */
     grantId?: string;
 }
 
-/** Folium 1.2: options for `folium.ui.icon`. */
+/** Options for `folium.ui.icon`. */
 export interface FoliumIconOptions {
     /** Width and height in px. Default 24. */
     size?: number;
@@ -1109,24 +1228,24 @@ export interface FoliumUiService {
     toast(message: string, options?: { type?: 'info' | 'success' | 'error'; durationMs?: number }): void;
     /** Opens the player panel, optionally on one of this mod's panel tabs (local id). */
     openPlayerPanel(tabId?: string): void;
-    /** Folium 1.5: opens this mod's registered home tab (local id). Rejects unknown tabs. */
+    /** Opens this mod's registered home tab (local id). Rejects unknown tabs. */
     openHomeTab(tabId: string): void;
     /** Switches to the home or player view. */
     navigate(view: 'home' | 'player'): void;
-    /** Folium 1.3: opens the host volume panel (the command palette's volume command). */
+    /** Opens the host volume panel (the command palette's volume command). */
     openVolume(): void;
     /**
      * Lets the user pick a local file; null when cancelled. With `persist`
-     * (Folium 1.1) the pick is remembered for this mod and the handle carries
+     * the pick is remembered for this mod and the handle carries
      * a `grantId` for restoreFile.
      */
     pickFile(options?: { accept?: 'video' | 'audio' | 'image' | 'any'; persist?: boolean }): Promise<FoliumFileHandle | null>;
     /**
-     * Folium 1.1: a file this mod picked with `persist`, as a fresh session
+     * A file this mod picked with `persist`, as a fresh session
      * handle. Null when the grant is unknown to this mod or the file is gone.
      */
     restoreFile(grantId: string): Promise<FoliumFileHandle | null>;
-    /** Folium 1.1: forgets a persisted grant. URLs already handed out keep working this session. */
+    /** Forgets a persisted grant. URLs already handed out keep working this session. */
     releaseFile(grantId: string): Promise<void>;
     /**
      * Embeds an external page in `container` as a sandboxed iframe. The URL's
@@ -1134,9 +1253,10 @@ export interface FoliumUiService {
      */
     embed(container: HTMLElement, url: string, options?: { title?: string; allow?: string[] }): FoliumDisposer;
     /**
-     * Folium 1.2: one of the host's icons (lucide, named as on lucide.dev, e.g.
-     * "play", "skip-forward") as a new <svg> element the mod owns; null for an
-     * unknown name. Works in every context, the export window included.
+     * One of the host's icons as a new <svg> element the mod owns, from the icon set of
+     * lucide-react 1.48, the version Folia bundles, named as on lucide.dev (e.g. "play", "skip-forward").
+     * Resolves to null for a name that version does not have, including icons added in later lucide
+     * releases. Works in every context, the export window included.
      */
     icon(name: string, options?: FoliumIconOptions): Promise<SVGSVGElement | null>;
 }
@@ -1169,6 +1289,30 @@ export interface FoliumFetchResponse {
     json<T = unknown>(): T;
 }
 
+/**
+ * `folium.lyrics`: the shared lyric helpers (FoliumLyricsHelpers, in both contexts), plus two members that
+ * reach the displayed song's lyrics. Those two are unavailable in the export window: they throw
+ * `lyrics-unavailable-in-export-context`.
+ */
+export interface FoliumLyricsService extends FoliumLyricsHelpers {
+    /**
+     * The lines on screen now; empty when there are none. For a mod that starts after `lyrics.loaded` fired:
+     * read them once, then follow `lyrics.loaded`.
+     */
+    getLines(): readonly FoliumLine[];
+    /**
+     * Runs `lyrics.transform` again, now, and shows the result: on the displayed song's lyrics as they were
+     * before any transform (the way the host does when it rebuilds lyrics on screen), or, when the song's
+     * lyric load ended with none, on empty `lines` again. Does nothing while the song's lyrics are still
+     * loading. Takes no arguments: the handlers decide. This is the way to supply lyrics that take time to
+     * get, since the hook itself is synchronous: fetch or `parse` them, keep them keyed on the song, then
+     * call `refresh()`. The result is the same song's lyrics rebuilt, not a new load: it is not announced as
+     * `lyrics.loaded`. `getLines()` returns the new lines, and lyric mounts (visualizers, stage layers) get
+     * them as a new mount.
+     */
+    refresh(): void;
+}
+
 /** `folium.net`. */
 export interface FoliumNetService {
     /** Fetch through the host (no CORS limits); needs the `net.fetch` permission. */
@@ -1176,6 +1320,84 @@ export interface FoliumNetService {
 }
 
 // ---------------------------------------------------------------- Experimental
+
+/** EXPERIMENTAL (`player.layout`): a rectangle in viewport CSS pixels. */
+export interface FoliumLayoutRect {
+    /** Left edge. */
+    readonly left: number;
+    /** Top edge. */
+    readonly top: number;
+    /** Width. */
+    readonly width: number;
+    /** Height. */
+    readonly height: number;
+}
+
+/** EXPERIMENTAL (`player.layout`): a native control or its interactive reveal region; no internal ids. */
+export interface FoliumPlayerObstacle {
+    /** Coarse purpose; future hosts may add roles. */
+    readonly role: 'navigation' | 'window' | 'playback' | 'now-playing' | 'panel' | 'notification' | (string & {});
+    /** Hidden controls still reserve the pointer region that reveals them. */
+    readonly kind: 'control' | 'reveal-area';
+    /** Occupied rectangle. */
+    readonly rect: FoliumLayoutRect;
+}
+
+/** EXPERIMENTAL (`player.layout`): immutable snapshot; identity is stable until geometry changes. */
+export interface FoliumPlayerLayout {
+    /** Live-player bounds in viewport CSS pixels. */
+    readonly bounds: FoliumLayoutRect;
+    /** Four safe edge distances in CSS pixels, relative to bounds. */
+    readonly insets: Readonly<{ top: number; right: number; bottom: number; left: number }>;
+    /** Regions to avoid; not guaranteed complete. Count, order and roles are not compatibility promises; native ids stay private. */
+    readonly obstacles: readonly FoliumPlayerObstacle[];
+}
+
+/** EXPERIMENTAL (`remote.actions`). Append-only buttons; native remote controls stay unchanged. */
+export interface FoliumRemoteActionDef {
+    /** Local action id; the host adds the owning mod and registration prefix. */
+    id: string;
+    /** Localized button label and accessible name. */
+    label: FoliumLabel;
+    /** Lucide icon name in kebab-case. */
+    icon: string;
+    /** Prevents invocation while true. */
+    disabled?: boolean;
+    /** Toggle state exposed through aria-pressed. */
+    pressed?: boolean;
+    /** Optional nonnegative finite count. */
+    count?: number;
+    /** Host-defined visual emphasis. */
+    tone?: 'normal' | 'alert';
+    /** `track` (default) expires when the displayed song changes; `session` survives a song change. */
+    scope?: 'track' | 'session';
+    /** Runs in the main window through the host's remote bridge. */
+    run(): void | Promise<void>;
+}
+
+/** EXPERIMENTAL (`remote.actions`). Current playback context for additional buttons. */
+export interface FoliumRemoteActionsContext {
+    /** Currently displayed song, or null when no song is displayed. */
+    readonly song: FoliumSong | null;
+    /** Playback state of the displayed song. */
+    readonly state: FoliumPlaybackState;
+}
+
+/** EXPERIMENTAL (`remote.actions`). A group of buttons appended after native remote controls. */
+export interface FoliumRemoteActionsDef {
+    /** Local registration id; the host adds the owning mod prefix. */
+    id: string;
+    /** Order among mod groups only; native buttons cannot be reordered. */
+    order?: number;
+    /** Buttons for the current context. The per-mod limit is not yet finalized. */
+    actions(context: FoliumRemoteActionsContext): readonly FoliumRemoteActionDef[];
+}
+
+/** EXPERIMENTAL (`remote.actions`). Owns one additional remote-button registration. */
+export interface FoliumRemoteActionsHandle extends FoliumRegistryHandle {
+    /** Re-evaluates actions and refreshes the remote window without changing native buttons. */
+    invalidate(): void;
+}
 
 /** EXPERIMENTAL (`omni.providers`): a song as a mod provider describes it. */
 export interface FoliumProviderSong {
@@ -1218,8 +1440,8 @@ export interface FoliumOmniProviderDef {
     /** A playable URL for the song at a quality. */
     getAudioUrl?(song: FoliumProviderSong, quality: FoliumAudioQuality): Promise<{ url: string; expiresAt?: number } | null>;
     /**
-     * Lyrics for a song, as raw text the host parses (FoliumLyricsResult, Folium 1.4), or the deprecated
-     * Folium 1.3 plain-LRC shape. Null when there are none.
+     * Lyrics for a song, as raw text the host parses (FoliumLyricsResult), or the deprecated Folium 1.3
+     * plain-LRC shape. Null when there are none.
      */
     getLyrics?(song: FoliumProviderSong): Promise<FoliumLyricsResult | FoliumLegacyLyricsResult | null>;
 }
@@ -1249,7 +1471,7 @@ export interface FoliumWordColorRange {
 }
 
 /**
- * Folium 1.3: the pure lyric helpers builtin modes share, so a mod lays out,
+ * The pure lyric helpers builtin modes share, so a mod lays out,
  * times and colors lines exactly as they do. Available in both contexts.
  */
 export interface FoliumLyricsHelpers {
@@ -1273,13 +1495,13 @@ export interface FoliumLyricsHelpers {
         options?: { cjkMatchMode?: 'target-contains-token' | 'bidirectional-contains' | 'exact' },
     ): string;
     /**
-     * Folium 1.4: parses a lyric document with the host's local lyric file pipeline, off the main thread.
+     * Parses a lyric document with the host's local lyric file pipeline, off the main thread.
      * Rejects with a TypeError (`invalid-lyrics-track`) when the track is malformed.
      */
     parse(track: FoliumLyricsTrack): Promise<FoliumParsedLyrics>;
 }
 
-/** Folium 1.3: theme resolution builtin modes use. Available in both contexts. */
+/** Theme resolution builtin modes use. Available in both contexts. */
 export interface FoliumThemeHelpers {
     /** CSS font-family value for lyric text. */
     resolveFontStack(theme: Pick<FoliumTheme, 'fontStyle' | 'fontFamily' | 'fontFamilyStack'>): string;
@@ -1294,7 +1516,10 @@ export interface FoliumThemeHelpers {
 /** Where a client runs: the main window, or the transparent video export window. */
 export type FoliumContextKind = 'main' | 'export';
 
-/** The host, for runtime feature detection (`folium.host`). */
+/**
+ * The host's versions (`folium.host`), for display and logs. Every member of this contract is there from
+ * Folium 1.6 on; an older 1.x host lacks some of them.
+ */
 export interface FoliumHostInfo {
     /** The Folium version (`major`, `minor`). */
     folium: { major: number; minor: number };
@@ -1342,7 +1567,7 @@ export interface FoliumLogger {
 export interface FoliumClientApi {
     /** This mod's id. */
     readonly modId: string;
-    /** Host versions, for feature detection. */
+    /** Host versions, for display and logs. */
     readonly host: FoliumHostInfo;
     /** Where this client runs. */
     readonly env: { readonly context: FoliumContextKind };
@@ -1362,46 +1587,26 @@ export interface FoliumClientApi {
     readonly storage: FoliumStorage;
     /** Calls into this mod's main entry. */
     readonly rpc: FoliumRpc;
-    /** Folium 1.3. */
-    readonly lyrics: FoliumLyricsHelpers;
-    /** Folium 1.3. */
+    /** The lyric helpers builtin modes use, and the displayed song's lyrics. */
+    readonly lyrics: FoliumLyricsService;
+    /** The theme helpers builtin modes use. */
     readonly theme: FoliumThemeHelpers;
+    /**
+     * Calls `listener` every `ms` milliseconds (at least 16) until the mod stops; the host stops
+     * it then.
+     */
+    every(ms: number, listener: () => void): FoliumDisposer;
+    /**
+     * Runs `disposer` when the mod stops, after the disposer `activate` returned; at once when
+     * the mod has already stopped.
+     */
+    onDispose(disposer: FoliumDisposer): void;
     /** Unfrozen surfaces; each requires the matching manifest `experimental` opt-in. */
     readonly experimental: Readonly<Record<string, unknown>>;
-    /**
-     * Host internals with no compatibility promise. Only available when the
-     * manifest pins host versions with `"folia"`; otherwise accessing it throws.
-     */
-    readonly internals: Readonly<Record<string, unknown>>;
 }
 
 /** The shape of a client entry module. */
 export interface FoliumClientModule {
     /** `activate(folium)`; may return a disposer, which runs before the host removes the mod's registrations. */
     default: (folium: FoliumClientApi) => void | FoliumDisposer | Promise<void | FoliumDisposer>;
-}
-
-// ---------------------------------------------------------------- Main entry
-// Shapes of objects on the main (Node) entry's `activate(api)` parameter. That
-// `api` is plain JS (electron/modSystem/modApi.cjs) and its member table is
-// written by hand in dev/folium/api-docs.mjs; types here are listed under the
-// main entry heading of the reference, never under the client entry.
-
-/**
- * Folium 1.5, main entries only: `api.storage.paths`, the directories this mod writes its files to. Needs
- * the `filesystem.data` permission; without it, reading either path throws `permission-denied:filesystem.data`.
- * Each read creates the directory when it is missing, and throws the file system's error when it cannot (a file
- * or a dead link standing where the directory should be; for `cache`, clearing the cache in the mods panel
- * removes that entry). Both getters are non-enumerable, so serializing or spreading `api` never reads them.
- * Clients get no paths: they have no file system.
- */
-export interface FoliumModPaths {
-    /** Files to keep: `<userData>/mods-data/<id>/files`, beside (not holding) the `folium.storage` data file. */
-    readonly data: string;
-    /**
-     * Files the mod can rebuild: `<userData>/mods-cache/<id>`. The user can empty it from the mods panel at
-     * any time, even while the mod runs, so expect files to vanish; the host sets no size limit, so cap it
-     * yourself.
-     */
-    readonly cache: string;
 }

@@ -6,11 +6,11 @@ import {
     isGridSurfaceActionDeclared,
     runGridSurfaceAction,
     type GridSurfaceParams,
-} from '@/library/core/model/collectionSurface';
-import { LIBRARY_ACTION_IDS } from '@/library/core/model/librarySuites';
-import { EMPTY_COLLECTION_MUTATION_SNAPSHOT } from '@/library/core/model/collectionMutationCapabilities';
-import type { LibraryDeclaredActions } from '@/library/core/contracts/suite';
-import { resolveCollectionSyncCounts } from '@/library/core/model/collectionProgress';
+} from '@/library/core/collection/collectionSurface';
+import { LIBRARY_ACTION_IDS } from '@/library/core/suite/librarySuites';
+import { EMPTY_COLLECTION_MUTATION_SNAPSHOT } from '@/library/core/collection/mutations/collectionMutationCapabilities';
+import type { LibraryDeclaredActions } from '@/library/core/suite/suite.contract';
+import { resolveCollectionSyncCounts } from '@/library/core/collection/collectionProgress';
 
 // test/unit/library/core/collectionSurface.test.ts
 // 只有核心动作的 renderer（没有信息面板、侧栏、编辑模式）注册到命令面板时，

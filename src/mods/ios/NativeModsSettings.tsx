@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { installNativeMod, nativeModList, onNativeModsChanged, removeNativeMod, setNativeModEnabled, notifyNativeModsChanged } from './host';
-import { ModSurfaceRenderer } from '../ModSurfaceRenderer';
+import { ModSurfaceRenderer } from '../manager/ModSurfaceRenderer';
 import { useModsStore } from '../useModsStore';
 import { DEFAULT_THEME } from '../../services/baseThemes';
 import type { Theme } from '../../types';

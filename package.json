@@ -8,7 +8,7 @@
     "email": "chthollyphile@users.noreply.github.com"
   },
   "private": true,
-  "version": "0.7.19",
+  "version": "0.7.21",
   "license": "AGPL-3.0",
   "type": "module",
   "main": "electron/main.cjs",
@@ -24,6 +24,9 @@
     "typecheck": "tsc --noEmit",
     "codemap": "node dev/mcp/ts-code-map/codemap.mjs",
     "folium:api": "node dev/folium/api-docs.mjs",
+    "folium:types": "node dev/folium/types.mjs",
+    "folium:new": "node dev/folium/new.mjs",
+    "folium:check": "node dev/folium/check.mjs",
     "codemap:check": "node dev/mcp/ts-code-map/codemap.mjs --check",
     "test": "vitest run -c vitest.config.ts",
     "test:unit": "vitest run -c vitest.config.ts",
@@ -88,18 +91,34 @@
       "dist/**/*",
       "electron/**/*",
       "shared/**/*",
+      "!**/node_modules/youtubei.js/bundle/**",
       "package.json",
       "build/miao.png",
       "build/thumbar/*.png"
     ],
     "asarUnpack": [
-      "electron/analysis/htdemucs_runner.py",
-      "node_modules/@koromix/koffi-*/**/*.node"
+      "node_modules/@koromix/koffi-*/**/*.node",
+      "node_modules/@lox-audioserver/node-librespot/prebuilds/**/*.node"
     ],
     "extraResources": [
       {
         "from": "build/ffmpeg/${os}-${arch}",
         "to": "ffmpeg-audio"
+      },
+      {
+        "from": "build/mnn/${os}-${arch}",
+        "to": "mnn",
+        "filter": [
+          "*folia_mnn.*"
+        ]
+      },
+      {
+        "from": "models",
+        "to": "models",
+        "filter": [
+          "beat_this-wgsl.bin",
+          "htdemucs-wgsl.bin"
+        ]
       },
       {
         "from": "build/icon.png",
@@ -209,29 +228,30 @@
     }
   },
   "dependencies": {
-    "@capacitor/core": "8.5.3",
-    "@capacitor/ios": "8.5.3",
     "@google/genai": "^2.24.0",
-    "@neteasecloudmusicapienhanced/api": "^4.41.1",
+    "@neteasecloudmusicapienhanced/api": "4.41.1",
     "@xhayper/discord-rpc": "^1.5.1",
-    "@yakult-green-tea/qq-music-api": "3.3.1",
+    "@yakult-green-tea/qq-music-api": "3.3.3",
     "axios": "^1.20.0",
+    "bgutils-js": "4.0.3",
     "bodian-music-api": "0.1.2",
     "busboy": "^1.6.0",
     "electron-store": "^11.0.2",
     "electron-updater": "^6.8.9",
     "fflate": "^0.8.3",
     "file-type": "^21.3.4",
+    "googlevideo": "4.1.1",
     "koffi": "^3.3.1",
     "kugoumusicapi": "https://github.com/MakcRe/KuGouMusicApi/archive/refs/tags/v1.6.0.tar.gz",
     "music-metadata": "^11.16.1",
-    "onnxruntime-node": "^1.30.0",
-    "qrcode": "1.5.4",
-    "ws": "^8.21.3"
+    "ws": "^8.21.3",
+    "youtubei.js": "18.1.0",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
+    "qrcode": "1.5.4"
   },
   "devDependencies": {
     "@applemusic-like-lyrics/ttml": "^1.0.1",
-    "@capacitor/cli": "8.5.3",
     "@chenglou/pretext": "^0.0.9",
     "@emnapi/core": "1.11.3",
     "@emnapi/runtime": "1.11.3",
@@ -248,6 +268,7 @@
     "@types/three": "^0.185.4",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.1.1",
+    "@webgpu/types": "0.1.74",
     "@xmldom/xmldom": "^0.9.12",
     "animejs": "^4.5.0",
     "autoprefixer": "^10.6.1",
@@ -283,7 +304,8 @@
     "vitest": "^4.1.11",
     "wait-on": "^9.1.0",
     "wanakana": "^5.3.1",
-    "zustand": "^5.0.15"
+    "zustand": "^5.0.15",
+    "@capacitor/cli": "8.5.3"
   },
   "overrides": {
     "@babel/plugin-transform-runtime": "7.29.7",
@@ -297,5 +319,8 @@
     "three-stdlib": {
       "fflate": "$fflate"
     }
+  },
+  "optionalDependencies": {
+    "@lox-audioserver/node-librespot": "0.5.1"
   }
 }

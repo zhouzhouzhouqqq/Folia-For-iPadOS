@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { hasNativeAutomix } from '../../platform/ios/automix';
-import { modelsPresent, subscribeModelAvailability } from './modelAvailability';
+import { modelsPresent, subscribeModelAvailability } from '../analysis/modelAvailability';
 import { waitForNativeInferenceIdle } from './nativeInference';
 import { profilesSettled } from './profileService';
 

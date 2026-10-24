@@ -156,3 +156,35 @@ CoreSimulator/LaunchServices在自动化环境不可启动；最初未测真实W
 - 已同步到个人构建仓库及公开源码准备仓库；两份工程 `npm run ios:sync` 与公开源码 `npm run typecheck` 通过。
 - 本地 WebKit 浏览器检查通过：1024×768、768×1024、375×768 三种尺寸，帮助/选项共 6 项；截图与记录位于工作区 `work/settings-credit-*`。浏览器检查不等同于 iPad 实机安装验收。
 - 用户已授权将署名更新作为构建 3 替换现有 `ipados-0.7.19-preview.2` 的附件；不移动历史 Git 标签。实际上传结果记录在工作区 `work/github-replace-preview2-result.json`，未产生该结果前不得声称已发布。
+## 2026-10-22：手机竖屏重载 / 后台无声，构建 4
+
+当前独立修复分支：`codex/iphone-playback-lifecycle`，未自动提交/推送。iPhone 13 Pro 的系统记录已确认 WebContent 约 1.5 GiB highwater 终止；具体分配来源仍待测。已实现系统媒体封面原生解码缩图、active 网页会话的后台同图恢复、仅 Debug 的有界资源计数。歌词/背景/AutoMix/音效均保留。34 项定向单测、两项 Mac WebKit 横竖屏切歌检查、类型、前端、同步与原生 Debug 构建通过。详见 [故障与验证跟踪](ipados-phone-playback-reload.md)，发布和真机状态以该文档后续记录为准，不把本轮标为全部修复。
+## 2026-10-22：QQ 音乐登录后无法播放修复
+
+用户反馈 QQ 扫码登录完成后歌曲能显示，但点击播放无声。审计确认 QQ 原生 `music_play` 返回的 vkey CDN 地址可能是 HTTP；原生 ProviderHTTP 的 HTTPS 升级只作用于协议请求，最终 `<audio>` 请求由 WKWebView 发起，因 ATS / 混合内容策略被阻止。已在统一 `toSafeRemoteUrl` 层仅对 QQ CDN 选择器允许的 `*.qqmusic.qq.com`、`*.tc.qq.com` 媒体域升级 HTTPS，保留 vkey 查询参数，并保持其它 QQ API、图片和 Electron 酷狗兼容逻辑不变。
+
+定向 QQ provider / transport / 原生状态 / URL 归一化回归 4 个文件、153 项通过；`typecheck` 和 iOS build/sync 通过，`App` scheme / iOS SDK 26.5 已核实，arm64 Debug 无签名构建 `BUILD SUCCEEDED`。本轮代码尚未提交或推送。必须用最新资源覆盖安装到实体 iPad，复验 QQ 登录、播放、切歌、后台和系统控件；真机确认前状态为“已修复待真机验证”。
+
+
+## 2026-10-23：官方 0.7.21 合入
+
+已完成完整源码获取、三方冲突处理、设置/账号/分析桥迁移和本机基础构建。分支 codex/upstream-0.7.21，无提交/推送。详见 ipados-upstream-0.7.21.md；Spotify/YTM iOS bridge 未实现，不能声称全量平台支持。最新日志为 work/upstream-0721-validation/，真机未接入。本轮不得以旧版安装成功或锁屏成功推定新版通过。
+
+
+## 2026-10-23 最终落地检查
+
+已将完整 0.7.21 合并结果原子写回本公开 checkout，清理上游删除/重命名后的旧路径，保留用户原有未提交更改。依赖目录由临时安装迁回公开 checkout，解除原来指向个人 checkout 的共享软链接；未改个人签名工程。
+
+正式目录 typecheck、iOS sync、4 文件 35 项定向回归、App scheme iphoneos arm64 Debug 无签名构建均通过；git diff --check 无错误，无冲突标记，无远程 WebView URL/iOS SW。修正 tsconfig 排除生成的 iOS public 资源，避免类型检查读取旧打包 JS。
+
+视觉 26 场景均挂载；URL 单独复测已无错误并有动画像素变化，未放宽 iframe sandbox。清单使用 AST 提取 121 个真实 Tempera shot ID，避免注释中的引号污染。证据保存至 workspace 的 work/upstream-0721-validation。
+
+仍需真机：所有视觉参数/分镜、三源账号和真实播放、连续切歌/后台/锁屏/中断/蓝牙、旧手机 WebContent 重载、智能动感/AutoMix 模型 CPU/内存、文件与导出。未实现 Spotify/YTM iOS 运行桥，不宣称全部移植完成。后续从 docs/ipados-upstream-0.7.21.md 的逐项差异继续；无需重新审计或覆盖本分支。
+
+
+2026-10-23 最终产物补记：正式工作目录 App scheme 的 iphoneos arm64 Debug 与 Release 无签名构建均为 BUILD SUCCEEDED；Release IPA 已在源码目录外生成并通过 ZIP CRC/执行权限/arm64/无个人 Team/无 profile/无远程首页/无 iOS Service Worker 检查，SHA-256 随产物保存。该 IPA 必须自行签名后安装，未上传 GitHub，未安装真机，不能代表播放与视觉的最终验收。
+
+
+## 2026-10-23 Xcode 工程入口纠正
+
+用户反馈 Xcode 仍为 0.7.19。已实际读取 Xcode workspace/window 路径，确认此前打开的是 outputs/folia-major/ios/App/App.xcodeproj（旧签名工程），而更新后的源码在 outputs/github-publish/Folia-For-iPadOS。现已打开新版并关闭旧版窗口，保留旧工程与签名。xcodebuild -showBuildSettings 确认新版 MARKETING_VERSION=0.7.21；package.json 同为 0.7.21，Info.plist 从 MARKETING_VERSION 取值，iOS public 本地 bundle 存在。未覆盖个人 Team/Bundle ID；新版公开工程需要用户在 Signing & Capabilities 选择自己的签名。以后从本目录 ios/App/App.xcodeproj 打开，勿从旧 Recent 项目进入。

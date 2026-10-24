@@ -1,0 +1,25 @@
+/* Keep the panel's measured content budget aligned with its touch-sized dock. */
+.player-panel-surface {
+    --pn-dock-height: 36px;
+    --pn-view-height: 100dvh;
+}
+
+.player-panel-surface [data-player-panel-dock] > [role='group'] {
+    height: 100%;
+}
+
+@media (any-pointer: coarse) {
+    .player-panel-surface {
+        /* The segmented row has 2px padding on each edge: buttons retain 44px. */
+        --pn-dock-height: 48px;
+    }
+
+    .player-panel-surface [data-player-panel-dock] button {
+        touch-action: manipulation;
+    }
+}
+
+html[data-folia-platform='ios'] .player-panel-surface {
+    --pn-view-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-width: calc(100dvw - env(safe-area-inset-left) - env(safe-area-inset-right) - 32px);
+}

@@ -13,10 +13,12 @@ test('WebKit owns metadata, cover, seek and one previous/next callback across re
             testWindow.__mediaActions[action] = callback; original(action, callback);
         };
         Object.assign(window, { Capacitor: {
-            PluginHeaders: [{ name: 'FoliaDevice', methods: ['configureAudio', 'setMusicControls', 'publishNowPlaying', 'addListener', 'removeListener'].map(name => ({ name, rtype: 'promise' })) }],
-            nativePromise: async (_plugin: string, method: string, payload: { next: boolean; previous: boolean }) => {
+            PluginHeaders: [{ name: 'FoliaDevice', methods: ['configureAudio', 'setMusicControls', 'publishNowPlaying', 'prepareMediaArtwork', 'addListener', 'removeListener'].map(name => ({ name, rtype: 'promise' })) }],
+            nativePromise: async (_plugin: string, method: string, payload: { next: boolean; previous: boolean; data?: string }) => {
                 testWindow.__nativeCalls.push(method);
                 if (method === 'setMusicControls') { testWindow.__musicControls.push(payload); return { ...payload, skipForward: false, skipBackward: false }; }
+                // Synthetic cover only; ImageIO itself is exercised by dev/ipados/artwork/main.swift.
+                if (method === 'prepareMediaArtwork') return { data: payload.data };
                 return {};
             },
             nativeCallback: () => 'synthetic-listener',
@@ -27,7 +29,7 @@ test('WebKit owns metadata, cover, seek and one previous/next callback across re
     const state = () => page.evaluate(() => ({ title: navigator.mediaSession.metadata?.title, artist: navigator.mediaSession.metadata?.artist,
         cover: navigator.mediaSession.metadata?.artwork[0]?.src.split(',')[0], playing: navigator.mediaSession.playbackState,
         paused: document.querySelector('audio')?.paused }));
-    await expect.poll(state).toEqual({ title: 'Synthetic A', artist: 'Synthetic Artist', cover: 'data:image/png;base64', playing: 'playing', paused: false });
+    await expect.poll(state).toEqual({ title: 'Synthetic A', artist: 'Synthetic Artist', cover: 'data:image/jpeg;base64', playing: 'playing', paused: false });
     const musicPolicy = () => page.evaluate(() => {
         const probe = window as unknown as { __mediaActions: Record<string, MediaSessionActionHandler | null>; __musicControls: { next: boolean; previous: boolean }[] };
         return { hasNext: !!probe.__mediaActions.nexttrack, hasPrevious: !!probe.__mediaActions.previoustrack,
@@ -36,7 +38,20 @@ test('WebKit owns metadata, cover, seek and one previous/next callback across re
     });
     const expectedPolicy = { hasNext: true, hasPrevious: true, hasSkipForward: false, hasSkipBackward: false,
         canSeekTo: true, native: { next: true, previous: true } };
+    const waitForAudio = async () => expect.poll(() => page.locator('audio').evaluate(element => {
+        const audio = element as HTMLAudioElement;
+        return !audio.paused && audio.readyState >= 3 && audio.currentSrc === audio.src;
+    })).toBe(true);
     await expect.poll(musicPolicy).toEqual(expectedPolicy);
+    for (let index = 0; index < 6; index++) {
+        await command('nexttrack');
+        await expect.poll(async () => (await state()).title).toBe('Synthetic B');
+        await waitForAudio();
+        await command('previoustrack');
+        await expect.poll(async () => (await state()).title).toBe('Synthetic A');
+        await waitForAudio();
+    }
+    expect(await page.locator('audio').count()).toBe(1);
     async function command(action: MediaSessionAction, seekTime?: number) {
         await page.evaluate(({ action, seekTime }) => {
             const actions = (window as unknown as { __mediaActions: Record<string, MediaSessionActionHandler> }).__mediaActions;

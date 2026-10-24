@@ -5,7 +5,7 @@ import type { LyricData, SongResult } from '../../../types';
 import type { CommandPalettePlaybackContext } from '../../command-palette/types';
 import type { PlayerControlSlotContext } from '../../floating-player/playerControlSlotActions';
 import { resolveLikeAvailability } from '../../../utils/playerLikeAvailability';
-import { resolvePlaybackNeighbors } from '../../../utils/playbackNeighbors';
+import { canShuffleQueue, resolvePlaybackNeighbors } from '../../../utils/playbackNeighbors';
 
 // src/components/app/lattice/LatticePlaybackProvider.tsx
 // Reuses the main bar's playback actions and keeps its timeline outside transformed cards.
@@ -50,7 +50,7 @@ export default function LatticePlaybackProvider({ actions, currentSong, queue, l
             canPrev: neighbors.prev.canGo && !actions.disabled,
             canNext: neighbors.next.canGo && !actions.disabled,
             onShuffle: actions.playback.shuffleQueue,
-            canShuffle: queue.length > 1 && !actions.playback.isFmMode && !actions.isStageActive,
+            canShuffle: canShuffleQueue(queue.length, actions.playback.isFmMode, Boolean(actions.isStageActive)),
             onLike: () => { void actions.playback.toggleSongLike(); },
             isLiked: actions.playback.isSongLiked,
             likeDisabled: resolveLikeAvailability(currentSong, Boolean(actions.disabled), Boolean(actions.isStageActive)).disabled,

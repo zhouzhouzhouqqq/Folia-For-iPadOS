@@ -51,7 +51,7 @@ export const resolveBravaisPlayingCardRestore = ({
     if (layer.items.length === 0 || layer.wall?.loading) return { kind: 'wait' };
     const entryKey = layer.nowPlayingKey;
     if (!entryKey) return { kind: 'skip' };
-    const focused = bravaisSlotFromKey(focusedSlotKey);
+    const focused = bravaisSlotFromKey(focusedSlotKey, display.shape);
     const slot = focused && resolveSlotItem(display, focused)?.key === entryKey
         ? focused
         : findDisplayItemSlot(display, entryKey, near);
@@ -108,7 +108,7 @@ export const useBravaisPlayingCard = ({
         const current = displayRef.current;
         const memory = readBravaisPlayingCard();
         if (!current || !memory || memory.layerKey !== current.layer.key) return;
-        const slot = bravaisSlotFromKey(expandedSlotKey);
+        const slot = bravaisSlotFromKey(expandedSlotKey, current.shape);
         const key = slot ? resolveSlotItem(current, slot)?.key ?? null : null;
         if (key !== memory.entryKey) disarmBravaisPlayingCard();
     }, [expandedSlotKey, seq]);

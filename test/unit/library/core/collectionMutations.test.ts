@@ -6,18 +6,18 @@ import type {
     LocalGridViewCollectionDescriptor,
     NavidromeGridViewCollectionDescriptor,
     OnlineGridViewCollectionDescriptor,
-} from '@/library/core/contracts/collection';
-import type { CollectionResource } from '@/library/core/contracts/resource';
-import type { LibraryMutationPort } from '@/library/core/contracts/ports';
-import type { LibraryEntryRef } from '@/library/core/contracts/mutations';
+} from '@/library/core/collection/collection.contract';
+import type { CollectionResource } from '@/library/core/shared/resource.contract';
+import type { LibraryMutationPort } from '@/library/core/shared/ports.contract';
+import type { LibraryEntryRef } from '@/library/core/collection/mutations/mutations.contract';
 import {
     createCollectionMutationController,
     type CollectionMutationOmni,
-} from '@/library/core/services/collectionMutations';
-import { createOnlineCollectionResource } from '@/library/core/services/onlineCollectionResource';
-import { createNavidromeCollectionResource } from '@/library/core/services/navidromeCollectionResource';
-import { createStaticCollectionResource } from '@/library/core/services/staticCollectionResource';
-import { buildDuplicateOccurrences, entryKeyAt } from '@/library/core/model/collectionEntries';
+} from '@/library/core/collection/mutations/collectionMutations.service';
+import { createOnlineCollectionResource } from '@/library/core/collection/resource/onlineCollectionResource.service';
+import { createNavidromeCollectionResource } from '@/library/core/collection/resource/navidromeCollectionResource.service';
+import { createStaticCollectionResource } from '@/library/core/collection/resource/staticCollectionResource.service';
+import { buildDuplicateOccurrences, entryKeyAt } from '@/library/core/collection/collectionEntries';
 
 // test/unit/library/core/collectionMutations.test.ts
 // 变更动作层：每个来源的删条目（重复条目的语义、原始下标、过期拒绝）、重复提交只发一次、
@@ -158,7 +158,7 @@ const onlineResource = async (descriptor: OnlineGridViewCollectionDescriptor, tr
 };
 
 const navidromeResource = async (tracks: SongResult[]) => {
-    const resource = createNavidromeCollectionResource('k', vi.fn(async () => tracks));
+    const resource = createNavidromeCollectionResource('k', vi.fn(async () => ({ tracks, failed: false })));
     resource.ensure(naviPlaylist, {});
     await settle();
     return resource;
@@ -496,28 +496,43 @@ describe('subscription', () => {
         expect(controller.getSnapshot().subscribed).toBe(true);
     });
 
-    it('toggles through omni, refreshes the account and answers busy meanwhile', async () => {
+    it('shows a toggle at once, asks omni behind it, follows a second press and refreshes the account', async () => {
         const { resource } = await onlineResource(publicPlaylist, [onlineSong('s0')]);
         const upstream = deferred<void>();
         const omni = fakeOmni({ subscribe: vi.fn(() => upstream.promise) });
         const { controller, port } = setup({ descriptor: publicPlaylist, resource, omni });
 
         const first = controller.toggleSubscribe();
-        expect(controller.getSnapshot()).toMatchObject({ subscribing: true, capabilities: { subscribe: { enabled: false, pending: true } } });
-        expect(await controller.toggleSubscribe()).toEqual({ ok: false, reason: 'busy' });
+        // 一按就变：请求还在路上，星星已经是「已订阅」，而且还能再按。
+        expect(controller.getSnapshot()).toMatchObject({ subscribed: true, subscribing: true, capabilities: { subscribe: { enabled: true, pending: false } } });
+        // 请求期间再按：只改「要的」，立即答 ok，请求跟着它走。
+        expect(await controller.toggleSubscribe()).toEqual({ ok: true });
+        expect(controller.getSnapshot().subscribed).toBe(false);
         upstream.resolve();
         expect(await first).toEqual({ ok: true });
 
-        // 状态还不知道时按「未订阅」处理，所以第一次是订阅。
-        expect(omni.subscribe).toHaveBeenCalledTimes(1);
-        expect(omni.subscribe).toHaveBeenCalledWith(publicPlaylist, true);
-        expect(controller.getSnapshot()).toMatchObject({ subscribed: true, subscribing: false });
-        expect(port.onCollectionMutated).toHaveBeenCalledTimes(1);
+        // 状态还不知道时按「未订阅」处理，所以第一次是订阅；第二次按下跟着取消，一次一个。
+        expect(vi.mocked(omni.subscribe).mock.calls).toEqual([[publicPlaylist, true], [publicPlaylist, false]]);
+        expect(controller.getSnapshot()).toMatchObject({ subscribed: false, subscribing: false });
+        expect(port.onCollectionMutated).toHaveBeenCalledTimes(2);
         expect(port.notifyFavoriteAlbumsChanged).not.toHaveBeenCalled();
 
         expect(await controller.toggleSubscribe()).toEqual({ ok: true });
-        expect(omni.subscribe).toHaveBeenLastCalledWith(publicPlaylist, false);
-        expect(controller.getSnapshot().subscribed).toBe(false);
+        expect(omni.subscribe).toHaveBeenLastCalledWith(publicPlaylist, true);
+        expect(controller.getSnapshot().subscribed).toBe(true);
+    });
+
+    it('puts the star back to what the platform holds when it refuses, and says the toggle failed', async () => {
+        const refused = ownedPlaylist({ id: 'refused-playlist', creator: { id: 'u2', nickname: 'them' } });
+        const { resource } = await onlineResource(refused, [onlineSong('s0')]);
+        const omni = fakeOmni({ subscribe: vi.fn(async () => { throw new Error('refused'); }) });
+        const { controller } = setup({ descriptor: refused, resource, omni });
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        const toggled = controller.toggleSubscribe();
+        expect(controller.getSnapshot().subscribed).toBe(true);
+        expect(await toggled).toEqual({ ok: false, reason: 'failed' });
+        expect(controller.getSnapshot()).toMatchObject({ subscribed: false, subscribing: false });
     });
 
     it('tells the favorite albums list when an album changes', async () => {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_TEMPERA_LAYER_IMAGE, DEFAULT_TEMPERA_TUNING, TEMPERA_MAX_LAYER_IMAGES } from '@/types';
-import { resolveStoredTemperaTuning } from '@/stores/visualizerSettingsPersistence';
+import { resolveStoredTemperaTuning } from '@/components/visualizer/tempera/tuning';
 import { TemperaPixiRuntime } from '@/components/visualizer/tempera/createTemperaPixiRuntime';
 import { PixiSongSwap } from '@/components/visualizer/pixiSongSwap';
 import { PixiSceneCache } from '@/components/visualizer/pixiSceneCache';

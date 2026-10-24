@@ -1,10 +1,10 @@
-import type { AppView } from '../stores/useAppViewStore';
+import type { AppView, LatticeSource } from '../stores/useAppViewStore';
 import type { SearchReturnView, SearchSource } from '../stores/useSearchNavigationStore';
-import type { CollectionNavigationSnapshot } from '../library/core/contracts/collection';
+import type { CollectionNavigationSnapshot } from '../library/core/collection/collection.contract';
 import {
     isSameCollectionPath,
     isSameCollectionVisit,
-} from '../library/core/model/collectionNavigation';
+} from '../library/core/collection/collectionNavigation';
 
 // src/hooks/navigationHistoryJournal.ts
 // 应用历史记录的内存日志（N1）：appHistoryIndex → 那条记录的 NavigationHistoryState。浏览器不让页面读别的历史记录，
@@ -21,6 +21,8 @@ export type NavigationHistoryState = {
     view: AppView;
     search?: { query: string; sourceTab: SearchSource; returnView?: SearchReturnView; } | null;
     collection?: CollectionNavigationSnapshot | null;
+    /** Set on a 'lattice' entry that shows the explore page's entries; one without it shows the play queue. */
+    latticeSource?: LatticeSource;
     appHistoryIndex: number;
     /** 写这条记录的页面会话（每次加载页面一个新值）；旧记录没有它。 */
     appHistorySession?: string;

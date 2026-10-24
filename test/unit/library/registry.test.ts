@@ -16,8 +16,8 @@ import {
     LIBRARY_ACTION_IDS,
     LIBRARY_ARTIST_ACTION_IDS,
     LIBRARY_HOME_ACTION_IDS,
-} from '@/library/core/model/librarySuites';
-import type { LibrarySuiteManifest } from '@/library/core/contracts/suite';
+} from '@/library/core/suite/librarySuites';
+import type { LibrarySuiteManifest } from '@/library/core/suite/suite.contract';
 
 // test/unit/library/registry.test.ts
 // 真实的 suite 注册表（eager glob 发现 suites/*/entry.ts）。Vitest 的 DEV 为 true，且测试配置显式
@@ -52,13 +52,14 @@ describe('library suite registry', () => {
         expect(resolveLibrarySurface('account', 'tui')).toBe(tui);
     });
 
-    it('renders the bravais account surface itself (B10) and declares all seven account actions', () => {
-        // 登录与确认在缝里（BravaisAccount），不再回退 grid 的登录弹窗。
+    it('answers bravais with the grid account surface as a whole: its sign-in is the shared window, its switch confirm grid\'s', () => {
+        // 登录在共用的登录窗口里，缝里不再有登录态 / 确认态：bravais 不声明 account surface，整体回退 grid 的确认框。
         const bravais = resolveLibrarySurface('account', 'bravais');
-        expect(bravais).toMatchObject({ suiteId: 'bravais', isFallback: false });
-        expect(bravais.component).not.toBe(resolveLibrarySurface('account', 'grid').component);
-        expect(bravais.component).toBe(getLibrarySuite('bravais')?.surfaces.account?.component);
-        expect([...bravais.declaredActions.actions].sort()).toEqual([...LIBRARY_ACCOUNT_ACTION_IDS].sort());
+        const grid = resolveLibrarySurface('account', 'grid');
+        expect(getLibrarySuite('bravais')?.surfaces.account).toBeUndefined();
+        expect(bravais).toMatchObject({ suiteId: 'grid', isFallback: true });
+        expect(bravais.component).toBe(grid.component);
+        expect(bravais.declaredActions).toBe(grid.declaredActions);
     });
 
     it('still answers a suite without an account surface with the grid one as a whole', () => {

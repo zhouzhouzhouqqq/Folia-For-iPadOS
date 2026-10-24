@@ -12,7 +12,6 @@ import {
 import {
   clearBrowserCacheByCategory,
   clearCacheTables,
-  getBrowserCacheUsage,
   getBrowserCacheUsageByCategory,
   getCacheKeysByPrefix,
   putCacheEntry,
@@ -150,16 +149,6 @@ export const clearCache = async (preserveKeys: string[] = []): Promise<void> => 
     if (!preserveKeys.some(key => key.startsWith('cover_'))) await clearCoverAssets();
   } catch (error) {
     console.error('Clear cache failed', error);
-  }
-};
-
-export const getCacheUsage = async (): Promise<number> => {
-  try {
-    const browserSize = await getBrowserCacheUsage();
-    const audioSize = hasElectronAudioCacheBridge() ? await window.electron!.getAudioCacheUsage() : 0;
-    return browserSize + audioSize + await getCoverAssetUsage();
-  } catch {
-    return 0;
   }
 };
 

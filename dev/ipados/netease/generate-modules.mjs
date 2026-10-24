@@ -10,8 +10,8 @@ const version = JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).ver
 if (version !== '4.41.1') throw new Error(`Re-audit upstream mappings before generating from ${version}`);
 const destination = path.resolve('src/services/onlineMusic/neteaseDirect/vendor');
 fs.mkdirSync(destination, { recursive: true });
-const source = fs.readFileSync('src/services/netease.ts', 'utf8');
-const routes = [...new Set([...source.matchAll(/fetchWithCreds\(`([^?`$]+)/g)].map(match => match[1]))].sort();
+const source = fs.readFileSync('src/services/onlineMusic/netease/netease.ts', 'utf8');
+const routes = [...new Set(['/logout', ...[...source.matchAll(/fetchWithCreds\(`([^?`$]+)/g)].map(match => match[1])])].sort();
 const special = new Set(['/login/qr/create', '/login/qr/check', '/song/url/v1', '/scrobble/v1']);
 const names = [];
 const manifest = [];

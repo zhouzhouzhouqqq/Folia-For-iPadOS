@@ -1,5 +1,5 @@
 {
-  "baseline": "35db05ccef6065e868fab14f49b433c8344e9ca1",
+  "baseline": "33b25ff75252435a78006af45114fdf10e64727a",
   "modes": [
     {
       "kind": "lyrics",
@@ -108,7 +108,7 @@
         },
         {
           "path": "src/components/visualizer/cadenza/entry.tsx",
-          "sha256": "abe5d276c66d9eea65087a85134bb326cbe4169bc7e13e0b8bb03024fd085fe1",
+          "sha256": "a1cda54cd37552f2de6abab46ca73ee915dbb30a5697040b7c76766389f9a0d1",
           "imports": [
             "react",
             "../../../types",
@@ -118,11 +118,14 @@
         },
         {
           "path": "src/components/visualizer/cadenza/tuning.ts",
-          "sha256": "92277fb6b5db097f20bd39b99809d80412a6ab990ed7ac17b9948fec92553674",
+          "sha256": "b3ccb2a4656920546a1933da93cc2cbc48841415934fdc9c26cb4050598fc9d3",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition"
           ],
-          "parameters": []
+          "parameters": [
+            "ts"
+          ]
         }
       ]
     },
@@ -283,6 +286,20 @@
           "parameters": []
         },
         {
+          "path": "src/components/visualizer/cappella/customPacks.ts",
+          "sha256": "7e5dc9dca92b9eed5bfbf1fe2e62446fcc8300143d2fb6c499f3fba63a1bf678",
+          "imports": [
+            "../../../i18n/config",
+            "../../../services/cappellaAvatarPack",
+            "../../../services/cappellaEmojiPack",
+            "../../../stores/useStatusMessageStore",
+            "../../../stores/useVisualizerAssetStore",
+            "../../../types",
+            "../tuningDefinition"
+          ],
+          "parameters": []
+        },
+        {
           "path": "src/components/visualizer/cappella/emoImages.ts",
           "sha256": "e24aac4fe38c1c329e592030f64a20c317d3ca5ba3420cbcd5bff2063ad35c4c",
           "imports": [
@@ -292,21 +309,35 @@
         },
         {
           "path": "src/components/visualizer/cappella/entry.tsx",
-          "sha256": "04cd827c5be7297f27f304b991dba43c1550cf2ca74a293affedaf2045a58135",
+          "sha256": "635cff1ede593380e5cb30d74c03f3c62b3cb8d9d1461d1a1aaff7ab74234ebd",
           "imports": [
             "react",
+            "lucide-react",
+            "../../../types",
+            "../../../stores/useVisualizerAssetStore",
+            "../../shared/QuickControlChip",
             "../definition",
             "../settingsPanels"
           ],
-          "parameters": []
+          "parameters": [
+            "avatarSource",
+            "showEmoMessages"
+          ]
         },
         {
           "path": "src/components/visualizer/cappella/tuning.ts",
-          "sha256": "59d6855851134829fab37aa33d3585329a5dee3b038d729177a0bc6fe144401f",
+          "sha256": "e031485c12970260554571a68a30817e37e4d03659a23b2a0c66e4a4700decfe",
           "imports": [
-            "../tuningRegistry"
+            "../../../i18n/config",
+            "../../../stores/useStatusMessageStore",
+            "../../../stores/useVisualizerAssetStore",
+            "../../../types",
+            "../tuningDefinition",
+            "./customPacks"
           ],
-          "parameters": []
+          "parameters": [
+            "ts"
+          ]
         }
       ]
     },
@@ -317,7 +348,7 @@
       "files": [
         {
           "path": "src/components/visualizer/claddagh/CladdaghRingLine.tsx",
-          "sha256": "97e706c1eb805dac0a9c221e5568acadb6fd4e4b24cb43f60208723354f32c63",
+          "sha256": "8ffbf29a36814a4ca62aeb11cd517f407f622ca9c7f28fde736d69db67c69113",
           "imports": [
             "react",
             "framer-motion",
@@ -326,6 +357,7 @@
             "../../../utils/fontStacks",
             "../colorMix",
             "../../../utils/glowBlurQuantize",
+            "../../../utils/frameRateLimiter",
             "../wordColoring",
             "./claddaghTimeline",
             "./claddaghLayout",
@@ -382,22 +414,29 @@
         },
         {
           "path": "src/components/visualizer/claddagh/entry.tsx",
-          "sha256": "d4d6bc5391406c9d0737121114f4cac159d8d67f0df9a011862a0a46f2368da5",
+          "sha256": "dfacd40bb2f7935084ba8dbd339a57bb6070954402e0cdb8ba9452233a622e8c",
           "imports": [
             "react",
+            "lucide-react",
             "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
             "../settingsPanels"
           ],
-          "parameters": []
+          "parameters": [
+            "showAxisLine"
+          ]
         },
         {
           "path": "src/components/visualizer/claddagh/tuning.ts",
-          "sha256": "ac5d7bf35090c3c8567dc528f6154ca93e76e6832be410f8ff5757e4bf08cf92",
+          "sha256": "e2b6121bce75b287af0b65c8ce3f533308455d4ee820b30084509ac43e9744fa",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition"
           ],
-          "parameters": []
+          "parameters": [
+            "ts"
+          ]
         }
       ]
     },
@@ -408,7 +447,7 @@
       "files": [
         {
           "path": "src/components/visualizer/classic/Visualizer.tsx",
-          "sha256": "4d5c9dd71a4c0fdfd9f1a081c7b1cfc85951139d0b99401dfdc42eb0e49a8698",
+          "sha256": "10caf532947f309309450fe634c5fd74db1a329d86859619141b1e964c756c86",
           "imports": [
             "react",
             "framer-motion",
@@ -438,21 +477,29 @@
         },
         {
           "path": "src/components/visualizer/classic/entry.tsx",
-          "sha256": "d258f109d876ad0570e9b83ee1a77eaab76e505145c1e3130d29e15352ef67fb",
+          "sha256": "fd173a1497eb300af961345beb1bc5844504939296112a5c2072b5ec6fab2feb",
           "imports": [
             "react",
+            "lucide-react",
+            "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
             "../settingsPanels"
           ],
-          "parameters": []
+          "parameters": [
+            "enableWordRotation"
+          ]
         },
         {
           "path": "src/components/visualizer/classic/tuning.ts",
-          "sha256": "83d3c71127ad5653c045bb0fd3cb3381973d8428ee43d11c79b9c7312fd7de3e",
+          "sha256": "908d7dede39c5b28cf5e2fea7ce0e39bfd564913e1164101eb5ac6859477640a",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition"
           ],
-          "parameters": []
+          "parameters": [
+            "ts"
+          ]
         }
       ]
     },
@@ -480,7 +527,7 @@
         },
         {
           "path": "src/components/visualizer/diorama/DioramaActiveUnitPlanes.tsx",
-          "sha256": "23b7713e41f04a1fccbeff5ce9cde1eff3e586c35c13082b286259407df0e1b6",
+          "sha256": "a50ee23298827f232ebcb1f1c0c19fe6cefbdd5fe5c9c1a7d2b5e959453b8948",
           "imports": [
             "react",
             "three",
@@ -492,55 +539,62 @@
         },
         {
           "path": "src/components/visualizer/diorama/DioramaBackgroundParticleSettings.tsx",
-          "sha256": "dc68722d5e5cd8999b382d3838f3d4034af035c1431ca4c8f299affd870f71f4",
+          "sha256": "8a6978e467f57304ea2f2e2d56442a12b5c34e1237fb441e8798c222ebec6586",
           "imports": [
             "react",
-            "lucide-react",
             "../../../types",
-            "../colorMix",
-            "./DioramaSettingsToggle"
+            "../panelRows",
+            "./DioramaFoldRow"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/diorama/DioramaEffectSettings.tsx",
-          "sha256": "c6e7d0fee0e79ce9ca398533cd4ea94c7c6265bf677483f7aa605d39ba5258cd",
+          "sha256": "c94941570d0411973737294b3bdc0cb2c1e66bc1401467c44088aaac2380e14d",
+          "imports": [
+            "react",
+            "../../modal/settings/kit",
+            "../panelRows",
+            "./DioramaFoldRow"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/DioramaFoldRow.tsx",
+          "sha256": "36b32ed58b66b94f3081b012ce794a8ab9743c044e1036636e9aaf47b64dfb5b",
           "imports": [
             "react",
             "lucide-react",
-            "../../../types",
-            "../colorMix",
-            "./DioramaSettingsToggle"
+            "../../modal/settings/kit"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/diorama/DioramaGeometrySettings.tsx",
-          "sha256": "c0e1be9a22b74624046634d8d7ded5e76d382e9bffb08082dc09c348d95c96be",
+          "sha256": "7668e4ebea5218b7a1ea9df14e884503586c890a7f28f6b5df73b93c19482903",
           "imports": [
             "react",
-            "lucide-react",
             "../../../types",
-            "../colorMix",
-            "./DioramaParticleAppearanceSettings",
-            "./DioramaSettingsToggle"
+            "../../modal/settings/kit",
+            "./DioramaFoldRow",
+            "./DioramaParticleAppearanceSettings"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/diorama/DioramaParticleAppearanceSettings.tsx",
-          "sha256": "016e6f0ab419b59922c0e41472e8d5bd84d8b216cfc00a19fab7751b10931deb",
+          "sha256": "f57403e5e0b79c57ff8f583d95f5b1ba0ae8c4f811c39f9a89543d9bc15a44fe",
           "imports": [
             "react",
             "../../../types",
-            "../colorMix",
-            "./DioramaSettingsToggle"
+            "../../modal/settings/kit",
+            "../panelRows"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/diorama/DioramaParticleField.tsx",
-          "sha256": "6b23bd8046b89cdfa109b7f8c13f318117f9e22a7c9772a64c8f32011c3add67",
+          "sha256": "f5333fd60078b77ada25d5b768c32a2c45bc18a679b6b9b1a1a74e0af3f2965f",
           "imports": [
             "react",
             "@react-three/fiber",
@@ -551,13 +605,16 @@
             "./dioramaGeometry",
             "./dioramaParticleCorridor",
             "./dioramaParticleModel",
+            "./dioramaBeatRipples",
+            "../../../stores/motionSignals",
+            "../../../services/beatFx/beatFxLive",
             "./dioramaParticleMaterials"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/diorama/DioramaScene.tsx",
-          "sha256": "6c23b198ce146efeda436ccbc82c9e7d173303280fe65544157be32939a6b241",
+          "sha256": "5c2cf760b0fc87084c2d85cad219e0c64bc761defcc51beb4b134328ec974f80",
           "imports": [
             "react",
             "@react-three/fiber",
@@ -578,7 +635,10 @@
             "./dioramaSceneLayout",
             "./dioramaLineRasterCache",
             "./dioramaSceneFrame",
-            "./DioramaActiveUnitPlanes"
+            "./DioramaActiveUnitPlanes",
+            "./dioramaBeatRipples",
+            "../../../services/beatFx/beatFxLive",
+            "../../../stores/motionSignals"
           ],
           "parameters": []
         },
@@ -594,7 +654,7 @@
         },
         {
           "path": "src/components/visualizer/diorama/VisualizerDiorama.tsx",
-          "sha256": "1aebd2fb629ac5a6f7671f841d0dcf9108034df8ae0aad370c3dcf45e425d320",
+          "sha256": "cacea61225c29667f4b4e7b79a2fbbf0ef129b4438c439bdb7428cc25e62f532",
           "imports": [
             "react",
             "@react-three/fiber",
@@ -612,6 +672,7 @@
             "./cameraPath",
             "./dioramaSequencer",
             "./dioramaTransition",
+            "../styleTransition/firstFrame",
             "lyrics still loading"
           ],
           "parameters": []
@@ -621,6 +682,15 @@
           "sha256": "71adb1bcb6b7c099a147848065004d48de1d3fa2f45122681cd2fb50d0ce3e76",
           "imports": [
             "../../../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/diorama/dioramaBeatRipples.ts",
+          "sha256": "0040facf7a17b3001fcf3de78623d456d4352bfcb0f955c7c941b4d1b6199aae",
+          "imports": [
+            "./cameraPath",
+            "../../../services/beatFx/clock"
           ],
           "parameters": []
         },
@@ -723,7 +793,7 @@
         },
         {
           "path": "src/components/visualizer/diorama/dioramaSceneFrame.ts",
-          "sha256": "a8ce636da24cb1f0261f65dbf6bdc78b78dadbae7fb0e8659e5e318399f43b1b",
+          "sha256": "b116464bc42a052ba04ed53a17b2f9edc1c435363a20c8c0d010af1e9b1952f5",
           "imports": [
             "three",
             "./cameraPath",
@@ -801,21 +871,32 @@
         },
         {
           "path": "src/components/visualizer/diorama/entry.tsx",
-          "sha256": "ec27fbbfb4a88f62d036979e09605bc01730dc1a5b6e4ad7c45734e5ecb89e7c",
+          "sha256": "43a6496d65d1d0cf52c84906daaeabeb44e11af6099b88be18e909ded5b7b777",
           "imports": [
             "react",
+            "lucide-react",
+            "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
+            "../../../services/beatFx/beatEffects",
             "../settingsPanels"
           ],
-          "parameters": []
+          "parameters": [
+            "keywordColoringEnabled",
+            "soulEnabled"
+          ]
         },
         {
           "path": "src/components/visualizer/diorama/tuning.ts",
-          "sha256": "eef536579e8b6b83510497f91838eae197d98e755a86e6c789a79715463ac634",
+          "sha256": "3baf4f391490291ef7240a43c01b9dd46c15a74aa6c47c3310ba86d29b90d54f",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition",
+            "./dioramaMoteField"
           ],
-          "parameters": []
+          "parameters": [
+            "ts"
+          ]
         }
       ]
     },
@@ -825,8 +906,18 @@
       "entry": "src/components/visualizer/fume/entry.tsx",
       "files": [
         {
+          "path": "src/components/visualizer/fume/FumeBackground.ts",
+          "sha256": "f31a917570935b5bfeb0c03eb368a19835fde5d168dbb93abc1e745ffe6689dd",
+          "imports": [
+            "../../../types",
+            "../colorMix",
+            "../textMeasureCache"
+          ],
+          "parameters": []
+        },
+        {
           "path": "src/components/visualizer/fume/VisualizerFume.tsx",
-          "sha256": "b942008a2836fe89c3edbc5dbdb35fbbe62399b489264a869906482b30c276e0",
+          "sha256": "6c6ed828a53c400ad94a63f201d0607aa2167488a9610b7b34ab8e34491ebfb6",
           "imports": [
             "react",
             "framer-motion",
@@ -835,9 +926,10 @@
             "../../../utils/lyrics/renderHints",
             "../colorMix",
             "../definition",
-            "../FumeBackground",
+            "./FumeBackground",
             "../runtime",
             "../VisualizerShell",
+            "./backgroundConfig",
             "../VisualizerSubtitleOverlay",
             "./fumeTypes",
             "./fumeCameraStep",
@@ -846,25 +938,44 @@
             "./fumeArticleLayout",
             "./fumeCamera",
             "./fumeStage",
-            "./useFumeCanvasStage"
+            "./useFumeCanvasStage",
+            "../styleTransition/firstFrame",
+            "../preview/frozenPicture"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/fume/backgroundConfig.ts",
+          "sha256": "990479b4b92bb2442a328c8c93a2f539c0949516569803a9a4ea2fb84a3ecc0e",
+          "imports": [
+            "../../../types",
+            "../backgrounds/definition",
+            "../definition"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/fume/entry.tsx",
-          "sha256": "3811d528366e225209fd98b424a4db51b111e4d1c09b0588c4322c67abebeb4a",
+          "sha256": "d2f12f9e1891a2fded795b79f9dd199fe406b148f72ffa5b94393426ac5d5fbd",
           "imports": [
             "react",
+            "lucide-react",
             "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
-            "../settingsPanels"
+            "../settingsPanels",
+            "./backgroundConfig"
           ],
-          "parameters": []
+          "parameters": [
+            "cameraTrackingMode",
+            "hidePrintSymbols"
+          ]
         },
         {
           "path": "src/components/visualizer/fume/fumeArticleLayout.ts",
-          "sha256": "067cdb80da2ae922b08f9fe6ff2001663f33c8d771741a603e166849f0866df8",
+          "sha256": "e20180092c6eedb1484732b802d0f1372ef897d0d0a1e39ec6a4098057a7f820",
           "imports": [
+            "@chenglou/pretext",
             "../../../types",
             "../../../utils/fontStacks",
             "../../../utils/lyrics/renderHints",
@@ -904,10 +1015,10 @@
         },
         {
           "path": "src/components/visualizer/fume/fumeCameraStep.ts",
-          "sha256": "91b25847c754d4764f4903fda4df66b424d0548f315959f88833a3d1ebb02460",
+          "sha256": "c56f88d8da5d44c39378c3305f23d2436b5c9790df25e6ca9d8e6f29835043cf",
           "imports": [
             "../../../types",
-            "../FumeBackground",
+            "./FumeBackground",
             "./fumeTypes",
             "./fumeMath",
             "./fumeReveal",
@@ -917,7 +1028,7 @@
         },
         {
           "path": "src/components/visualizer/fume/fumeCanvasText.ts",
-          "sha256": "b922a5612946527f755dfac284ebb42640c9da6cef043a8c470bb007f09996e1",
+          "sha256": "125e20bcbb75f3fcdd5805c14417361462cf44b6eca6e0b5b5fb7d18423c06a7",
           "imports": [
             "../../../types",
             "../../../utils/fontStacks",
@@ -962,11 +1073,11 @@
         },
         {
           "path": "src/components/visualizer/fume/fumeStage.ts",
-          "sha256": "bbffc340d8c0d901c982ced2e0c5f63b2e8ef63e818efc8bb9b00fc9bd94c7ec",
+          "sha256": "6112d7ed08134a2c17d78ea136cb2d9ac6bd09e8cf2b65538f75cacadc93d9a9",
           "imports": [
             "framer-motion",
             "../../../types",
-            "../FumeBackground",
+            "./FumeBackground",
             "./fumeCameraStep",
             "./fumeTypes"
           ],
@@ -974,7 +1085,7 @@
         },
         {
           "path": "src/components/visualizer/fume/fumeTextMeasure.ts",
-          "sha256": "16a555c9e72aaeea27acdec903fb7b5edcce2e9132feb97dfe61984f56d19cdb",
+          "sha256": "4e8dc010deb37d853e4d2ea14a6ba26a01a95fcaee0b09980c983fb66549a972",
           "imports": [
             "@chenglou/pretext",
             "../../../types",
@@ -1008,18 +1119,21 @@
         },
         {
           "path": "src/components/visualizer/fume/tuning.ts",
-          "sha256": "97849748cc7e5b1f78a360bda622de520294c5392df5ec967edcd059099e6533",
+          "sha256": "55156bc1539881f59ee23ef536584406aabf726f00dd9b214b5825b8eefa4a0d",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition"
           ],
-          "parameters": []
+          "parameters": [
+            "ts"
+          ]
         },
         {
           "path": "src/components/visualizer/fume/useFumeCanvasStage.ts",
-          "sha256": "6d4468457d35b836def3f745e703fed8fd25bf78893cc85c0db1778893f9dbf9",
+          "sha256": "6bdbcc77d78b4ad17a5d7559c8e3d000d5fe14dfbe3d8056c2b53591486c3f42",
           "imports": [
             "react",
-            "../FumeBackground",
+            "./FumeBackground",
             "../../../utils/glowBlurQuantize",
             "./fumeTypes",
             "./fumeCameraStep",
@@ -1040,19 +1154,19 @@
       "files": [
         {
           "path": "src/components/visualizer/lumiere/LumiereSettingsPanel.tsx",
-          "sha256": "62681a23798c5069e0c603de831e61734a97866911fe1a6a8cf2e079a504bc1e",
+          "sha256": "6391a8af81852b2580b9c63d9b5321c98846c8debf02b8b6c60fe1ef8a0cab47",
           "imports": [
             "react",
             "../../../types",
+            "../../modal/settings/kit",
             "../definition",
-            "../VisualizerPresetGroup",
-            "../tempera/TemperaSettingsControls"
+            "../panelRows"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/lumiere/VisualizerLumiere.tsx",
-          "sha256": "cfee85afa6d65cb65e3de5192bca8ad8c18ba75d14b634cda3bb37949c6e31ef",
+          "sha256": "959be258645343705a50ae5f2c0c5a01f6ec3ac290c2853978ad71c61939f62f",
           "imports": [
             "react",
             "react-i18next",
@@ -1062,7 +1176,7 @@
             "../../../utils/fontStacks",
             "../../../utils/lyrics/renderHints",
             "../definition",
-            "../pixiRuntimeHost",
+            "../pixi/pixiRuntimeHost",
             "../runtime",
             "../songHandover",
             "../subtitleFontSizes",
@@ -1102,13 +1216,15 @@
         },
         {
           "path": "src/components/visualizer/lumiere/createLumierePixiRuntime.ts",
-          "sha256": "a4eeec1fbff2746a104efae11f23c34b5dd350ffe781f096a3025ede3681bd22",
+          "sha256": "cbf0ba21752148f911cdafffea730a8a3717a0ee7f00741eb9be88e190beebbf",
           "imports": [
             "framer-motion",
             "pixi.js",
             "../../../types",
-            "../loadPixi",
             "../pixiSceneCache",
+            "../pixi/loadPixi",
+            "../pixi/pixiProgramLinks",
+            "../pixi/pixiWebGLContext",
             "./lumiereAudio",
             "./lumiereProgram",
             "./lumiereRuntimeTuning",
@@ -1165,18 +1281,23 @@
         },
         {
           "path": "src/components/visualizer/lumiere/entry.tsx",
-          "sha256": "38bc18cc32c14a7a0ad23b2627617aec6ae94fd1dc7769ff68a32c6547a20153",
+          "sha256": "e260729161fc40984eb9811e8a29d5779f7550f1ccb48195d95ddab0cd467f38",
           "imports": [
             "react",
+            "lucide-react",
             "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
             "./LumiereSettingsPanel"
           ],
-          "parameters": []
+          "parameters": [
+            "hideTrails",
+            "overlayFrame"
+          ]
         },
         {
           "path": "src/components/visualizer/lumiere/light/bloomFilter.ts",
-          "sha256": "e737b4d854a7e52609351475125c7e8c2fe436a213d3a4646225131dd093189c",
+          "sha256": "055c1bbc2674c83a5ab133eab88cf40b6f09f03ac9dd788db49940d1d0f7a291",
           "imports": [
             "pixi.js",
             "../../pixiFilterVertex"
@@ -1259,7 +1380,7 @@
         },
         {
           "path": "src/components/visualizer/lumiere/lineart/lineArt.ts",
-          "sha256": "a0d0400978b53af0b32778943d01ab76ea4ac433e39be0fd7c8f852a8f9c1322",
+          "sha256": "0e3c60f9ba982d22e99ac8e169dec09aa6d04d27d4220573d8e121a1aab3980a",
           "imports": [
             "pixi.js",
             "../light/rig"
@@ -1361,10 +1482,10 @@
         },
         {
           "path": "src/components/visualizer/lumiere/lumiereRuntimeTuning.ts",
-          "sha256": "85e15cf2be25fb0e863006bce0ac6fa4ab8d7890ac76f17662980aa16abe8165",
+          "sha256": "41d3cc194e44278479397180fba0bde097185351e269508a62810634df1a36ea",
           "imports": [
             "../../../types",
-            "../pixiTextureBudget",
+            "../pixi/pixiTextureBudget",
             "./lumiereProgram",
             "./types"
           ],
@@ -1733,7 +1854,7 @@
         },
         {
           "path": "src/components/visualizer/lumiere/text/lyricWindow.ts",
-          "sha256": "e098a883e1f2092a3686943fde612a96984695b459837e17c09342e7dd06d4c9",
+          "sha256": "7c667e0af959f17adcd4eaa9980bbb455b2bc714f0ae96edd4b1c309dc84cd2c",
           "imports": [
             "pixi.js",
             "../../../../types",
@@ -1867,9 +1988,11 @@
         },
         {
           "path": "src/components/visualizer/lumiere/tuning.ts",
-          "sha256": "a4f611186cf24e24f0a2dad3c9b6f497c1974c93987fd25e1aa06f4ac8855009",
+          "sha256": "7c9523a6ef0e103484c5f55f8a13a80cf08eaceee752f8c8fabe607a54e6d13d",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../../../utils/lumiereTuning",
+            "../tuningDefinition"
           ],
           "parameters": [
             "ts"
@@ -1907,12 +2030,11 @@
         },
         {
           "path": "src/components/visualizer/monet/MonetFloatingDecor.tsx",
-          "sha256": "eb01a31d7f5d36a19638b7734bbae96ba4f5b7ebcd61529450b049cb3b3dd786",
+          "sha256": "e0c4483660ff65344c75395ad6f716242754910ace5b3fb4428c00cbd54f1e44",
           "imports": [
             "react",
             "framer-motion",
             "../../../types",
-            "../colorMix",
             "../../../hooks/useLucideIcons",
             "../../../services/lucideIconResolver"
           ],
@@ -1938,10 +2060,11 @@
         },
         {
           "path": "src/components/visualizer/monet/MonetPortraitImage.tsx",
-          "sha256": "3857dbca7d4a1f6b84f9f498dc9a94a5495b10a0b52eb6330e0163cd192efc74",
+          "sha256": "bf200089f3a4b850886eb3b9b80cd7fe9d1dd3aa006eea53a44979b490a10cd1",
           "imports": [
             "react",
             "framer-motion",
+            "../../../services/automix/handoffProgress",
             "./monetPortraitCrossfade"
           ],
           "parameters": []
@@ -1980,19 +2103,21 @@
         },
         {
           "path": "src/components/visualizer/monet/MonetSettingsPanel.tsx",
-          "sha256": "85d4c56637e4758f57cb29bd9b14c478760c40e6f61a6bf9523e70c06e1a0fe9",
+          "sha256": "cbfc54ec25ea3c4fd8c63a6355b401a8533ec20f86edb626f01f8fdbe5fc5bfe",
           "imports": [
             "react",
             "lucide-react",
+            "../../../stores/useVisualizerAssetStore",
             "../../../types",
-            "../colorMix",
-            "../definition"
+            "../../modal/settings/kit",
+            "../definition",
+            "../panelRows"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/monet/VisualizerMonet.tsx",
-          "sha256": "6ff885ae955f13ab1141d3eb7b9ad829e9231e635d9fe6ceb868fefd4805f8df",
+          "sha256": "c42d0d0fb82e84c91b42d047dea32a6cb46072a5a095f76111c1819bc163437f",
           "imports": [
             "react",
             "react-i18next",
@@ -2012,27 +2137,60 @@
             "./MonetLyricsRail",
             "./MonetPortraitImage",
             "./monetLyricsModel",
+            "./monetSongHandoff",
             "./monetLyricsModel"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/monet/entry.tsx",
-          "sha256": "b6c1d1e632cc279518a82cd62f78154cd3090e2e8049d9132cafe7f83c4060af",
+          "sha256": "b23e4dc8c3195e9dc0ceabf72d7d5e52013dad9cdef18be34fc96b7c546f1cb5",
           "imports": [
             "react",
+            "lucide-react",
             "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
             "./MonetSettingsPanel"
+          ],
+          "parameters": [
+            "showAudioVisualization",
+            "showDescription",
+            "showPortraitDragHanger"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/monet/monetBackground.worker.ts",
+          "sha256": "7c93bbcea5a6544d4e0586349d9a483cd344025f9fa1a98591f8ee81cf655f12",
+          "imports": [
+            "../../../types",
+            "./monetBackgroundPaint"
           ],
           "parameters": []
         },
         {
-          "path": "src/components/visualizer/monet/monetBackgroundPipeline.ts",
-          "sha256": "101b8d9fecc668b62e5b754a861951140dbf92df4c98e50162332ef1050aebb1",
+          "path": "src/components/visualizer/monet/monetBackgroundPaint.ts",
+          "sha256": "5ea38b15a058bd8ba99047dbd7f52ad4279ffda3ccb809009253d7a59ed5c885",
           "imports": [
             "../colorMix",
             "../../../types"
+          ],
+          "parameters": [
+            "backgroundGrayscale",
+            "backgroundOverlayOpacity",
+            "backgroundSaturation",
+            "backgroundStreaksEnabled",
+            "backgroundWash",
+            "backgroundWashColorMode",
+            "backgroundWashCustomColor"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/monet/monetBackgroundPipeline.ts",
+          "sha256": "0a2a4c87a273b6b52f0cc3dae7ee4d495b40213ac3b3ba7d1314f528b5a864c1",
+          "imports": [
+            "../../../types",
+            "./monetBackground.worker"
           ],
           "parameters": [
             "backgroundBlurPx",
@@ -2072,7 +2230,7 @@
         },
         {
           "path": "src/components/visualizer/monet/monetPortraitCrossfade.ts",
-          "sha256": "f7c6a9c63dc97853a85bf1d7dbe2a846e19bb1bd65254c7ff2a85a5635a7ae76",
+          "sha256": "3c898dece550f79e7c75329f97355c012053ee84ac81e3be244256dedcacdaac",
           "imports": [],
           "parameters": []
         },
@@ -2096,12 +2254,37 @@
           "parameters": []
         },
         {
-          "path": "src/components/visualizer/monet/tuning.ts",
-          "sha256": "3711eeaf52456674ddc465be25e9b794c8595ec577701256287293f836226502",
+          "path": "src/components/visualizer/monet/monetSongHandoff.ts",
+          "sha256": "1338ce1b51f17373bb18c1d214f0788808a37a928137a471a2aa4711b989b817",
           "imports": [
-            "../tuningRegistry"
+            "../definition"
           ],
           "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/portraitUpload.ts",
+          "sha256": "a9a0f685679b0aae6e6c22b2ad66a16d4aae631375c74dd9bba66425e2a78d19",
+          "imports": [
+            "../../../i18n/config",
+            "../../../services/monetPortraitImage",
+            "../../../stores/useStatusMessageStore",
+            "../../../stores/useVisualizerAssetStore",
+            "../../../types",
+            "../tuningDefinition"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/monet/tuning.ts",
+          "sha256": "501c6c741ba50177479dbd2a5bfe84ddb8ee5d1734191006b96c2dc0014a0e04",
+          "imports": [
+            "../../../types",
+            "../tuningDefinition",
+            "./portraitUpload"
+          ],
+          "parameters": [
+            "ts"
+          ]
         },
         {
           "path": "src/components/visualizer/monet/useMonetRailSize.ts",
@@ -2142,7 +2325,7 @@
         },
         {
           "path": "src/components/visualizer/partita/VisualizerPartita.tsx",
-          "sha256": "370d920a899d1d57404f9fc314db9ebaa0606f9a429d5eb32d483224fc51b06d",
+          "sha256": "bcadbd7e3d23c242ff7789aa52c1aa801edb9bc3d6fe61fe80f8a9440dcfcec0",
           "imports": [
             "react",
             "framer-motion",
@@ -2164,13 +2347,18 @@
         },
         {
           "path": "src/components/visualizer/partita/entry.tsx",
-          "sha256": "9ed441cc2f04fb095a5ef90bae51ae7f836c0af29264cae7f28a949db50c8e80",
+          "sha256": "c05cc004967eae736f543b7acc101570a1a7e6b3b8bf6d9cd242882ccba5481a",
           "imports": [
             "react",
+            "lucide-react",
+            "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
             "../settingsPanels"
           ],
-          "parameters": []
+          "parameters": [
+            "showGuideLines"
+          ]
         },
         {
           "path": "src/components/visualizer/partita/partitaLayout.ts",
@@ -2193,11 +2381,14 @@
         },
         {
           "path": "src/components/visualizer/partita/tuning.ts",
-          "sha256": "0a8d024f6155bb00f20280e18d7aa52582c7f88635b90524850c2f59a247922d",
+          "sha256": "745ae1cb77394e237349bf7aa4d173af621698c78799fa07f792580a89050699",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition"
           ],
-          "parameters": []
+          "parameters": [
+            "ts"
+          ]
         }
       ]
     },
@@ -2224,43 +2415,50 @@
         },
         {
           "path": "src/components/visualizer/pendolo/PendoloClockworkCanvas.tsx",
-          "sha256": "221e0f9ec75e6b71cbd8dc22ded234ba9b395d36145a8760bf793da03e9fdfb9",
+          "sha256": "565956b60e27b71b62abe1733dc3621bdb9ef088d85506383287565012f0f911",
           "imports": [
             "react",
             "framer-motion",
             "../colorMix",
             "./pendoloClockworkDraw2d",
+            "./pendoloBeatFx",
+            "../../../services/beatFx/beatFxLive",
+            "../../../services/beatFx/beatEffects",
+            "./pendoloBeatFxDraw",
             "./pendoloClockworkMotion",
             "./pendoloMotionProfile",
             "./pendoloClockworkScene",
-            "./pendoloClockworkWebGL"
+            "./pendoloClockworkWebGL",
+            "./usePendoloBeatFx"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/pendolo/PendoloRotatingLine.tsx",
-          "sha256": "4e5d952088c103b5d7f968813b5cf47a841889db311eed31e59fce551a9af531",
+          "sha256": "b3657b73759bd017d576187de05fc3562481454176a92c5f672bb6a87b8be7eb",
           "imports": [
             "react",
             "framer-motion",
-            "./pendoloTimeline"
+            "./pendoloTimeline",
+            "./pendoloBeatFx"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/pendolo/PendoloSettingsPanel.tsx",
-          "sha256": "1e5885bbac1fce7f7d0bb773aeaf125cfaa71382b39f2a01e975dacb112de0b3",
+          "sha256": "19129e3b835caa39b349b603141661f31c8ccf213886fb5085eeb64418e53a98",
           "imports": [
             "react",
             "../../../types",
+            "../../modal/settings/kit",
             "../definition",
-            "../VisualizerPresetGroup"
+            "../panelRows"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/pendolo/VisualizerPendolo.tsx",
-          "sha256": "313aee1e9dc460f49f8bb1cc732aeaa1b5fe946ac99431782f8e190d0be8ea47",
+          "sha256": "db81e135cca354e9691d073dc7f3f8d61e68fea017ecabfadea964b972a6e118",
           "imports": [
             "react",
             "framer-motion",
@@ -2279,25 +2477,53 @@
             "./pendoloTextLayout",
             "./pendoloSubtitleTracks",
             "./pendoloMotionProfile",
+            "./pendoloBeatFx",
             "./pendoloTimeline",
-            "./PendoloRotatingLine"
+            "./PendoloRotatingLine",
+            "./usePendoloBeatFx",
+            "../../../stores/useVisualizerSettingsStore"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/pendolo/entry.tsx",
-          "sha256": "88f1d961c4167540daa8a92b5fdcf24942cf9b6ba926e29fa254e3809b83e9a9",
+          "sha256": "fab8faf30c95a6d44b9da959a380310d760ddc076f6065e271720f46debee1e0",
           "imports": [
             "react",
+            "lucide-react",
             "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
+            "../../../services/beatFx/beatEffects",
             "./PendoloSettingsPanel"
+          ],
+          "parameters": [
+            "showCoverOnWatchFace",
+            "showGearDecor"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloBeatFx.ts",
+          "sha256": "c6c9069df467918c0a781794ffa7fd49eab31cd786340793d0627da81b7ee581",
+          "imports": [
+            "../colorMix",
+            "../../../services/beatFx/beatFxLive",
+            "../../../services/beatFx/clock"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/pendolo/pendoloBeatFxDraw.ts",
+          "sha256": "4df84ed4fdd2d63ad5e79139584a688e10df0f4382aac6364f8f247ca7a9e0dd",
+          "imports": [
+            "./pendoloBeatFx",
+            "./pendoloClockworkScene"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/pendolo/pendoloClockworkDraw2d.ts",
-          "sha256": "fbe916ea842cd099fd23d5c3e7e9152466a77774d2555d315e78276ab27366e4",
+          "sha256": "52be6394ece743f3c3e97066b597000ee2d3d8ee0a172cb654e85aaf872a05c3",
           "imports": [
             "../colorMix",
             "./pendoloClockworkScene"
@@ -2306,7 +2532,7 @@
         },
         {
           "path": "src/components/visualizer/pendolo/pendoloClockworkMeshes.ts",
-          "sha256": "cef8888f9cb65139c085717113378a2ddb01a4db9276eb4dd6bbb63bc73a93b1",
+          "sha256": "35bc353d99597598d84d099d04a8c7726bb72b93506377d48867135f7e109ab0",
           "imports": [
             "../colorMix",
             "./pendoloClockworkScene"
@@ -2315,7 +2541,7 @@
         },
         {
           "path": "src/components/visualizer/pendolo/pendoloClockworkMotion.ts",
-          "sha256": "ec47e1a8c36aee3c0fa9b3ed241925798b2047cebb9201f161234cae65c573c9",
+          "sha256": "47dcf1cd3d80e459f0e192a39bf7d5f9ea4408c3d8ab6cd40e27ba68c9a74c83",
           "imports": [
             "./pendoloMotionProfile"
           ],
@@ -2323,7 +2549,7 @@
         },
         {
           "path": "src/components/visualizer/pendolo/pendoloClockworkScene.ts",
-          "sha256": "6a422a269f32758a43f4614b0b43a4dd65937741339bc08cee1c980a61558960",
+          "sha256": "30b41281fefa61a6decc4154de288ec376d883d2c8b826c53d211163ae62de14",
           "imports": [
             "../colorMix"
           ],
@@ -2331,11 +2557,13 @@
         },
         {
           "path": "src/components/visualizer/pendolo/pendoloClockworkWebGL.ts",
-          "sha256": "24f894bd8c4236dc9c824ce2f6e338a325ea6faeaac74cf9fc9c443a08edfd4e",
+          "sha256": "a0dbd5ca8311df27d362e74fffb8a53d5aeb3a6b292d43a42eb5d2df00533d30",
           "imports": [
             "../colorMix",
             "./pendoloClockworkMeshes",
-            "./pendoloClockworkScene"
+            "./pendoloClockworkScene",
+            "./pendoloBeatFxDraw",
+            "./pendoloBeatFx"
           ],
           "parameters": []
         },
@@ -2399,13 +2627,28 @@
         },
         {
           "path": "src/components/visualizer/pendolo/tuning.ts",
-          "sha256": "45111f1d6211fc81b501d64a708623f5de8196bb2dd28d0009ae3c6ca6f48dd3",
+          "sha256": "5c567b51f57586fdcf2ef5c6dccb0802a5c6cb007a082e3f713a8a1063c22a71",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition"
           ],
           "parameters": [
             "ts"
           ]
+        },
+        {
+          "path": "src/components/visualizer/pendolo/usePendoloBeatFx.ts",
+          "sha256": "37ae6e47a4f80714423bce0bf05046cd133f9c94a2b51389a17ee11e26eb2e5a",
+          "imports": [
+            "react",
+            "framer-motion",
+            "../../../services/beatFx/beatFxLive",
+            "../../../services/beatFx/beatEffects",
+            "../../../services/analysis/drumHits",
+            "./pendoloBeatFx",
+            "./pendoloBeatFxDraw"
+          ],
+          "parameters": []
         }
       ]
     },
@@ -2415,29 +2658,20 @@
       "entry": "src/components/visualizer/sonnet/entry.tsx",
       "files": [
         {
-          "path": "src/components/visualizer/sonnet/SonnetSettingsControls.tsx",
-          "sha256": "76c03987fbbca4dab5094e0fe4d838fc50b429bb6fe5fbdc01488380c60b8fdf",
-          "imports": [
-            "react"
-          ],
-          "parameters": []
-        },
-        {
           "path": "src/components/visualizer/sonnet/SonnetSettingsPanel.tsx",
-          "sha256": "46e65c886c10bfce03ac64d7f2f40c9a9a1b91556875a7c2b457c0709452aa7b",
+          "sha256": "1b6f7b2d27b2034167dba5631a047357b0c7fe11edfeac38b126479394b92fab",
           "imports": [
             "react",
             "../../../types",
-            "../colorMix",
+            "../../modal/settings/kit",
             "../definition",
-            "../VisualizerPresetGroup",
-            "./SonnetSettingsControls"
+            "../panelRows"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/sonnet/VisualizerSonnet.tsx",
-          "sha256": "f04c4277b1bf6ed9dac7b6c2015dc8eb1dd8c60c76ae97024b630e7cc65ee172",
+          "sha256": "9e97d4500f19efab757d5fd762c4bb515cfe3659d8a3815b02d4647cd9add251",
           "imports": [
             "react",
             "framer-motion",
@@ -2447,10 +2681,11 @@
             "../../../utils/fontStacks",
             "../../../utils/lyrics/renderHints",
             "../definition",
-            "../pixiRuntimeHost",
+            "../pixi/pixiRuntimeHost",
             "../runtime",
             "../songHandover",
             "@/mods/folium/registries/tunings",
+            "../../../stores/useVisualizerSettingsStore",
             "../VisualizerShell",
             "../VisualizerSubtitleOverlay",
             "./createSonnetPixiRuntime",
@@ -2460,19 +2695,22 @@
         },
         {
           "path": "src/components/visualizer/sonnet/createSonnetPixiRuntime.ts",
-          "sha256": "bd2ba0608d63762ce32437ed9c9c1da17dcf5bedd64218caf517a67a56a8de59",
+          "sha256": "61f7ffc4615b9d84394ada6b46d0e2cc20a7101923f8b7aca1c2d7e9e0068424",
           "imports": [
             "framer-motion",
             "../../../types",
             "./types",
             "./sonnetProgram",
             "./sonnetSceneBuilder",
-            "../pixiTextureBudget",
+            "../pixi/pixiTextureBudget",
             "./sonnetPixiResources",
             "./sonnetCredits",
-            "../loadPixi",
             "../pixiSceneCache",
+            "../pixi/loadPixi",
+            "../pixi/pixiProgramLinks",
+            "../pixi/pixiWebGLContext",
             "./sonnetDebug",
+            "./sonnetBeatFx",
             "./sonnetShotFrame",
             "./sonnetSceneFrame",
             "./sonnetFrameOverlay",
@@ -2481,20 +2719,27 @@
           ],
           "parameters": [
             "enableTransitions",
+            "postProcessEnabled",
             "showOnlyText",
             "textureResolution"
           ]
         },
         {
           "path": "src/components/visualizer/sonnet/entry.tsx",
-          "sha256": "49da120d3c525d48bc0a8c6ac222db431d3f1645cc7828e591b49798b4dea261",
+          "sha256": "998ef25e87e0b94f6587209d6a3be2fa447548919a1c6040d4eb2411521e3e65",
           "imports": [
             "react",
+            "lucide-react",
             "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
+            "../../../services/beatFx/beatEffects",
             "./SonnetSettingsPanel"
           ],
-          "parameters": []
+          "parameters": [
+            "outerFrameMode",
+            "postProcessEnabled"
+          ]
         },
         {
           "path": "src/components/visualizer/sonnet/sonnetAdditionalShotMg.ts",
@@ -2509,7 +2754,7 @@
         },
         {
           "path": "src/components/visualizer/sonnet/sonnetAnimatedGraphics.ts",
-          "sha256": "cf47cb7c22a4c89d3dd0f6853bd34d34364370ed229e352983152caa3aa9001f",
+          "sha256": "10cada7b750c80f3ad8d365c67ae1b77d695ea121fce8fa2e9b5e6831cbc7145",
           "imports": [],
           "parameters": []
         },
@@ -2529,6 +2774,18 @@
           "imports": [
             "./sonnetAnimatedGraphics",
             "./sonnetRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/sonnet/sonnetBeatFx.ts",
+          "sha256": "639fff1e0469c9e40991b9b29d05d32740520b29a96f1ba4c8ed8cfc41e1ec5b",
+          "imports": [
+            "../../../types",
+            "../../../stores/motionSignals",
+            "../../../services/beatFx/beatFxLive",
+            "../../../services/beatFx/clock",
+            "./types"
           ],
           "parameters": []
         },
@@ -2633,7 +2890,7 @@
         },
         {
           "path": "src/components/visualizer/sonnet/sonnetGuides.ts",
-          "sha256": "354757540dad85497430acce8199689af969d94a838131470efa888716a9abb5",
+          "sha256": "af8b3625b7ae4be91f405dedefcac1b981d68ce86834d9bdcad24b60ac8f3065",
           "imports": [
             "../../../types",
             "./types",
@@ -2702,9 +2959,9 @@
         },
         {
           "path": "src/components/visualizer/sonnet/sonnetPixiResources.ts",
-          "sha256": "d9171c6f46967047d22122834b08e069d453b9ab94a8963c302746a31d03248c",
+          "sha256": "01e1b18fbf0c98c35aa7e894670fa66fe3c62a2c8730a732b8153ed78e43bed9",
           "imports": [
-            "../pixiDisplayResources"
+            "../pixi/pixiDisplayResources"
           ],
           "parameters": []
         },
@@ -2768,7 +3025,7 @@
         },
         {
           "path": "src/components/visualizer/sonnet/sonnetSceneBuilder.ts",
-          "sha256": "ba4357694d825d4748e4aa2a1738037a6cd367f2a9b1f468097100430a103f7e",
+          "sha256": "6a402a151be200ea7d45ebcc1bf40e37873052fee2a2d8ae86fe3ad38cc7d7a5",
           "imports": [
             "../../../types",
             "../../../utils/fontStacks",
@@ -2826,7 +3083,7 @@
         },
         {
           "path": "src/components/visualizer/sonnet/sonnetShotFrame.ts",
-          "sha256": "442e947a35e642b1cb1aac1e58691d13f89313d2824aca74543b692c47335e46",
+          "sha256": "38ab469cc00e4ac2add164cbaa04b9d6cbac854b23778349305452cdca7447c6",
           "imports": [
             "framer-motion",
             "../../../types",
@@ -2834,7 +3091,8 @@
             "./sonnetRandom",
             "./sonnetSceneBuilder",
             "./sonnetTypographyLayout",
-            "./sonnetCameraTracking"
+            "./sonnetCameraTracking",
+            "./sonnetBeatFx"
           ],
           "parameters": [
             "cameraIntensity",
@@ -2848,7 +3106,7 @@
         },
         {
           "path": "src/components/visualizer/sonnet/sonnetShotMg.ts",
-          "sha256": "02464c59101eab0d515e247b63369f5b16d6909afdf15266ff9cbf20e456794d",
+          "sha256": "96527cca51b354c54b3cf6c7b1fb7a1ee61b9dee2d7a59be2ffea8d879a2f4da",
           "imports": [
             "../../../types",
             "./types",
@@ -2860,7 +3118,9 @@
             "./sonnetBackgroundDecor",
             "./sonnetFixedGeoVariants",
             "./sonnetThemedShotMg",
-            "./sonnetShotMgViewport"
+            "./sonnetShotMgViewport",
+            "./sonnetBeatFx",
+            "../../../services/beatFx/beatFxLive"
           ],
           "parameters": []
         },
@@ -3065,9 +3325,10 @@
         },
         {
           "path": "src/components/visualizer/sonnet/tuning.ts",
-          "sha256": "5409aa7b365859dccb0298393d3f1359fa9892348f6eb7ea7d467e18803cab0b",
+          "sha256": "bfaba4699fc5204a9b84a366ad85317ff9839ea74c6e120e4db8942ded783a9e",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition"
           ],
           "parameters": [
             "ts"
@@ -3102,7 +3363,7 @@
         },
         {
           "path": "src/components/visualizer/still/entry.tsx",
-          "sha256": "a6b123de8b04a146a9610defd432bea6b4d94978e448c884c081ad635256cda9",
+          "sha256": "0c4566edc35562ef911702537dd666ea454d8dfb4776ca419cc1fb3b32bd2b88",
           "imports": [
             "react",
             "../definition"
@@ -3129,13 +3390,13 @@
         },
         {
           "path": "src/components/visualizer/tempera/TemperaImageLayerControls.tsx",
-          "sha256": "8bc632119a0a5c6eae90f4dc75af33e56eba8b3156ed49938be28f1b73f25c23",
+          "sha256": "16ce13fb9c8600a9629437ef3b9e7ad7dc1b5234912dbd5d1bfad5127f2924ed",
           "imports": [
             "../../../services/fileDownload",
             "react",
             "react-i18next",
-            "lucide-react",
             "../../../types",
+            "../../modal/settings/kit",
             "../../../types",
             "../../../services/temperaLayerImages",
             "../../../services/temperaImageArchive",
@@ -3150,10 +3411,9 @@
         },
         {
           "path": "src/components/visualizer/tempera/TemperaImageLayerDialog.tsx",
-          "sha256": "8ad62c8e8b9c8fd20011bce54b16226771db178d1cf298dd02d376cda5637478",
+          "sha256": "917652d5ac7eedee6d1f73c7673eb0143143208cd7f41449750bf332953a03cc",
           "imports": [
             "react",
-            "react-dom",
             "lucide-react",
             "i18next",
             "../../../types",
@@ -3183,7 +3443,7 @@
         },
         {
           "path": "src/components/visualizer/tempera/TemperaSettingsControls.tsx",
-          "sha256": "04953b95958859fc21a424e41c68c35a3a585d4fb3b717f37385484303d52d60",
+          "sha256": "39c51fcf31047ae062aa4d5fff2a633499f939a48c8ede19d204535aa244bc5a",
           "imports": [
             "react"
           ],
@@ -3191,21 +3451,21 @@
         },
         {
           "path": "src/components/visualizer/tempera/TemperaSettingsPanel.tsx",
-          "sha256": "188a57bd91f4c50abdf17d4eadf64abb512aaa87ed06d64f3edae386393ceeee",
+          "sha256": "b52ab1d80b1cd3f5e7de00f21d16ca35c52b51da67a5e3d98efac41693248f43",
           "imports": [
             "react",
             "../../../types",
-            "../colorMix",
+            "../../modal/settings/kit",
             "../definition",
-            "../VisualizerPresetGroup",
-            "./TemperaSettingsControls",
-            "./TemperaImageLayerControls"
+            "../panelRows",
+            "./TemperaImageLayerControls",
+            "./temperaPalette"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/tempera/VisualizerTempera.tsx",
-          "sha256": "6636745047fcbcaaf9c241ff548d8f747c09238caeaf855f1dc2a453f06f8114",
+          "sha256": "7dcd311036e40ac58b6b84dd80c009af508e33bd72119a7ae2d27251970639d9",
           "imports": [
             "react",
             "react-i18next",
@@ -3216,7 +3476,7 @@
             "../../../utils/fontStacks",
             "../../../utils/lyrics/renderHints",
             "../definition",
-            "../pixiRuntimeHost",
+            "../pixi/pixiRuntimeHost",
             "../runtime",
             "../songHandover",
             "../VisualizerShell",
@@ -3416,18 +3676,20 @@
         },
         {
           "path": "src/components/visualizer/tempera/createTemperaPixiRuntime.ts",
-          "sha256": "1880b2beab1c33918b93d6e0b405aab0e69b9f145d64e45d4d77a1ebefa44909",
+          "sha256": "bb71d142a0739e110adeba279ed1f72b2fc221491d66a69d8de2053b796082d1",
           "imports": [
             "framer-motion",
             "../../../types",
-            "../pixiDisplayResources",
-            "../pixiTextureBudget",
+            "../pixi/pixiDisplayResources",
+            "../pixi/pixiTextureBudget",
             "./types",
             "./temperaProgram",
             "./temperaSceneBuilder",
-            "../loadPixi",
             "../pixiSceneCache",
             "../pixiSongSwap",
+            "../pixi/loadPixi",
+            "../pixi/pixiProgramLinks",
+            "../pixi/pixiWebGLContext",
             "./temperaSceneFilters",
             "./temperaShapes",
             "./temperaImageTextures",
@@ -3439,20 +3701,27 @@
           "parameters": [
             "enableTransitions",
             "layerImages",
+            "postProcessEnabled",
             "showCornerMarks",
             "textureResolution"
           ]
         },
         {
           "path": "src/components/visualizer/tempera/entry.tsx",
-          "sha256": "0638283857a8929f471eb212caa340225a5664987822bbad54a3dd53082b2f30",
+          "sha256": "9f460faed1d835f2c8c1fd3f4a9edd3ab6b2e9de8e0e39d284e883cb48a7d7ff",
           "imports": [
             "react",
+            "lucide-react",
             "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
             "./TemperaSettingsPanel"
           ],
-          "parameters": []
+          "parameters": [
+            "colorMode",
+            "postProcessEnabled",
+            "showCornerMarks"
+          ]
         },
         {
           "path": "src/components/visualizer/tempera/temperaBlocks.ts",
@@ -3513,10 +3782,10 @@
         },
         {
           "path": "src/components/visualizer/tempera/temperaCreditsLayer.ts",
-          "sha256": "360c60cef780b1abbbb43666a0cc2efaae6d0b6851074cfc8ccfc9b0136ba193",
+          "sha256": "6985ef9a70a4ada7d6f89f326a0821b0cb7a91bdfa31f4c44e8e549299d3c895",
           "imports": [
             "../../../types",
-            "../pixiDisplayResources",
+            "../pixi/pixiDisplayResources",
             "./temperaSceneBuilder",
             "./temperaPalette",
             "./temperaMotion",
@@ -3620,10 +3889,10 @@
         },
         {
           "path": "src/components/visualizer/tempera/temperaOverlay.ts",
-          "sha256": "e255cd08bdd14985d8ce2deae9ab6dcf746726f71a157cccc34169a9effd370f",
+          "sha256": "53a10c12d14548ab3ec782eb473b5aa5530735a7fc351997f213cd64b03a76bd",
           "imports": [
             "../../../types",
-            "../pixiDisplayResources"
+            "../pixi/pixiDisplayResources"
           ],
           "parameters": [
             "showCornerMarks"
@@ -3780,9 +4049,10 @@
         },
         {
           "path": "src/components/visualizer/tempera/tuning.ts",
-          "sha256": "3461e4afada58ced44b4d42f6e03adbea0d512762f0ce6c00389afabf7950638",
+          "sha256": "171323ef405727789c0f5d4837d6ed5e2a542b4084e35b0afe51d18f89108d70",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition"
           ],
           "parameters": [
             "ts"
@@ -3816,7 +4086,7 @@
       "files": [
         {
           "path": "src/components/visualizer/tilt/VisualizerTilt.tsx",
-          "sha256": "a65c494dc5787aea3464fd594bd2b9b4f3f070b3be9cfb0cbdff67b1ec74b846",
+          "sha256": "fab8b67f5f6bb040b6c0453de61ce934fbe3369f4fb9505648c26046d7ce350e",
           "imports": [
             "react",
             "framer-motion",
@@ -3840,21 +4110,28 @@
         },
         {
           "path": "src/components/visualizer/tilt/entry.tsx",
-          "sha256": "ccfe94ea9cea23c4551fc613958a1dc085eb5c16e4ccb0fc5d3492ab78a0c85c",
+          "sha256": "af5573a3206f6ef1df2bae30bc420e339a04c3ad4a5bc24940f31429f572d7cc",
           "imports": [
             "react",
+            "../../../types",
+            "../../shared/QuickControlChip",
             "../definition",
             "../settingsPanels"
           ],
-          "parameters": []
+          "parameters": [
+            "colorScheme"
+          ]
         },
         {
           "path": "src/components/visualizer/tilt/tuning.ts",
-          "sha256": "fd65b47061971258d98c7f978c026872ac3d7848bb4ce3b6879f0675468a0fc0",
+          "sha256": "869494f299cf326e2826a39bb154327b7edde7de576b5af1a0b7df5f995a4ec0",
           "imports": [
-            "../tuningRegistry"
+            "../../../types",
+            "../tuningDefinition"
           ],
-          "parameters": []
+          "parameters": [
+            "ts"
+          ]
         }
       ]
     },
@@ -3865,12 +4142,12 @@
       "files": [
         {
           "path": "src/components/visualizer/backgrounds/common/CommonBackgroundSettingsCard.tsx",
-          "sha256": "fbf18b936fc003a5ed0a1d81a206122fdf51f3e30606f235683fcba295a4563e",
+          "sha256": "593e89f72fcd4584d3655293ff959e2fc949488582ea787c99cee8d5c0b4bdc0",
           "imports": [
             "react",
-            "../../colorMix",
-            "../definition",
-            "../BackgroundToggleRow"
+            "../../../modal/settings/kit",
+            "../../panelRows",
+            "../definition"
           ],
           "parameters": [
             "common"
@@ -3878,32 +4155,41 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/common/FluidBackground.tsx",
-          "sha256": "62baf5d5ee3817987947bbe341376a46bfecc875b65b92ce402f8d9412be5a88",
+          "sha256": "d30ca197b38f157bdca9550a418764e294d56c9b7898795eac713cf12ba2e4da",
           "imports": [
             "react",
             "framer-motion",
-            "../../../../types"
+            "../../../../types",
+            "../../preview/frozenPicture",
+            "../../styleTransition/firstFrame",
+            "../useBlendedColors"
           ],
           "parameters": []
         },
         {
+          "path": "src/components/visualizer/backgrounds/common/GeometricBackground.css",
+          "sha256": "63860a0784b4a70b06ab74a9262d9e36502720fe63671e05c79dd72897be4d39",
+          "imports": [],
+          "parameters": []
+        },
+        {
           "path": "src/components/visualizer/backgrounds/common/GeometricBackground.tsx",
-          "sha256": "008b72e4f8d37194df4c53d94b7a14a2a228243860ef2ec548b41afc30938a9b",
+          "sha256": "9167ff07817d1bf38150932c8707e766043ceab2a75acd6ed3835dd0eadae682",
           "imports": [
             "react",
             "framer-motion",
             "../../../../types",
             "../../../../hooks/useLucideIcons",
-            "../../../../services/lucideIconResolver"
+            "../../../../services/lucideIconResolver",
+            "./GeometricBackground.css"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/backgrounds/common/entry.tsx",
-          "sha256": "20249a70af3810835d34ca604f5f2e0d0a2257aad26033c3fcf7323ee4e5b63d",
+          "sha256": "21188cd2333146de232c1bf284ec83257855f1ec1c76906f671ff970f6c30566",
           "imports": [
             "react",
-            "framer-motion",
             "lucide-react",
             "../definition",
             "../../../shared/QuickControlChip",
@@ -3924,7 +4210,7 @@
       "files": [
         {
           "path": "src/components/visualizer/backgrounds/latent/LatentBackground.tsx",
-          "sha256": "271ed525c2cb3aec56f7d8b35e4d75735baa78142d120840699885c0c32440ac",
+          "sha256": "1866c2e97659366c41bbf15f504de6388fd0e2fb5e4268d450372aa8bc09e4ef",
           "imports": [
             "react",
             "@paper-design/shaders",
@@ -3933,7 +4219,12 @@
             "../../../../types",
             "../../../../utils/colorExtractor",
             "../../../../utils/paperShaderUniforms",
-            "../../../../utils/paperShaderContext"
+            "../../../../utils/paperShaderContext",
+            "../../styleTransition/firstFrame",
+            "../useBlendedColors",
+            "../../../../stores/motionSignals",
+            "../../../../services/beatFx/beatFxLive",
+            "../../../../services/beatFx/beatEffects"
           ],
           "parameters": [
             "colorSource",
@@ -3953,12 +4244,12 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/latent/LatentBackgroundSettingsCard.tsx",
-          "sha256": "7caf57d0269970b6e93348722505b783fe7135308c3533fea4c2f807ea0ed435",
+          "sha256": "a189c8b19f382ad4a9df81ce35ef3bab2cf33716f28809280589be06da641308",
           "imports": [
             "react",
             "../../../../types",
-            "../../colorMix",
-            "../BackgroundToggleRow"
+            "../../../modal/settings/kit",
+            "../../panelRows"
           ],
           "parameters": [
             "colorSource",
@@ -3979,7 +4270,7 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/latent/entry.tsx",
-          "sha256": "a1cd0d938765dd416bb1aeaaa183cd9547b3f07ee94705479d2c937bf591fba7",
+          "sha256": "e7f319b69502517f13d948c3cdf2b054f3e7dac78f2d60ca3699730502760b72",
           "imports": [
             "react",
             "lucide-react",
@@ -3987,12 +4278,25 @@
             "./LatentBackground",
             "./LatentBackgroundSettingsCard",
             "../definition",
-            "../../../shared/QuickControlChip"
+            "../../../shared/QuickControlChip",
+            "../../../../services/beatFx/beatEffects"
           ],
           "parameters": [
+            "colorSource",
             "displayMode",
             "latent",
             "overlayEnabled"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/latent/tuning.ts",
+          "sha256": "dc94eea678c0a5ad916bdcfff8a23e2905b84cbf799de92b397d2ddefa387fe5",
+          "imports": [
+            "../../../../types",
+            "../../tuningDefinition"
+          ],
+          "parameters": [
+            "ts"
           ]
         }
       ]
@@ -4004,7 +4308,7 @@
       "files": [
         {
           "path": "src/components/visualizer/backgrounds/monet/MonetBackgroundLayer.tsx",
-          "sha256": "c9f45d775f57673d7b8c46fe8bf422aa475e0a7923f6dd723ef0c9eb0fc6bd85",
+          "sha256": "a60ff680f4107d2721fd34b652cd1860f7faed8a4e597c6210f97d3197085402",
           "imports": [
             "react",
             "framer-motion",
@@ -4012,7 +4316,9 @@
             "../../colorMix",
             "../../monet/monetBackgroundPipeline",
             "./monetBackgroundDrift",
-            "../../../../hooks/useReducedMotionFor"
+            "../../../../hooks/useReducedMotionFor",
+            "../../preview/frozenPicture",
+            "../../styleTransition/firstFrame"
           ],
           "parameters": [
             "backgroundBlurPx",
@@ -4026,14 +4332,14 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/monet/MonetBackgroundSettingsCard.tsx",
-          "sha256": "1b05b0a332c1c5e0465148e293cd5d1f1fdbaa065ee012a12ee1bbf3b11ded73",
+          "sha256": "0ee4db9c6539ae622719cab0c71b3390eb50cfc3d659486bf06a69512ce5066d",
           "imports": [
             "react",
             "react-colorful",
             "lucide-react",
             "../../../../types",
-            "../../colorMix",
-            "../BackgroundToggleRow"
+            "../../../modal/settings/kit",
+            "../../panelRows"
           ],
           "parameters": [
             "backgroundBlurPx",
@@ -4053,9 +4359,10 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/monet/entry.tsx",
-          "sha256": "c98a2e49d42e4169b5ce3c347bd22862cf9b6c5a2b3e1ca4157f1d66c479d656",
+          "sha256": "0fd74f5b3febfde24beb940ebcc9987e8af5a2979d3c2d81ed17c40f967c5a0f",
           "imports": [
             "react",
+            "lucide-react",
             "../../../../types",
             "./MonetBackgroundSettingsCard",
             "./MonetBackgroundLayer",
@@ -4063,17 +4370,45 @@
             "../../../shared/QuickControlChip"
           ],
           "parameters": [
+            "backgroundDriftEnabled",
             "backgroundLayout",
+            "backgroundSource",
+            "backgroundStreaksEnabled",
             "customImage",
             "monet",
             "transparent"
           ]
         },
         {
+          "path": "src/components/visualizer/backgrounds/monet/imageUpload.ts",
+          "sha256": "8ba0bd847df1ae4b7d832511d88a070edc9c7faf5a6ba41ec6a7d6f9653392fd",
+          "imports": [
+            "../../../../i18n/config",
+            "../../../../services/monetBackgroundImage",
+            "../../../../stores/useStatusMessageStore",
+            "../../../../stores/useVisualizerAssetStore",
+            "../../../../types",
+            "../../tuningDefinition"
+          ],
+          "parameters": []
+        },
+        {
           "path": "src/components/visualizer/backgrounds/monet/monetBackgroundDrift.ts",
           "sha256": "b3f7e7b8940fbccd86d8fe8976e158b1ae02ef6b7add26e42875014127dfaf29",
           "imports": [],
           "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/monet/tuning.ts",
+          "sha256": "88762ec8e4bde986cca6c126ad4c150371b188f746c1b744f2b03fda884c9f61",
+          "imports": [
+            "../../../../types",
+            "../../tuningDefinition",
+            "./imageUpload"
+          ],
+          "parameters": [
+            "ts"
+          ]
         }
       ]
     },
@@ -4084,20 +4419,19 @@
       "files": [
         {
           "path": "src/components/visualizer/backgrounds/nomand/NomandBackgroundEffectPanel.tsx",
-          "sha256": "697dc583a48c8d1242e39910ab1afea45a43a738412ee2a3f9422fbef7f71da6",
+          "sha256": "a371c318eb16878cfa2faaef4b54026d8807d44b95bcb8b4549f650ae43504cb",
           "imports": [
-            "react",
-            "../../../../types",
-            "../../colorMix"
+            "../../../../types"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/backgrounds/nomand/NomandBackgroundEffectSettings.tsx",
-          "sha256": "e188ad3658f5776b4c9fb45e19b46bd91c43a4e7648ffe53f0f03205e6ce16ce",
+          "sha256": "b0eef415770b29e46b678c1068f2f409540c57bf98c944fe1469dfd09f73feb6",
           "imports": [
             "react",
             "../../../../types",
+            "../../../modal/settings/kit",
             "./NomandDitheringSettings",
             "./NomandFlutedGlassSettings",
             "./NomandHalftoneDotsSettings",
@@ -4111,12 +4445,15 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/nomand/NomandBackgroundLayer.tsx",
-          "sha256": "48c90d4adfd63cb9135d5b4862f5ae4bc4679fe671a44234ff7fa35643bd877e",
+          "sha256": "d0b25ed5c215f3bdb33d88b3f095bfe7b0f65a552bf8d43484f286c760b2a31e",
           "imports": [
             "react",
+            "@paper-design/shaders",
             "@paper-design/shaders-react",
             "../../../../types",
-            "./nomandShaderAdjustments"
+            "./nomandShaderAdjustments",
+            "../../styleTransition/firstFrame",
+            "../../../../utils/paperShaderContext"
           ],
           "parameters": [
             "colorSteps",
@@ -4146,24 +4483,25 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/nomand/NomandBackgroundSettingsCard.tsx",
-          "sha256": "4b15e0cc45c581c5a057ea99df1af6700e9605972d4ccee79d41e11182dcddcf",
+          "sha256": "3e8948b080198cee03a011a3002c075d9c4744f888cbc0776f3c8eec10e3a7e7",
           "imports": [
             "react",
             "lucide-react",
             "../../../../types",
-            "../../colorMix",
-            "../BackgroundToggleRow",
+            "../../../modal/settings/kit",
+            "../../panelRows",
             "./NomandBackgroundEffectSettings"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/backgrounds/nomand/NomandDitheringSettings.tsx",
-          "sha256": "b1b586d7d36b2a64f0855b43f1186188b4ba5458f7091950020202d8f55cf861",
+          "sha256": "69093d89e1f9450749d92d7a2390564e2917eb40b57bbb98075f2aade1b3e85b",
           "imports": [
             "react",
             "../../../../types",
-            "../BackgroundToggleRow",
+            "../../../modal/settings/kit",
+            "../../panelRows",
             "./NomandBackgroundEffectPanel"
           ],
           "parameters": [
@@ -4176,9 +4514,10 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/nomand/NomandFlutedGlassSettings.tsx",
-          "sha256": "39b24e27e90b5148487f9074613bd16fea90f9cec54d6c8650834e488f3dc1c4",
+          "sha256": "3e290541d18e2aeb5209cac487fde187519398900b8042a11046f71e9855445e",
           "imports": [
             "react",
+            "../../panelRows",
             "./NomandBackgroundEffectPanel"
           ],
           "parameters": [
@@ -4189,10 +4528,10 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/nomand/NomandHalftoneDotsSettings.tsx",
-          "sha256": "66c2a621c431dff5360ca173862a1fd42829f8be3498c3c20f785e4b2e47b535",
+          "sha256": "a525cf14425e396532b4644dacd2d3c55d11184b976ae526d2825ade163fda0e",
           "imports": [
             "react",
-            "../BackgroundToggleRow",
+            "../../panelRows",
             "./NomandBackgroundEffectPanel"
           ],
           "parameters": [
@@ -4205,9 +4544,10 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/nomand/NomandLensDistortionSettings.tsx",
-          "sha256": "54166ae745e5992d6f7aaf4d20cfb8c7ad049ff265a0707e68a4bf978c59b8d8",
+          "sha256": "78c12dcc573abf295f4ab6143e35012dd8cc41f0654494930d1b785392ab9034",
           "imports": [
             "react",
+            "../../panelRows",
             "./NomandBackgroundEffectPanel"
           ],
           "parameters": [
@@ -4218,9 +4558,10 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/nomand/NomandPaperTextureSettings.tsx",
-          "sha256": "29e541050c79fece7d751a3969a22258ee22a9591a5536133d994b5672a25e2f",
+          "sha256": "56093f67cd2f357f115f035c7a39d43ce127cbec5faf8f1d2c8e0c6eb2d0f5ec",
           "imports": [
             "react",
+            "../../panelRows",
             "./NomandBackgroundEffectPanel"
           ],
           "parameters": [
@@ -4231,18 +4572,21 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/nomand/entry.tsx",
-          "sha256": "37d7504268105c217ca084ffd5dd89db37b8e13e0df5f2deb16f77cb07af6485",
+          "sha256": "bbeee7b4580138e7d303debd6585bbf7755aec2934e005a30c8115a01dbb29d7",
           "imports": [
             "react",
             "lucide-react",
             "../../../../types",
             "./NomandBackgroundLayer",
             "./NomandBackgroundSettingsCard",
+            "./NomandBackgroundEffectSettings",
             "../definition",
             "../../../shared/QuickControlChip"
           ],
           "parameters": [
             "customImage",
+            "effect",
+            "imageSource",
             "nomand",
             "overlayEnabled"
           ]
@@ -4252,6 +4596,17 @@
           "sha256": "3a1371924804a024f9085ffbe2ddfcf0f8946c0536ede9a88db674f47cbd7217",
           "imports": [],
           "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/nomand/tuning.ts",
+          "sha256": "2386bd71fa34ec3a20f530df7fd61bab51195ca24baaeb863930d20d66624421",
+          "imports": [
+            "../../../../types",
+            "../../tuningDefinition"
+          ],
+          "parameters": [
+            "ts"
+          ]
         }
       ]
     },
@@ -4262,23 +4617,25 @@
       "files": [
         {
           "path": "src/components/visualizer/backgrounds/sora/SoraBackground.tsx",
-          "sha256": "d74fe5b329c941d0bda45e20ca7b781668fc302ad23bdf464ecfb290dc1c4657",
+          "sha256": "ae6b38062123bdd96f6af2390a6710d4dec03db21c3a36ff9ec06fa3962cf6e1",
           "imports": [
             "react",
+            "framer-motion",
             "twgl.js",
             "../../../../types",
-            "../../colorMix"
+            "../../colorMix",
+            "../useBlendedColors"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/backgrounds/sora/SoraBackgroundSettingsCard.tsx",
-          "sha256": "dc6359d4958f2fdc5f553ad72375c702097b2e35dd93cf66bbcbef6781c460b7",
+          "sha256": "8b31f3be953cf4103bec917678da8e485b8b290d94ef854a3e673637741964b4",
           "imports": [
             "react",
             "../../../../types",
-            "../../colorMix",
-            "../BackgroundToggleRow"
+            "../../../modal/settings/kit",
+            "../../panelRows"
           ],
           "parameters": [
             "blank"
@@ -4286,7 +4643,7 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/sora/entry.tsx",
-          "sha256": "8769d1fb94029ea2d08b1802f493535d1c1a80c8d3d81aa75480a522a84be2ac",
+          "sha256": "11a84270f4f0a9ab953f473da2bd6bc5f3a9b6ccd1b71d56d9c534c3cab923bc",
           "imports": [
             "react",
             "lucide-react",
@@ -4299,6 +4656,17 @@
           "parameters": [
             "blank",
             "sora"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/sora/tuning.ts",
+          "sha256": "319217bd96cd787758d5fb9dd9460250abeff80829fb575b78e8f0b850f8154c",
+          "imports": [
+            "../../../../types",
+            "../../tuningDefinition"
+          ],
+          "parameters": [
+            "ts"
           ]
         }
       ]
@@ -4320,19 +4688,19 @@
         },
         {
           "path": "src/components/visualizer/backgrounds/url/UrlBackgroundSettingsCard.tsx",
-          "sha256": "79ef880a64918712b1c9c182a6fa08ad6f58582b035195478750bb150bc1fc82",
+          "sha256": "49319098796811c76fa2727b541e877d658abbd91f16b8855ba85da436d3d738",
           "imports": [
             "react",
             "lucide-react",
             "../../../../types",
-            "../../colorMix",
-            "../../../../utils/urlBackground"
+            "../../../../utils/urlBackground",
+            "../../../modal/settings/kit"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/backgrounds/url/entry.tsx",
-          "sha256": "860b6913558a38aaffff649c94289232ce548d1d2d0e988075a61a409c9409a5",
+          "sha256": "4783388e8a2157049c8df7cd6034099fafda02868cbba2a19dc1960840f2ddd1",
           "imports": [
             "react",
             "./UrlBackgroundLayer",
@@ -4342,6 +4710,16 @@
           "parameters": [
             "url"
           ]
+        },
+        {
+          "path": "src/components/visualizer/backgrounds/url/settings.ts",
+          "sha256": "c803ecacfa8799270facdb81ee0252da3fcde1d6c2b2e1f76e0c35e98c4b962e",
+          "imports": [
+            "../../../../types",
+            "../../../../utils/urlBackground",
+            "../../tuningDefinition"
+          ],
+          "parameters": []
         }
       ]
     }
@@ -4563,66 +4941,66 @@
     "ribbon-loop",
     "round-plate",
     "halo-burst",
-    "s live\n    // background shows in it - see `compositions/temperaCutout.ts`.\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    // Instrument panels: measured geometric decoration around one heavy focal mass.\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    // Corridors: openings cut along the flow vector, so the hand-off between two shots keeps\n    // the same opening moving instead of cutting to a new one.\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    // Brutalist monoliths: one enormous matte solid, cropped by the frame, type on its edge.\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    // The same language read as ground and structure rather than as objects.\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    // Monogatari-style interstitials: one flat field, type as the whole picture.\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    ",
-    ",\n    "
+    "iris-hole",
+    "slot-rail",
+    "punch-row",
+    "film-gate",
+    "cross-vent",
+    "louvre-slats",
+    "ring-eye",
+    "notch-stack",
+    "wedge-gap",
+    "dot-sieve",
+    "sight-mark",
+    "dial-scale",
+    "chevron-run",
+    "tally-column",
+    "grid-focus",
+    "axis-caps",
+    "strobe-slats",
+    "offset-plate",
+    "radial-comb",
+    "bracket-target",
+    "flow-channel",
+    "twin-channel",
+    "reed-run",
+    "taper-channel",
+    "chain-ports",
+    "dash-channel",
+    "window-run",
+    "bridge-span",
+    "braid-channel",
+    "port-ladder",
+    "apex-mass",
+    "ziggurat",
+    "slab-wall",
+    "cantilever",
+    "pylon-pair",
+    "bunker-slit",
+    "plinth-stack",
+    "buttress-run",
+    "void-core",
+    "shear-block",
+    "ridge-line",
+    "chasm",
+    "overhang",
+    "step-well",
+    "pier-row",
+    "revetment",
+    "tower-crop",
+    "lintel",
+    "rubble-fan",
+    "gnomon",
+    "monogatari-card",
+    "monogatari-rule",
+    "monogatari-edge",
+    "monogatari-stack",
+    "monogatari-flash"
   ],
   "sharedSources": [
     {
       "path": "src/types.ts",
-      "sha256": "b6c64ebede1dab6c42866039230aa0e4f4202f1c830e6e2c54f271d4bcab1ee5"
+      "sha256": "91fef680917c48124f295b1335ad044f8f5232737fa32f7ccb556aac3e7fa628"
     },
     {
       "path": "src/types/visualizerModes.ts",
@@ -4630,11 +5008,11 @@
     },
     {
       "path": "src/components/visualizer/registry.tsx",
-      "sha256": "a6637b6709b16bf9e09e2c31d864c1546649346c3db7612f3ae1e0d19403c071"
+      "sha256": "522511ae6a39e1f8aac55c04f3b1ee4d5fa64df82a8126bd9b6b0d46daa67079"
     },
     {
       "path": "src/components/visualizer/tuningRegistry.ts",
-      "sha256": "10a3dfdcdcc62c79be46f9f07753cec17b70479754bd50955372fe61cb4e02bb"
+      "sha256": "aca42cb82061961579de964d89fb8f94f8eed7c01f60591051c038fae3a765f8"
     },
     {
       "path": "src/components/visualizer/backgrounds/registry.tsx",
@@ -4642,7 +5020,7 @@
     },
     {
       "path": "src/components/visualizer/backgrounds/common/FluidBackground.tsx",
-      "sha256": "62baf5d5ee3817987947bbe341376a46bfecc875b65b92ce402f8d9412be5a88"
+      "sha256": "d30ca197b38f157bdca9550a418764e294d56c9b7898795eac713cf12ba2e4da"
     },
     {
       "path": "src/services/customLyricsFont.ts",
@@ -4654,7 +5032,7 @@
     },
     {
       "path": "src/library/registry.ts",
-      "sha256": "0623807ff0807cc9d2d805ddc0b1e5345b2aca8737d4c9d107f43669368aff4b"
+      "sha256": "15c6eeac65e9ef6796e4adcfff34fd02545fcd2415ee2a5ca39a7997cf85ba28"
     }
   ],
   "librarySuites": [
@@ -4662,19 +5040,19 @@
       "id": "grid",
       "path": "src/library/suites/grid/entry.ts",
       "productionAvailable": true,
-      "sha256": "cf53ff3b7d7e460480f61943d72d0ccb7fa307e9488da83a1121c9249c7a0260"
+      "sha256": "b3d983954b4da2c642d787f9e6c9ba737670b6a78ad105b00bad18bf6894ea3a"
     },
     {
       "id": "bravais",
       "path": "src/library/suites/bravais/entry.ts",
       "productionAvailable": true,
-      "sha256": "be6c829fc541f1153da8d69d0cd2d17d4e42947223bf3cdcfd8ebd0af8a461c6"
+      "sha256": "a95848ea7825fd0972a39b85e6ea35e215ea568a826a8c94651818cd4df9f66b"
     },
     {
       "id": "tui",
       "path": "src/library/suites/tui/entry.ts",
       "productionAvailable": false,
-      "sha256": "da1948cbdae727579da4f9ad875382e853ce40d23eab0039f4b410ed692e1c1c"
+      "sha256": "db0a3b9e4fcdfcb3f65749de30c1d7302ad3cf20c603e37cc94e310df3c078fb"
     }
   ]
 }

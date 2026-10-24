@@ -3,7 +3,7 @@ import { getStoredBoolean, getStoredString, setStoredBoolean } from './storagePr
 
 // src/stores/useLatticeSettingsStore.ts
 // Persistent queue-collage preferences. Deliberately separate from useLatticeControlsStore: that
-// store only publishes runtime actions from the currently mounted wall.
+// store only publishes runtime state of the currently mounted wall.
 
 const LATTICE_VIGNETTE_KEY = 'lattice_vignette';
 const LATTICE_AUTO_FOCUS_ON_SONG_CHANGE_KEY = 'lattice_auto_focus_on_song_change';

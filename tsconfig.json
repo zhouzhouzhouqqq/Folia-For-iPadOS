@@ -32,6 +32,8 @@
     "dist",
     "release",
     "sync-server",
-    "original"
+    "original",
+    "ios/App/App/public",
+    "test-results"
   ]
 }

@@ -9,11 +9,11 @@ import { prepareMediaSessionArtwork } from '@/services/mediaSessionArtwork';
 import { PlayerState } from '@/types';
 
 // Exercise the complete iPad bridge, including ownership, stale artwork and displayed AutoMix deck.
-const native = vi.hoisted(() => ({ ios: true, publish: vi.fn(), configure: vi.fn(async () => {}), controls: vi.fn(async () => ({})),
+const native = vi.hoisted(() => ({ ios: true, publish: vi.fn(), artwork: vi.fn(async () => ({ data: 'dGh1bWI=' })), configure: vi.fn(async () => {}), controls: vi.fn(async () => ({})),
     listen: vi.fn(async (_name: string, _callback: unknown) => ({ remove: vi.fn() })) }));
 vi.mock('@/platform/capabilities', () => ({ isNativeIOS: () => native.ios }));
 vi.mock('@/platform/ios/device', () => ({ FoliaDevice: {
-    publishNowPlaying: native.publish, configureAudio: native.configure, setMusicControls: native.controls, addListener: native.listen,
+    publishNowPlaying: native.publish, prepareMediaArtwork: native.artwork, configureAudio: native.configure, setMusicControls: native.controls, addListener: native.listen,
 } }));
 vi.mock('@/platform/ios/files', () => ({ blobBase64: vi.fn(async () => 'cGljdHVyZQ==') }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -52,13 +52,23 @@ afterEach(() => {
 it('publishes title, artist, cover and timeline to the WebKit owner, without host metadata or duplicate remote commands', async () => {
     await render();
     expect(media.metadata).toMatchObject({ title: 'Synthetic A', artist: 'Artist', album: 'Album',
-        artwork: [{ src: 'data:image/png;base64,cGljdHVyZQ==' }] });
+        artwork: [{ src: 'data:image/jpeg;base64,dGh1bWI=' }] });
     expect(media.playbackState).toBe('playing');
     expect(media.setPositionState).toHaveBeenLastCalledWith({ duration: 100, position: 8, playbackRate: 1 });
     expect(native.publish).not.toHaveBeenCalled();
     expect(native.listen.mock.calls.map(args => args[0])).not.toContain('remoteCommand');
     prepareIOSNativeMediaSession();
     expect(native.configure).toHaveBeenCalledWith({ webMediaSession: true });
+});
+it('publishes no original artwork while the native thumbnail is pending, and ignores an aborted result', async () => {
+    let finish!: (value: { data: string }) => void;
+    native.artwork.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    await render();
+    expect(media.metadata).toMatchObject({ title: 'Synthetic A', artwork: [] });
+    const metadata = media.metadata;
+    act(() => root!.unmount()); root = undefined;
+    await act(async () => finish({ data: 'b2xk' }));
+    expect(media.metadata).toBe(metadata);
 });
 it('delivers one next/previous/pause/play/seek command to the shared transport and observes current refs', async () => {
     await render(true);

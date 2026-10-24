@@ -1,32 +1,33 @@
 # Folium 1：Folia 模组平台
 
-> **实验性功能，默认关闭。** 需先在「设置 → 实验室 → 模组系统」中开启，命令面板的「模组」命令与模组
+> **实验性功能，默认关闭。** 需先在「设置 → 模组 → 模组系统」中开启，命令面板的「模组」命令与模组
 > 管理面板才会出现，加载器也才会扫描目录。开关关闭时**不加载任何模组代码**——不是隐藏 UI，而是已启用
-> 的模组也会被停用（执行其 deactivate），相关 IPC 一律拒绝。开关本身不替代单个模组的启用确认。
+> 的模组也会被停用（执行它的清理函数），相关 IPC 一律拒绝。开关本身不替代单个模组的启用确认。
 
 Folium 是 Folia 的模组平台，形状参照 Minecraft Forge：模组通过**注册表**往宿主里加东西，
-通过**事件总线**介入宿主行为，通过**服务**调用宿主能力；确实要碰宿主内部时，走一个明确标注、
-钉死宿主版本的 **internals** 通道。
+通过**事件总线**介入宿主行为，通过**服务**调用宿主能力。
 
 本文件就是 Folium 1 的规范。「稳定」的部分在 folium 1.x 内只增不改（见[版本与演进](#版本与演进)）；
 标了「实验」的部分需要在清单里显式选用，任何 minor 都可能变。
 
 > **模组开发与上架注意事项**
 >
-> - Folium 1.3 是首个稳定版本，稳定扩展接口目前只有 UI 相关部分，1.4 起的歌词原文解析（`folium.lyrics.parse` 与 `getLyrics` 的返回形状），以及 1.5 起的播放控制补全（音量、静音、循环模式、播放队列）、首页页面（`homeTabs`）、播放失败通知（`playback.failed`）与 main 入口的文件目录（`api.storage.paths`）。其他部分，尤其是 `omni.providers` 等 Omni provider 接口，仍属实验接口，尚不具备应用内置 Omni provider 的对等能力。在 Folium v2 发布前，请绝对不要尝试制作超出当前实验接口能力的完整音源模组；接口缺口必然导致问题，浪费开发者和维护者的时间。
+> - 稳定扩展接口目前只有 UI 相关部分、歌词原文解析（`folium.lyrics.parse` 与 `getLyrics` 的返回形状），以及播放控制补全（音量、静音、循环模式、播放队列）、首页页面（`homeTabs`）、播放失败通知（`playback.failed`）与 main 入口的文件目录（`api.storage.paths`）。其他部分，尤其是 `omni.providers` 等 Omni provider 接口，仍属实验接口，尚不具备应用内置 Omni provider 的对等能力。在 Folium v2 发布前，请绝对不要尝试制作超出当前实验接口能力的完整音源模组；接口缺口必然导致问题，浪费开发者和维护者的时间。
 > - 任何尝试导出 provider 的原始音频流或解密之后的原始音频文件的模组，都有极高的平台法律风险。无论采用何种实现方式，此类模组都不会上架官方模组市场。
 
-公开类型全部在 [`src/mods/folium/contract.ts`](../src/mods/folium/contract.ts)，这是契约的唯一来源。
+公开类型全部在 [`src/mods/folium/contract.ts`](../src/mods/folium/contract.ts)，这是契约的唯一来源；
+[`folium.d.ts`](folium.d.ts) 是从它生成的一份给编辑器用的类型文件。第一次写模组，先照
+[第一个模组：从零到跑起来](../docs/folium/quickstart.md)走一遍（一条命令生成起点，一条命令检查）。
 仓库里的样例模组都是按本规范写的，可以直接照抄：
 
 | 样例 | 演示 |
 | --- | --- |
 | `sample-aurora-visualizer` | 歌词动画模式（visualizers），纯 client |
-| `visualizer52hz` | 「52Hz」PixiJS 歌词动画：逐字点亮，按节拍沿字形轮廓发出年轮，纯音乐时从随机髓心生长；visualizers + settings + `ctx.audio`（1.2）+ 思索教程（`ponder.targets`，通用骨架 + 双语字幕）+ 模组自带第三方库 |
+| `visualizer52hz` | 「52Hz」PixiJS 歌词动画：逐字点亮，按节拍沿字形轮廓发出年轮，纯音乐时从随机髓心生长；visualizers + settings + `ctx.audio` + 思索教程（`ponder.targets`，通用骨架 + 双语字幕）+ 模组自带第三方库 |
 | `k3panel` | 给内置模式「商籁」调参（tunings），纯 client |
 | `sample-transparent-mov-export` | client 注册命令，经 rpc 交给 main 调导出服务 |
 | `sample-progress-bar` | 改造进度条：按钮、样式、外部动态数据图层、设置分区、net.fetch、storage |
-| `more-progress-buttons` | 进度条两侧加「打乱队列」「音量」「喜爱」按钮，可分别关闭；用 `--folium-player-bar-extra` 把胶囊加宽补回轨道长度（1.3） |
+| `more-progress-buttons` | 进度条两侧加「打乱队列」「音量」「喜爱」按钮，可分别关闭；用 `--folium-player-bar-extra` 把胶囊加宽补回轨道长度 |
 | `sample-rickroll` | 在播放页嵌入外部网页（stageLayers + ui.embed + embedOrigins） |
 | `sample-beta-hello` | 先行测试渠道的最小示例：启用后在控制台打印 hello world，用先行测试密钥签名 |
 
@@ -44,9 +45,9 @@ Folium 是 Folia 的模组平台，形状参照 Minecraft Forge：模组通过**
 主界面所在的渲染进程，能读写界面里的一切。`mod.json` 的 `permissions` 是功能开关约定（未声明的 API
 调用 fail closed），**不构成安全边界**。
 
-- **两道开关**：实验室总开关决定加载器是否工作；总开关开启后，单个模组仍默认禁用，需逐个确认启用。
+- **两道开关**：「设置 → 模组」里的「模组系统」总开关决定加载器是否工作；总开关开启后，单个模组仍默认禁用，需逐个确认启用。
 - **启用需二次确认**：主进程原生确认窗口列出模组 id、安装位置、声明的权限、界面代码入口、选用的实验接口、
-  可嵌入的外部网页、是否使用内部接口（及兼容的宿主版本）与内容指纹，默认按钮为「取消」。窗口刻意不在渲染
+  可嵌入的外部网页、需要的 Folia 版本与内容指纹，默认按钮为「取消」。窗口刻意不在渲染
   进程绘制——那里的弹窗可被模组代码伪造或自动点击。
 - **信任绑定到内容**：确认结果与模组目录的内容摘要（sha256）一并保存。任何文件变化都会使摘要失配，
   加载器随即**撤销授权并保持禁用**，需要重新确认。唯一的例外是**未打包的开发版**里、位于仓库 `mods/`
@@ -117,7 +118,7 @@ client 只能用相对路径 import 模组目录里的 `.mjs/.js`，**不能 imp
 打包进去的库。要用第三方库就把它的 ESM 构建放进模组目录（例如 `vendor/pixi.min.mjs`，附上许可证），
 再相对 import，见 `visualizer52hz`。
 
-扫描顺序见 `electron/modSystem/modSystem.cjs` 的 `getModsDirectories`：开发版先扫仓库 `mods/`，
+扫描顺序见 `electron/modSystem/discovery.cjs` 的 `getModsDirectories`：开发版先扫仓库 `mods/`，
 再是 `userData/mods`、`resources/mods`；**同 id 只认先扫到的那一份**。改了文件却没生效时，先确认
 `userData/mods` 下没有同 id 的旧副本。
 
@@ -146,7 +147,7 @@ client 只能用相对路径 import 模组目录里的 `.mjs/.js`，**不能 imp
 
 | 字段 | 说明 |
 | --- | --- |
-| `folium` | 必须是 `1`。旧草案的 `apiVersion` / `entry` / `visualizers` 字段会被直接拒绝并提示迁移方式 |
+| `folium` | 必须是 `1` |
 | `id` | `^[a-z0-9][a-z0-9-]*$`，全局唯一 |
 | `version` | `MAJOR.MINOR.PATCH` |
 | `main` / `client` | 都可选，至少一个。`main` 是模组目录下的单个 `.cjs/.js` 文件；`client` 是目录内的 `.mjs/.js` 相对路径。纯渲染端模组不写 `main`，Node 里就不执行它的任何代码 |
@@ -154,18 +155,21 @@ client 只能用相对路径 import 模组目录里的 `.mjs/.js`，**不能 imp
 | `depends` | 模组 id 或 `id@^1.2.3`（仅支持 `^` 与 `*`）。缺失、版本不符、成环或依赖未启用时，只有该依赖子图不加载 |
 | `permissions` | 见下表。未知权限直接拒绝 |
 | `embedOrigins` | `folium.ui.embed` 可以加载的 https origin（形如 `https://host[:port]`），需要 `net.embed` |
-| `experimental` | 选用的实验接口：`omni.providers`、`omni.hooks`、`ponder.targets` |
-| `folia` | 宿主版本范围（空格分隔的比较式，支持 `>= > <= < = ^` 与 `*`）。**使用 `folium.internals` 时必填**；宿主版本不在范围内时加载器拒绝加载（`host-version-mismatch`） |
+| `experimental` | 选用的实验接口：`omni.providers`、`omni.hooks`、`ponder.targets`、`player.layout`、`remote.actions` |
+| `folia` | 可选。宿主版本范围（空格分隔的比较式，支持 `>= > <= < = ^` 与 `*`）；宿主版本不在范围内时加载器拒绝加载（`host-version-mismatch`） |
 
 | 权限 | 解锁 |
 | --- | --- |
-| `filesystem.data` | `api.storage.data.*`（main）与 `folium.storage.*`（client），两边共用一个数据文件；1.5 起还有 main 入口的文件目录 `api.storage.paths`（`data` / `cache`） |
-| `runtime.playback` | `api.runtime.getPlaybackSnapshot()`（main） |
+| `filesystem.data` | `api.storage.*`（main）与 `folium.storage.*`（client），两边共用一个数据文件；main 入口还有文件目录 `api.storage.paths`（`data` / `cache`） |
+| `playback.read` | `api.runtime.getPlaybackSnapshot()`（main） |
 | `render.export` | `api.render.exportVideo()`（main） |
 | `playback.control` | `folium.playback` 的播放、暂停、跳转、切歌、入队、打乱队列、喜爱；1.5 起还有设置音量、静音、循环模式与点播队列里的歌 |
 | `net.fetch` | `folium.net.fetch()`（经主进程代发，不受 CORS 限制） |
 | `net.embed` | `folium.ui.embed()`，还需要 `embedOrigins` |
-| `ui.stage` | `registries.stageLayers`（往播放页上画东西） |
+| `stageLayers` | `registries.stageLayers`（往播放页上画东西） |
+
+每个权限解锁的成员以 API 参考的[权限一览](../docs/folium/api.md#权限一览)为准，`npm run folium:check` 用同一张表查模组。
+为 Folium 1.5 写的清单里的旧权限名和不认识的字段，在 1.x 里只提醒、不拒绝，见[仍可用的旧名字](../docs/folium/api.md#仍可用的旧名字)。
 
 ## client 入口
 
@@ -180,13 +184,22 @@ export default function activate(folium) {
 
 - 启用并确认后，宿主从 `folia-mod://<id>/<client>?v=<指纹>` 导入它；指纹变了就是新模块，改完代码重载即生效。
 - **自动回收**：模组被禁用、重载或卸载时，宿主先调它返回的 disposer，再撤下它注册的所有条目与事件处理器。
-- **错误隔离**：activate、每个事件处理器、每次 mount 都在各自的错误边界里；出错只影响这个模组，
-  错误列在模组面板里该模组的「界面代码出错」下。
+- **启动时限**：导入 `client` 加上 `activate`（返回 promise 的话，到它给出结果）一共 5 秒。超过了不算出错，算慢：宿主提示用户一次
+  「过了 5 秒还没有启动完」，接着启动下一个模组；这次启动不会被取消，之后完成了，登记的条目照样生效，模组那一行写着启动用了多少秒并标「慢」。
+  启动时抛错（不管是按时还是超时之后）才算出错；模组已经被禁用或被新代码换掉之后，旧的那次启动才抛的错不记在模组头上。
+- **第一屏**：应用打开时第一屏最多等所有模组 1.5 秒，没启动完的在第一屏出来之后继续启动；存着的歌词样式或背景等它启动完自动换回来。
+  晚启动的模组收不到第一首歌的 `lyrics.transform` 和 `playback.beforePlay`。导出窗口不设这 1.5 秒，等每个模组启动完（各自最多 5 秒）；
+  要导出的歌词样式所属的模组那时还在启动，导出就一直等到它启动完（可以取消导出）；它启动时出了错、或者没有这个模组，导出报错停下。
+- **错误隔离**：activate、每个事件处理器、每次 mount、经 `ctx` 和 `folium` 订的每个监听都在各自的错误边界里；出错只影响这个模组，
+  错误列在模组面板里该模组的「界面代码出错」下：每个出错的地方一行，写着出错几次、最近一次的时间和原因。
+- **出错提示**：模组的代码抛错（mount、绘制、监听、清理函数、activate）时，宿主提示用户一次，写明是哪个模组的哪一种条目；
+  每次运行每个模组最多提示一次，用户可以对这个模组选不再提示（这一个选择同时管它出错和启动慢两种提示）。宿主不会因为出错停用、替换或取消选中任何东西。
+  命令失败、音源方法失败、钩子超时或失败、模组自己调 `log.error` 是平常的结果：只记到那一行，不提示。
 - **运行环境**：`folium.env.context` 是 `'main'`（主窗口）或 `'export'`（透明视频导出窗口）。导出窗口里
-  只属于界面的注册表（commands、stageLayers、playerPanelTabs、homeTabs、controlButtons、progressLayers、styles）
+  只属于界面的注册表（[注册表一览](../docs/folium/api.md#注册表一览)里「导出窗口里」一列写着不生效的那些）
   是空实现——照常调用、不生效，所以同一份代码两边都能跑；服务（playback / ui / net / storage / rpc）
   在导出窗口里调用会抛 `*-unavailable-in-export-context`（`ui.icon` 例外，两边都能用）。
-- `folium.host`：`{ folium: { major, minor }, folia: '<宿主版本>' }`，用于运行时的功能探测。
+- `folium.host`：`{ folium: { major, minor }, folia: '<宿主版本>' }`，给显示和日志用。
 
 ### folium 对象一览
 
@@ -196,32 +209,28 @@ export default function activate(folium) {
 | `registries.*` | 见[注册表](#注册表) |
 | `events.on(type, handler, { priority })` | 见[事件](#事件)，返回取消函数 |
 | `playback` / `ui` / `net` | 见[服务](#服务) |
-| `storage.get/set/has/delete/keys` | 异步；需 `filesystem.data`；单模组数据上限 1 MB。更大的内容由 main 入口写成文件，放进 `api.storage.paths.data`（1.5） |
+| `storage.get/set/has/delete/keys` | 异步；需 `filesystem.data`；单模组数据上限 1 MB。更大的内容由 main 入口写成文件，放进 `api.storage.paths.data` |
 | `rpc.call(name, ...args)` | 调用本模组 main 侧 `api.rpc.handle(name, fn)` 注册的函数；参数与返回值需可 JSON 序列化 |
-| `lyrics` / `theme`（1.3） | 内置模式共用的函数，见[歌词与主题](#歌词与主题13)；导出窗口里也能用。`lyrics.parse`（1.4）把歌词原文交给宿主解析 |
+| `every(ms, fn)` / `onDispose(fn)` | 定时调用、登记清理函数；模组停掉时宿主替它停掉定时、调用清理函数。见[现成的函数](../docs/folium/contributing.md#现成的函数) |
+| `lyrics` / `theme` | 内置模式共用的函数，见[歌词与主题](#歌词与主题)；导出窗口里也能用。`lyrics.parse` 把歌词原文交给宿主解析；`lyrics.getLines()`、`lyrics.refresh()` 读正在显示的歌词（导出窗口里不能用） |
 | `experimental[name]` | 选用了才能访问，否则抛 `experimental-not-declared:<name>` |
-| `internals` | 见 [internals](#internals自由度出口) |
 
 ## 注册表
 
 所有注册表同一种用法：`register(def)` 返回 `{ id, unregister() }`。`def.id` 是 `^[a-z0-9][a-z0-9-]*$`，
 宿主加上命名空间成为 `<modid>:<id>`（类似 Forge 的 ResourceLocation）；同一模组内重复 id 被拒绝。
 
+稳定的注册表有哪些，各自的用途、条目定义、需要的权限、在导出窗口里生不生效，都列在 API 参考的
+[注册表一览](../docs/folium/api.md#注册表一览)里：那张表是从宿主的代码生成的，这里不再抄一份。下面各小节写每一种的规则。
+
+实验性的两个不在那张表里：
+
 | 注册表 | 用途 | 稳定性 |
 | --- | --- | --- |
-| `visualizers` | 歌词动画模式 | 稳定 |
-| `tunings` | 给声明了 Folium 可调键的内置模式调参 | 稳定 |
-| `backgrounds` | 背景类型（出现在背景选择器，预览与导出同样生效） | 稳定 |
-| `stageLayers` | 播放页图层（需 `ui.stage`） | 稳定 |
-| `settingsSections` | 模组自己的设置，显示在模组面板里该模组展开后的区域 | 稳定 |
-| `commands` | 命令：出现在模组面板与命令面板 | 稳定 |
-| `playerPanelTabs` | 播放器面板的标签页 | 稳定 |
-| `homeTabs` | Grid 与 Bravais 首页导航里的完整页面（1.5） | 稳定 |
-| `controlButtons` | 进度条左右的按钮（`progress.leading` / `progress.trailing`） | 稳定 |
-| `progressLayers` | 叠在进度条轨道上的图层 | 稳定 |
-| `styles` | 模组 CSS，只针对公开 part | 稳定 |
 | `experimental['omni.providers']` | 在线音乐源 | 实验 |
 | `experimental['ponder.targets']` | 思索（应用内教程）目标 | 实验 |
+| `FoliumStageContext.getLayout()` | 播放页只读布局快照（需选用 `player.layout`） | 实验 |
+| `experimental['remote.actions']` | 在独立遥控窗口末尾追加宿主绘制的按钮 | 实验 |
 
 ### 宿主托管容器
 
@@ -230,25 +239,28 @@ export default function activate(folium) {
 `--folium-accent`、`--folium-font`；移除容器时调用 dispose。**模组不查询、不修改容器以外的宿主 DOM**，
 也不需要轮询——生命周期全部由宿主管。
 
-容器外层（1.2 起）带三个属性，供思索的 `hoverSelector` 和 `dom` 锚点定位某一个条目：
-`data-folium-owner`（模组 id）、`data-folium-kind`（`visualizer`、`visualizer-settings`、`background`、
-`background-settings`、`stage-layer`、`panel-tab`、`home-tab`（1.5）、`control-button`、`progress-layer`、`settings-section`、
-`tuning`）、`data-folium-entry`（带命名空间的条目 id，如 `visualizer52hz:rings`）。ShadowRoot 里面的元素
+`mount` 可以是异步的（返回一个给出 dispose 的 promise）。每种 `ctx` 都有 `onChange`、`onFrame`、`onResize`、
+`every`、`onDispose`；歌词动画和舞台图层的 `ctx` 还有 `onLyricTime`，进度条按钮和图层的有 `onPlaybackTime`。
+用它们开的监听和定时器在挂载结束时由宿主停掉。每个函数的说明和例子见[现成的函数](../docs/folium/contributing.md#现成的函数)。
+
+容器外层带三个属性，供思索的 `hoverSelector` 和 `dom` 锚点定位某一个条目：
+`data-folium-owner`（模组 id）、`data-folium-kind`（这是哪一种条目的容器，如 `visualizer`、`panel-tab`；每种注册表的取值见
+[注册表一览](../docs/folium/api.md#注册表一览)的最后一列）、`data-folium-entry`（带命名空间的条目 id，如 `visualizer52hz:rings`）。ShadowRoot 里面的元素
 选择器够不到，只能指到这个外层容器。
 
-### 参数 schema（FoliumParam）
+### 设置 schema（FoliumSetting）
 
-设置分区、visualizer / background 设置、tunings、命令参数共用一种字段声明：
+设置分区、visualizer / background 设置、tunings 的 `settings` 和命令的 `params` 共用一种字段声明：
 
 ```js
 { key: 'size', type: 'number', label: { 'zh-CN': '大小', en: 'Size' }, min: 0, max: 10, step: 0.5,
   defaultValue: 4, description: { en: 'tooltip' }, group: { en: 'Layout' } }
 ```
 
-- `type`：`number`（滑块）/ `text` / `boolean` / `select`（需 `options: [{ value, label }]`）。
+- `type`：`number`（滑块）/ `text` / `boolean` / `select`（需 `options: [{ value, label }]`）/ `color`（应用自己的取色器，值是小写的 `#rrggbb`）。
 - `group` 相同的字段放在同一个小标题下。没写 `step` 的数值：上下界都是整数按 1，否则按 0.01。
 - schema 是值的唯一来源：读到的值**已合并默认值**，写入时按 schema 校验（未知键丢弃、数值夹到范围内、
-  select 必须是声明过的选项）；非法字段声明（重复 key、未知类型、非数值默认值……）会被丢弃。
+  select 必须是声明过的选项）；非法字段声明（重复 key、未知类型、类型不对的默认值……）会被丢弃，「设置 → 模组」里这个模组那一行写明是哪个、为什么。
 - 值持久化在宿主，并随「视觉配置」导入导出一起走，也会带进导出窗口。
 
 ### visualizers
@@ -259,7 +271,7 @@ folium.registries.visualizers.register({
   label: { 'zh-CN': '虹光', en: 'Aurora' },
   order: 420,
   mount(container, ctx) { /* … */ return () => { /* dispose */ }; },
-  settings: [/* FoliumParam[]，可选 */],
+  settings: [/* FoliumSetting[]，可选 */],
   settingsPanel(container, panelCtx) { /* 可选：自绘设置面板，值仍按 settings 存 */ },
   hostLayers: { background: true, subtitles: true },   // 缺省都是 true
 });
@@ -269,26 +281,28 @@ folium.registries.visualizers.register({
 
 | 成员 | 说明 |
 | --- | --- |
-| `lines` / `song` / `staticMode` / `staticLineIndex` | 本次挂载内不变的快照；`lines` 的结构见[歌词与主题](#歌词与主题13) |
-| `seed`（1.3） | 内置模式用的几何种子（当前歌曲 id，没有时是按模式的回退值），预览、播放、导出一致；拿它做种子，随机结果与内置模式同步变化 |
-| `isPreview`（1.3） | 是否在设置预览里渲染 |
-| `currentTime.get()` / `.on('change', cb)` | 歌词时钟 |
+| `lines` / `song` / `staticMode` / `staticLineIndex` | 本次挂载内不变的快照；`lines` 的结构见[歌词与主题](#歌词与主题) |
+| `seed` | 内置模式用的几何种子（当前歌曲 id，没有时是按模式的回退值），预览、播放、导出一致；拿它做种子，随机结果与内置模式同步变化 |
+| `isPreview` | 是否在设置预览里渲染 |
+| `lyricTime.get()` / `onLyricTime(cb)` | 歌词时钟（秒）：歌词行的时间按它算。它可以和播放位置不同（用户调了歌词偏移、舞台源）；预览里是预览自己的时钟 |
+| `getDuration()` | 歌曲长度（秒），还不知道时是 0，知道了 `onChange` 会通知 |
 | `getLineIndex()` / `isPaused()` / `getTheme()` / `getSettings()` / `getSurface()` | 随时读取，每帧读也没问题 |
-| `getSubtitleTheme()` / `getCoverUrl()` / `getDisplay()`（1.3） | 字幕主题（没有单独的字幕主题时等于 `getTheme()`）、封面地址、显示设置。`getDisplay()` 的字段与内置模式收到的同名 prop 一致：`showText`、`lyricsFontScale`、`subtitleFontScale`、`subtitleOverlayOpacity`、`subtitleOverlayBackground`、`subtitleUpcomingLyricsBlur`、`showHarmonySubtitle`、`harmonySubtitleBackground`、`showSubtitleTranslation`、`hideTranslationSubtitle`、`subtitleContentMode`、`isPlayerChromeHidden`、`isPanelOpen`、`visualizerOpacity`；值不变时返回同一个对象 |
-| `subscribe(cb)` | 行号、暂停、主题、字幕主题、封面、显示设置、模组设置、表面任一变化时回调（暂停时时钟不走，靠它得知变化） |
-| `audio`（1.2） | 音频分析：`getPower()`、`getBands()`（`bass` / `lowMid` / `mid` / `vocal` / `treble`）都是 0..1；`getSpectrum()` 是原始 FFT 幅值（0–255）或 `null`。每帧都在变且不通知，在自己的帧循环里读；`getBands()` 每次返回同一个对象、原地刷新，要保留读数就复制。预览里是宿主生成的模拟信号，静音或没有分析器时读到 0 |
+| `getSubtitleTheme()` / `getCoverUrl()` / `getDisplay()` | 字幕主题（没有单独的字幕主题时等于 `getTheme()`）、封面地址、显示设置。`getDisplay()` 的字段与内置模式收到的同名 prop 一致：`showText`、`lyricsFontScale`、`subtitleFontScale`、`subtitleOverlayOpacity`、`subtitleOverlayBackground`、`subtitleUpcomingLyricsBlur`、`showHarmonySubtitle`、`harmonySubtitleBackground`、`showSubtitleTranslation`、`hideTranslationSubtitle`、`subtitleContentMode`、`isPlayerChromeHidden`、`isPanelOpen`、`visualizerOpacity`；值不变时返回同一个对象 |
+| `getLayout()`（实验） | 选用了 `player.layout` 时读取播放页布局与安全边距；未选用、预览、OBS 或导出中返回 `null`，见 [player.layout](#playerlayout实验只读) |
+| `onChange(cb)` | 行号、暂停、主题、字幕主题、封面、显示设置、模组设置、表面、时长任一变化时回调；选用了 `player.layout` 时也通知布局变化（暂停时时钟不走，靠它得知变化） |
+| `audio` | 音频分析：`getPower()`、`getBands()`（`bass` / `lowMid` / `mid` / `vocal` / `treble`）都是 0..1；`getSpectrum()` 是原始 FFT 幅值（0–255）或 `null`。每帧都在变且不通知，在自己的帧循环里读；`getBands()` 每次返回同一个对象、原地刷新，要保留读数就复制。预览里是宿主生成的模拟信号，静音或没有分析器时读到 0 |
 
 - **只在歌词数据、歌曲、`staticMode` 或静态预览行变化时重挂载**；换行不会重挂载，行号从 `getLineIndex()` 读。
 - `hostLayers.background`：宿主在你下面画用户选的背景；`getSurface().hostBackground` 为真时，画满整屏且不透明
   的模组应自己让位。`hostLayers.subtitles`：宿主在上面画底部字幕（翻译 / 下一句），走用户的字幕设置。
 - `settingsPanel` 必须配合 `settings`：它只替换「画法」，键、默认值和校验仍由 schema 决定，面板通过
-  `panelCtx.params`（`get / set / reset / subscribe`）读写。
+  `panelCtx.settings`（`get / set / reset / onChange`）读写。
 - 用户的全局歌词字号是 `getDisplay().lyricsFontScale`，内置模式都乘上它；模组关掉 `hostLayers.subtitles`
   自己画字幕时，字幕相关设置也从 `getDisplay()` 读。
 - 舞台图层（stageLayers）拿到同一种上下文：显示设置读自播放页正在用的设置，`seed` 是当前歌曲 id；
   `getSubtitleTheme()` 等于 `getTheme()`，`hideTranslationSubtitle` 恒为 `false`。
 
-### 歌词与主题（1.3）
+### 歌词与主题
 
 模组拿到的歌词行和主题与内置 visualizer 收到的 `Line` / `Theme` **同名同义**，内置模式的写法可以直接照搬。
 它们仍是宿主投影出的冻结副本，不是宿主对象本身。
@@ -303,7 +317,7 @@ folium.registries.visualizers.register({
 | `translation` / `romanization` / `alternateTexts` | 翻译、罗马音；`alternateTexts` 是带语言与角色的多份替代文本 |
 | `id` / `agentId` / `songPart` / `blockIndex` | 行 id、演唱者、段落名（如 `Chorus`）、段落序号 |
 | `isChorus` / `chorusEffect` | 副歌标记与副歌效果（`bars` / `circles` / `beams`） |
-| `backgroundVocals` | 和声，结构同一行（`text`、时间、`words`、`agentId`、翻译……）。宿主旧的单数 `backgroundVocal` 已并入这里 |
+| `backgroundVocals` | 和声，结构同一行（`text`、时间、`words`、`agentId`、翻译……） |
 | `wordSegments` | 用户保存的分词，`join('')` 等于 `fullText`；分词用 `folium.lyrics.segmentWords(line)`，它和内置模式一样优先用这份 |
 
 没有的可选字段直接不出现。用户保存分词后歌词会换成新数组，visualizer 随之重挂载，和内置模式重新排版的时机一致。
@@ -323,11 +337,15 @@ folium.registries.visualizers.register({
 | `lyrics.getRecentCompletedLine(lines, index, time)` | 没有当前行时（`index` 为 -1）最近唱完的一句，字幕在间隙里继续显示它 |
 | `lyrics.buildWordColorRanges(fullText, wordColors)` | 关键词配色区间 `{ startOffset, endOffset, color, priority }[]`（UTF-16 偏移，互不重叠） |
 | `lyrics.resolveWordColor(wordText, wordColors, fallback, { cjkMatchMode })` | 单个词的关键词颜色 |
-| `lyrics.parse(track)`（1.4） | 异步。按本地歌词文件的流程解析[歌词原文](#歌词原文14)，得到 `{ lines, isWordByWord }` |
+| `lyrics.parse(track)` | 异步。按本地歌词文件的流程解析[歌词原文](#歌词原文)，得到 `{ lines, isWordByWord }` |
 | `theme.resolveFontStack(theme)` / `resolveTranslationFontStack(theme)` | 歌词 / 翻译字幕的 CSS `font-family` 值 |
 | `theme.resolveFontWeight(theme, fallback)` | 规范化后的字重 |
 
-#### 歌词原文（1.4）
+`folium.lyrics` 另有两个读正在显示的歌词的成员，导出窗口里调用会抛 `lyrics-unavailable-in-export-context`：
+`getLines()` 返回屏幕上现在的行（没有时是空数组），比 `lyrics.loaded` 晚启动的模组先读一次，再跟着 `lyrics.loaded` 走；
+`refresh()` 用这首歌没改写过的歌词重跑一遍 `lyrics.transform` 并显示结果，不发 `lyrics.loaded`。
+
+#### 歌词原文
 
 `lyrics.parse(track)` 和 `omni.providers` 的 `getLyrics` 都收 `FoliumLyricsTrack`：`{ format, text, translationText?, romanizationText? }`，
 宿主按本地歌词文件的流程解析，解析器在 worker 里运行。
@@ -366,7 +384,7 @@ folium.registries.visualizers.register({
 `transitionGlitchScale`，范围 0~3，恒等值 1）。
 
 ```js
-folium.registries.tunings.register({ id: 'deep', target: 'sonnet', label: {…}, params: [{ key: 'cameraScale', type: 'number', min: 0, max: 3 }] });
+folium.registries.tunings.register({ id: 'deep', target: 'sonnet', label: {…}, settings: [{ key: 'cameraScale', type: 'number', min: 0, max: 3 }] });
 ```
 
 只接受目标声明过的数值键，范围取两者交集；**同一目标的同一个键只归一个模组**，后注册的冲突项被丢弃并报告。
@@ -375,10 +393,10 @@ folium.registries.tunings.register({ id: 'deep', target: 'sonnet', label: {…},
 ### backgrounds
 
 `mount(container, ctx: FoliumBackgroundContext)`，没有歌词和时钟：`staticMode`、`isPaused()`、`getTheme()`、
-`getSettings()`、`getCoverUrl()`、`subscribe()`，以及 1.2 起的 `audio`（同上）。可带 `settings` / `settingsPanel`。
+`getSettings()`、`getCoverUrl()`、`audio`（同上），`onChange()` 在暂停、主题、设置、封面变化时回调。可带 `settings` / `settingsPanel`。
 透明表面（OBS、透明导出）下宿主不渲染背景。
 
-### stageLayers（需 `ui.stage`）
+### stageLayers（需 `stageLayers`）
 
 ```js
 folium.registries.stageLayers.register({ id: 'video', slot: 'player.stage.back', interactive: false, mount });
@@ -397,8 +415,8 @@ folium.registries.stageLayers.register({ id: 'video', slot: 'player.stage.back',
 
 ```js
 const section = folium.registries.settingsSections.register({ id: 'prefs', label: {…}, description: {…}, settings: [...] });
-section.params.get();            // 当前值（已合并默认值）
-section.params.subscribe(fn);    // 值变化时回调
+section.settings.get();           // 当前值（已合并默认值）
+section.settings.onChange(fn);    // 值变化时回调
 ```
 
 显示在模组面板里：展开该模组即可看到，位于它的命令卡片上方。导出窗口里同样可用（只读值）。
@@ -417,7 +435,7 @@ folium.registries.commands.register({ id: 'toggle', label: {…}, description: {
 `mount(container, ctx: FoliumPanelContext)`；标签用拼图图标，标题取 `label`。`folium.ui.openPlayerPanel('<id>')`
 可以直接打开它。模组停用时若正开着它，面板回到封面页。
 
-### homeTabs（1.5）
+### homeTabs
 
 ```js
 folium.registries.homeTabs.register({
@@ -443,14 +461,14 @@ folium.ui.openHomeTab('console');
   Bravais 下的 F6 / Shift+F6 由宿主接着切换首页页签。打开页面时不抢设置、命令面板等窗口的焦点。
   键盘焦点的细节（Tab 绕回、F6、焦点归还）见 [首页页面](../docs/folium/home-tabs.md)。
 
-### controlButtons 与 progressLayers
+### progressButtons 与 progressLayers
 
-两者共用 `FoliumProgressContext`：`currentTime`、`getDuration()`、`timeToRatio(t)`、`seek(t)`、
-`getColors()`（宿主进度条的颜色）、`subscribe()`（时长或颜色变化）。三处进度条（悬浮控件两处、Lattice）
+两者共用 `FoliumProgressContext`：`playbackTime`（播放时钟，`seek` 收的就是这个时间）和 `onPlaybackTime(cb)`、`getDuration()`、
+`timeToRatio(t)`、`seek(t)`、`getColors()`（宿主进度条的颜色）、`onChange()`（时长或颜色变化）。三处进度条（悬浮控件两处、Lattice）
 都渲染同一个宿主组件，所以扩展会同时出现在三处。
 
-- `controlButtons`：`slot` 为 `progress.leading` 或 `progress.trailing`，容器按内容大小排布。
-  `hideWhenCollapsed: true`（Folium 1.3）让按钮不出现在收起状态的悬浮胶囊里，只在展开的胶囊和 Lattice 显示；
+- `progressButtons`：`slot` 为 `progress.leading` 或 `progress.trailing`，容器按内容大小排布。
+  `hideWhenCollapsed: true` 让按钮不出现在收起状态的悬浮胶囊里，只在展开的胶囊和 Lattice 显示；
   收起的胶囊很窄，按钮多了会把进度条挤短。
 - `progressLayers`：容器铺满轨道且**不拦截指针**，拖动进度照常可用；标记等需要点击的元素自己设 `pointer-events: auto`。
 - 两者容器里的点击由宿主拦在容器内，不会冒泡到外层（悬浮控件的胶囊点击会跳到播放页），模组不需要自己 `stopPropagation()`。
@@ -472,7 +490,7 @@ CSS 放进 `@layer folium-mods`（在 Tailwind 各层之后声明），不用 `!
 | `progress.thumb` | 滑块（默认 `opacity: 0`，样式里设为可见即出现） |
 | `progress.time` / `progress.duration` | 当前时间 / 总时长 |
 
-**公开变量**（1.3）：`--folium-player-bar-extra`（长度，默认 `0px`）把悬浮胶囊加宽这么多，展开和收起两种状态都生效，
+**公开变量**：`--folium-player-bar-extra`（长度，默认 `0px`）把悬浮胶囊加宽这么多，展开和收起两种状态都生效，
 超出视口时截止。用来补回在进度条两侧加按钮后被压短的轨道：
 `folium.registries.styles.register({ id: 'wider', css: ':root { --folium-player-bar-extra: 56px; }' })`。
 这个变量只有一个值，几个模组同时设置时后注册的生效。
@@ -493,13 +511,13 @@ CSS 放进 `@layer folium-mods`（在 Tailwind 各层之后声明），不用 `!
 | `app.viewChanged` | `{ view }` |
 | `visualizer.modeChanged` | `{ mode }` |
 | `theme.changed` | `{ theme }` |
-| `playback.likeChanged`（1.3） | `{ liked }`，`getState().liked` 变了（喜爱、取消喜爱，或换到喜爱状态不同的歌） |
-| `playback.volumeChanged`（1.5） | `{ volume, muted }`，音量或静音开关变了，不论是谁改的；`volume` 在 0–1 |
-| `playback.loopModeChanged`（1.5） | `{ mode }`：`'off'`、`'all'`（列表循环）或 `'one'`（单曲循环） |
-| `playback.queueChanged`（1.5） | `{ length, currentIndex }`，队列变了或显示中的歌在队列里换了位置；只是轮廓，歌曲用 `playback.getQueue()` 读。同一个任务里的多次变化合成一次，不按载荷去重（打乱后长度和位置可能都没变） |
-| `playback.failed`（1.5） | `{ song, reason, phase, willAutoSkip }`，一首歌放不了，见下 |
+| `playback.likeChanged` | `{ liked }`，`getState().liked` 变了（喜爱、取消喜爱，或换到喜爱状态不同的歌） |
+| `playback.volumeChanged` | `{ volume, muted }`，音量或静音开关变了，不论是谁改的；`volume` 在 0–1 |
+| `playback.loopModeChanged` | `{ mode }`：`'off'`、`'all'`（列表循环）或 `'one'`（单曲循环） |
+| `playback.queueChanged` | `{ length, currentIndex }`，队列变了或显示中的歌在队列里换了位置；只是轮廓，歌曲用 `playback.getQueue()` 读。同一个任务里的多次变化合成一次，不按载荷去重（打乱后长度和位置可能都没变） |
+| `playback.failed` | `{ song, reason, phase, willAutoSkip }`，一首歌放不了，见下 |
 
-**`playback.failed`**（1.5）只在用户看得见「这首歌放不了」时报一次：
+**`playback.failed`**只在用户看得见「这首歌放不了」时报一次：
 
 - 宿主自己的自动重试（网络错误、超时之后的几次重试）都失败了才报，中间几次不报。恢复上次播放时有备用源静默接管的，不报。
   点歌或恢复还在加载时用户又点了别的歌的，前一首的失败不提示也不报。
@@ -533,11 +551,11 @@ CSS 放进 `@layer folium-mods`（在 Tailwind 各层之后声明），不用 `!
 **`folium.playback`**：`getState()` 返回 `{ song, state, position, duration, liked, canLike }`；`play / pause / toggle / seek / seekToLyricTime / next / previous`、
 `playSong(song)`、`enqueue(song)`、`shuffleQueue()`、`toggleLike()` 需要 `playback.control`。歌曲 DTO 带不透明的 `ref`，宿主靠它找回真正的歌曲。
 
-- `shuffleQueue()`（1.3）打乱播放队列，当前歌曲留在最前；私人 FM、队列只有一首、外部 Stage 播放时不动，返回 `false`。
-- `toggleLike()`（1.3）喜爱或取消喜爱正在显示的歌，和宿主的喜爱按钮相同，结果提示也由宿主给出；`canLike` 为 `false` 时
+- `shuffleQueue()` 打乱播放队列，当前歌曲留在最前；私人 FM、队列只有一首、外部 Stage 播放时不动，返回 `false`。
+- `toggleLike()` 喜爱或取消喜爱正在显示的歌，和宿主的喜爱按钮相同，结果提示也由宿主给出；`canLike` 为 `false` 时
   （没有歌、来源不支持、Stage 播放、播放控制被禁用）不动，返回 `false`。`liked` 的变化见 `playback.likeChanged` 事件。
 
-- `seek(seconds)` 跳到**播放时间**；`seekToLyricTime(seconds)`（1.3）跳到**歌词时间**，也就是内置模式点击歌词行的行为：
+- `seek(seconds)` 跳到**播放时间**；`seekToLyricTime(seconds)` 跳到**歌词时间**，也就是内置模式点击歌词行的行为：
   传 `line.startTime` 即可，宿主负责换算歌词偏移、处理只有歌词的舞台源，播放控制被禁用时忽略。歌词有偏移时
   `seek(line.startTime)` 会跳偏，所以点歌词跳转一律用 `seekToLyricTime`。visualizer 容器本身接收指针事件，
   在自己的元素上监听点击即可；在预览里（`ctx.isPreview`）不要触发跳转。
@@ -569,17 +587,16 @@ CSS 放进 `@layer folium-mods`（在 Tailwind 各层之后声明），不用 `!
 | --- | --- |
 | `toast(message, { type, durationMs })` | 提示条 |
 | `openPlayerPanel(tabId?)` | 打开播放器面板，可指定本模组注册的标签 |
-| `openHomeTab(tabId)`（1.5） | 切到首页并打开本模组注册的首页页面；没注册的 id 抛 `home-tab-not-registered:<id>`。见 [homeTabs](#hometabs15) |
+| `openHomeTab(tabId)` | 切到首页并打开本模组注册的首页页面；没注册的 id 抛 `home-tab-not-registered:<id>`。见 [homeTabs](#hometabs) |
 | `navigate('home' \| 'player')` | 页面导航 |
-| `openVolume()`（1.3） | 打开宿主的音量面板（命令面板里的音量命令） |
-| `pickFile({ accept: 'video' \| 'audio' \| 'image' \| 'any', persist })` | 原生选择框；返回 `{ url, name, size }` 或 `null`。`url` 是本次会话有效的 `folia-mod://_files/...`，支持 Range，可直接做 `<video>` 的 src。`persist: true`（1.1）时宿主记住这次选择，返回值多一个不透明的 `grantId` |
-| `restoreFile(grantId)`（1.1） | 把之前 `persist` 选中的文件换成本次会话的新句柄（含同一个 `grantId`）；授权不属于本模组或文件已不存在时返回 `null`，后者的授权随即作废。模组始终拿不到文件路径 |
-| `releaseFile(grantId)`（1.1） | 放弃授权；已经发出的 URL 本次会话内仍然有效 |
+| `openVolume()` | 打开宿主的音量面板（命令面板里的音量命令） |
+| `pickFile({ accept: 'video' \| 'audio' \| 'image' \| 'any', persist })` | 原生选择框；返回 `{ url, name, size }` 或 `null`。`url` 是本次会话有效的 `folia-mod://_files/...`，支持 Range，可直接做 `<video>` 的 src。`persist: true` 时宿主记住这次选择，返回值多一个不透明的 `grantId` |
+| `restoreFile(grantId)` | 把之前 `persist` 选中的文件换成本次会话的新句柄（含同一个 `grantId`）；授权不属于本模组或文件已不存在时返回 `null`，后者的授权随即作废。模组始终拿不到文件路径 |
+| `releaseFile(grantId)` | 放弃授权；已经发出的 URL 本次会话内仍然有效 |
 | `embed(container, url, { title, allow })` | 在容器里建一个沙箱 iframe；origin 必须在 `embedOrigins` 里，需 `net.embed`。返回移除函数 |
-| `icon(name, { size, strokeWidth, color })`（1.2） | 宿主的 lucide 图标，名字与 lucide.dev 一致（如 `play`、`skip-forward`）；异步，得到一个新建的 `<svg>` 元素，归模组所有，未知名字得到 `null`。默认 24px、描边 2、颜色 `currentColor`（跟随周围文字）。导出窗口里也能用。宿主只承诺图标名，图形随宿主的 lucide 版本更新 |
+| `icon(name, { size, strokeWidth, color })` | 宿主的 lucide 图标，名字与 lucide.dev 一致（如 `play`、`skip-forward`）；异步，得到一个新建的 `<svg>` 元素，归模组所有，未知名字得到 `null`。默认 24px、描边 2、颜色 `currentColor`（跟随周围文字）。导出窗口里也能用。宿主只承诺图标名，图形随宿主的 lucide 版本更新 |
 
 > 持久授权按模组 id 保存（每个模组最多 32 条，超出时丢弃最旧的），要跨重启使用就把 `grantId` 存进 `folium.storage`（需 `filesystem.data`）。
-> 1.0 宿主没有 `restoreFile`，用 `typeof folium.ui.restoreFile === 'function'` 或 `folium.host.folium.minor >= 1` 判断。
 
 > 打包版从 `file://` 加载页面，部分站点（例如 YouTube）会因为缺少 Referer 拒绝播放（YouTube 报错 153），
 > 页面本身能加载。补 Referer 是后续改进。
@@ -593,30 +610,30 @@ CSS 放进 `@layer folium-mods`（在 Tailwind 各层之后声明），不用 `!
 // index.cjs
 module.exports = function activate(api) {
   api.rpc.handle('export', async (values) => api.render.exportVideo({ codec: 'vp9', width: 1920, height: 1080, fps: 30, background: 'transparent' }));
-  api.lifecycle.onDeactivate(() => { /* 释放定时器、子进程… */ });
+  api.onDispose(() => { /* 释放定时器、子进程… */ });
 };
 ```
 
 | API | 说明 | 稳定性 |
 | --- | --- | --- |
 | `api.manifest` / `api.host` / `api.log.*` | 冻结的清单、宿主版本、日志 | 稳定 |
-| `api.lifecycle.onDeactivate(fn)` | 禁用 / 重载 / 退出前按逆序执行；activate 直接 return 函数等价 | 稳定 |
+| `api.onDispose(fn)` | 禁用 / 重载 / 退出时执行，后登记的先执行；activate 直接 return 一个函数也算登记 | 稳定 |
 | `api.rpc.handle(name, fn)` | 供 client 的 `folium.rpc.call` 调用 | 稳定 |
-| `api.storage.data.get/set/has/delete/keys` | 异步，需 `filesystem.data`，与 client 的 `folium.storage` 共用数据，上限 1 MB | 稳定 |
-| `api.storage.paths.data` / `.cache`（1.5） | 模组自己写文件的目录，见下 | 稳定 |
-| `api.runtime.getPlaybackSnapshot()` | 需 `runtime.playback`；返回 `FoliumPlaybackSnapshot` DTO，`position` 在播放中按推送时间外推。1.5 起多了 `volume`（0–1）、`muted`、`loopMode` | 稳定 |
-| `api.render.exportVideo(spec)` | 需 `render.export`；spec 只有输出参数 `{ codec: 'vp9' \| 'prores', width, height, fps, startSec, endSec, background: 'transparent' \| 'theme' }`，模式、调参、歌词、主题与 Folium 参数值由宿主按当前状态取 | 稳定 |
-| `api.experimental` | 目前为空 | 实验 |
+| `api.storage.get/set/has/delete/keys` | 异步，需 `filesystem.data`，与 client 的 `folium.storage` 共用数据，上限 1 MB | 稳定 |
+| `api.paths` | 可以写文件的用户目录：`documents`、`downloads`、`music`、`videos`；模组自己的文件放 `api.storage.paths` | 稳定 |
+| `api.storage.paths.data` / `.cache` | 模组自己写文件的目录，见下 | 稳定 |
+| `api.runtime.getPlaybackSnapshot()` | 需 `playback.read`；返回 `FoliumPlaybackSnapshot` DTO，`position` 在播放中按推送时间外推；还带音量 `volume`（0–1）、`muted` 与循环模式 `loopMode` | 稳定 |
+| `api.render.exportVideo(spec)` | 需 `render.export`；spec 只有输出参数 `{ codec: 'vp9' \| 'prores', width, height, fps, startSec, endSec, background: 'transparent' \| 'theme' }`，模式、调参、歌词、主题与 Folium 设置值由宿主按当前状态取 | 稳定 |
 
 导出上限（3840×2160、60fps、15 分钟、全局互斥）与 ffmpeg 查找顺序属于宿主行为，不属于契约，可能调整。
 
-### 文件目录 api.storage.paths（1.5）
+### 文件目录 api.storage.paths
 
-`api.storage.data` 适合设置大小的状态（上限 1 MB）；更大的内容、日志、下载的文件由 main 入口自己写成文件，放在宿主给的两个目录里：
+`api.storage` 适合设置大小的状态（上限 1 MB）；更大的内容、日志、下载的文件由 main 入口自己写成文件，放在宿主给的两个目录里：
 
 | 路径 | 位置 | 用途 |
 | --- | --- | --- |
-| `api.storage.paths.data` | `<userData>/mods-data/<id>/files` | 要保留的文件。与 `storage.data` 的数据文件同在 `mods-data/<id>` 下，但不包含它 |
+| `api.storage.paths.data` | `<userData>/mods-data/<id>/files` | 要保留的文件。与 `api.storage` 的数据文件同在 `mods-data/<id>` 下，但不包含它 |
 | `api.storage.paths.cache` | `<userData>/mods-cache/<id>` | 可以重建的文件。用户随时可以在模组面板里清空它，模组运行时也一样，所以要预期文件会消失；宿主不限大小，上限自己控制 |
 
 - 两个都是 getter，每次读取都先检查 `filesystem.data`，没有就**同步**抛 `permission-denied:filesystem.data`；然后在目录不存在时创建它，
@@ -625,12 +642,12 @@ module.exports = function activate(api) {
   链接 / junction。模组面板会把这样的缓存目录标成已损坏，「清空缓存」删掉这个条目后，下次读取就能重新建出目录。
 - 两个 getter 不可枚举：`JSON.stringify(api)`、`{ ...api.storage.paths }` 之类遍历属性的写法读不到它们，也就不会抛错或建目录。
 - 模组面板的「清空缓存」删除 `cache` 目录里的全部内容（包括子目录），保留目录本身；模组自己在里面建的子目录，用之前要自己再建一次。
-- `paths` 对象本身总是在（有没有权限都在），可以用 `'paths' in api.storage` 判断宿主是不是 1.5。
+- `paths` 对象本身总是在（有没有权限都在），可以用 `'paths' in api.storage` 判断宿主有没有它。
 - 路径只用通过校验的清单 `id` 拼出来。client 拿不到路径：它没有文件系统。
-- 模组面板显示的「数据」统计整个 `mods-data/<id>`（含 `storage.data` 的数据文件），「缓存」统计 `mods-cache/<id>`，见[从 UI 安装与管理](#从-ui-安装与管理)。
+- 模组面板显示的「数据」统计整个 `mods-data/<id>`（含 `api.storage` 的数据文件），「缓存」统计 `mods-cache/<id>`，见[从 UI 安装与管理](#从-ui-安装与管理)。
 
 ```js
-// index.cjs（需要 filesystem.data）
+// index.cjs（需要 storage）
 const fs = require('fs');
 const path = require('path');
 
@@ -669,18 +686,17 @@ folium.experimental['omni.providers'].register({
 });
 ```
 
-`getLyrics` 返回的 `FoliumLyricsResult` 是稳定形状（1.4），`omni.providers` 本身仍是实验接口：
+`getLyrics` 返回的 `FoliumLyricsResult` 是稳定形状，`omni.providers` 本身仍是实验接口：
 
-- 两条轨道都是[歌词原文](#歌词原文14)。
+- 两条轨道都是[歌词原文](#歌词原文)。
   - 有 `wordByWord` 时显示它；它解析失败或解析不出任何一行时，退回 `main`。
   - `wordByWord` 没带翻译、罗马音时，沿用 `main` 的。
 - `isPureMusic: true` 时显示纯音乐视图，忽略两条轨道。
 - `chorusRanges: [{ startTime, endTime }]` 是歌词时间（秒），落在区间里的行显示副歌效果，最多 64 段。
   - 没给时，宿主按重复的行自动识别。
   - TTML 的 `songPart` 标记优先于这两者。
-- 1.3 的 `{ lrc, translationLrc }` 仍然可用，按纯 LRC 解析，和 1.3 完全相同。这个形状从 1.4 起废弃，Folium 2 移除。
 
-注册的音源在界面上可以选为当前音源（1.4）：
+注册的音源在界面上可以选为当前音源：
 
 - 它出现在首页右下角的音源切换器里，标着「无需登录」，点一下就切过去。和切换内置音源一样，会先确认清空当前在线播放和队列。
   - 切换器、搜索浮层的来源按钮显示 `shortName`，没有时显示 `displayName`；头像是它的首字母。
@@ -699,10 +715,10 @@ folium.experimental['omni.providers'].register({
 `folium.env.context === 'main'`。
 
 - **文字字段**（目标的 `titleKey` / `summaryKey`、场景的 `titleKey`、`action.labelKey`、骨架框的 `labelKey`、
-  字幕的 `textKey`）不填翻译 key，直接写文字，或者按语言写 `{ 'zh-CN': '…', en: '…' }`（1.2），跟随界面语言切换，
+  字幕的 `textKey`）不填翻译 key，直接写文字，或者按语言写 `{ 'zh-CN': '…', en: '…' }`，跟随界面语言切换，
   缺的语言按其它模组标签的规则回退。文字里的 `{{mod}}` 会换成当前平台的修饰键（Ctrl / ⌘）。
 - **悬停提示**：`hoverSelector` 用上面的容器属性，例如 `[data-folium-entry="mymod:notes"]`。
-- **面板骨架**：`role: 'surface'` 的框不写 `surfaceKind` 时画成只有外框的 `plain`（1.2）。也可以借用宿主的
+- **面板骨架**：`role: 'surface'` 的框不写 `surfaceKind` 时画成只有外框的 `plain`。也可以借用宿主的
   界面骨架（`player-page`、`side-panel`、`settings-page`……），但它们画的是宿主界面，不是你的。
 
 **限制**：模组画不出自己界面的骨架。`surfaceKind` 只有宿主预置的那些；模组的面板、按钮在 ShadowRoot 里，
@@ -711,6 +727,99 @@ folium.experimental['omni.providers'].register({
 **建议**：别追求把界面画得像。用通用骨架勾出结构——一个 `surface` 面板、几个 `control` 按钮、几条 `rail`
 滑轨——再让字幕把意思讲清楚：每一步只讲一件事，用 `pointTo` 把字幕连到它讲的那个框，用 `highlight` 和
 `reveal` 标出「现在看这里」。这正是宿主思索的做法：骨架负责「在哪」，文字负责「是什么、为什么」。
+
+### player.layout（实验，只读）
+
+清单声明 `"experimental": ["player.layout"]` 后，通过已有 `mount(container, ctx)` 的
+`ctx.getLayout(): FoliumPlayerLayout | null` 读取快照，布局变化并入已有 `ctx.onChange(listener)` 通知。
+此成员仍是 **EXPERIMENTAL (`player.layout`)**；
+没有单独的 `folium.experimental['player.layout']` 服务。类型定义在 `src/mods/folium/contract.ts` 的 Experimental 段。
+
+- `bounds` 是播放页范围，`insets: { top, right, bottom, left }` 是相对该范围四条边的安全预留像素。
+  模组先应用 `insets`，再依据 `obstacles` 逐个做矩形相交判断；局部面板不会把所在整列都变成禁区。
+  当前仅自定义标题栏提供顶部 56px 预留（按播放页高度裁剪），其他方向为 0；局部控件由障碍物矩形表达。
+- `obstacles` 每项只有粗粒度 `role`、`kind: 'control' | 'reveal-area'`、`rect`，不暴露内部组件 id。
+  `role` 可为 `navigation`、`window`、`playback`、`now-playing`、`panel`、`notification` 或其他字符串。
+  障碍物**不保证完整，数量、顺序和 role 都不承诺兼容**；同一 role 的多个矩形不能合并为一个大框。
+- `FoliumLayoutRect` 是 `{ left, top, width, height }`：坐标为**视口 CSS 像素**，原点在视口左上角，
+  与 `getBoundingClientRect()` 一致。`bounds` 和所有障碍物使用同一坐标系，障碍物已裁剪到 `bounds` 内。
+  快照深冻结，数值未变时引用不变。
+- 清单未选用、非播放页、舞台已卸载、设置预览、OBS 或导出场景返回 `null`。
+  无布局订阅或首次测量尚未完成时也返回 `null`；订阅启动测量后会通知新快照。
+  静态歌词播放页仍有原生控件，因此仍提供布局。
+- 只有选用了 `player.layout` 的模组通过 `ctx.onChange` 订阅时才测量；单独调用 `getLayout()` 不启动测量。
+  动画、滚动、resize 共用 80ms 合并测量，不逐帧更新 React；`ctx.onChange` 还会通知其他上下文变化，
+  可以比较快照引用来跳过无关更新。停用模组自动移除订阅；最后一个布局订阅取消或离开播放页后停止监听/测量。
+
+返回按钮保留完整 **120×120** 的鼠标唤出区域，而不只是按钮点击区域。鼠标在 `app.overlay` 的模组内容
+上移动不会穿透并唤出背后的返回按钮，模组应避开这块区域。标题栏预留为**整条宽、56px 高**，
+仅在自定义窗口标题栏启用时出现；使用原生窗口边框或浏览器时不预留这一条。
+
+此接口不能修改原生控件、重排、隐藏或替换原生条目，也不提供原生 DOM。
+模组自己的完整组件仍挂在已有 `stageLayers` 的 `app.overlay` 槽位（需 `stageLayers`）；
+样式与交互由模组负责，通过现有 ShadowRoot 隔离，不增加另一套浮层渲染接口。
+
+```js
+export default function activate(folium) {
+  if (folium.env.context !== 'main') return;
+  folium.registries.stageLayers.register({
+    id: 'conversation', slot: 'app.overlay',
+    mount(container, ctx) {
+      // Mount your component and position only your own nodes from ctx.getLayout().
+      const render = () => positionOwnOverlay(container, ctx.getLayout());
+      const off = ctx.onChange(render);
+      render();
+      return off;
+    },
+  });
+}
+```
+
+`dev/folium/player-layout-demo` 提供无账号、无网络、可停用恢复的完整示例。
+
+### remote.actions：独立遥控窗口追加按钮
+
+清单声明 `"experimental": ["remote.actions"]`，在主窗口的 `client` 默认入口注册。
+这是 **EXPERIMENTAL (`remote.actions`)**。
+遥控窗口只接收可序列化的按钮定义，由宿主绘制；模组代码及 `run()` 始终在主窗口执行。
+
+```js
+export default function activate(folium) {
+  let count = 0;
+  const handle = folium.experimental['remote.actions'].register({
+    id: 'room-actions', order: 10,
+    actions(context) {
+      return [{
+        id: 'like', label: { 'zh-CN': '房间点赞', en: 'Like in room' },
+        icon: 'thumbs-up', count, disabled: !context.song,
+        run() { count += 1; handle.invalidate(); },
+      }];
+    },
+  });
+  return () => handle.unregister();
+}
+```
+
+- `actions(context)` 同步返回追加按钮。上下文只有当前显示的 `song: FoliumSong | null` 和
+  `state: 'playing' | 'paused' | 'stopped'`。回调应只计算定义，副作用放进按钮的 `run()`。
+- 注册项有局部 `id` 和可选 `order`；按钮也有局部 `id`，宿主为其加上模组及注册项前缀。
+  `label` 是真正的多语言 `FoliumLabel`，由遥控窗口按自己的语言解析；`icon` 是 Lucide 图标名。
+  可选呈现字段为 `disabled`、`pressed`、非负有限数 `count`、`tone: 'normal' | 'alert'`。
+- `scope` 缺省为 `track`：按钮对应的显示曲目已变化或当前没有曲目时，旧点击不会执行。
+  `session` 允许跨歌执行，适合停止试听等会话动作。两者都检查注册仍有效及最新 `disabled`。
+- 状态变化后调用当前注册 handle 的 `invalidate()`，重新计算定义并刷新已打开的遥控窗口。
+  它只刷新模组按钮，不改变原生命令，也没有全局 `ui.refreshRemoteControls()`。
+  卸载后的旧 handle 不会影响同 id 的新注册；停用模组会自动清理注册及旧点击资格。
+- 模组按钮票据在相同注册周期和按钮 id 下稳定，计数、按下态等展示更新不会使第二次连续点击丢失。
+  原生播放、切歌、进度条及其他按钮仍直接发送原有命令，不经过模组动作票据。
+- 宿主在遥控窗口「更多」里多出的「模组」页绘制这些按钮，原生按键的位置不变；空间不足时内部滚动；没有模组加按钮时这一页不出现。
+  颜色、尺寸、图标和焦点样式由宿主统一，计数在悬停或键盘聚焦时显示为圆角标记。
+  每模组的最终按钮配额尚未冻结，宿主可限制过大的动作列表，模组应只提供少量必要动作。
+- 只在独立 Electron 遥控窗口里显示，主窗口里没有。
+  不提供自由组件、输入框或原生按钮的替换、重排、隐藏、禁用接口，也不授予额外播放权限。
+
+公开类型见 `src/mods/folium/contract.ts` 的 Experimental 段。
+离线示例：`dev/folium/sample-remote-actions`，可检查连续点击、键盘操作、状态刷新和停用恢复。
 
 ## internals（自由度出口）
 
@@ -726,36 +835,19 @@ folium.experimental['omni.providers'].register({
 
 用户选中了某个模组的歌词动画或背景后，那个模组被停用或卸载时：**已保存的选择不会被改写**，界面先显示默认项，
 并提示「来自未运行的模组 X」；模组重新启用后自动恢复。队列里来自模组 provider 的歌同理，只是暂时不能播放。
+应用打开时没赶上第一屏的模组也是这样：第一屏先显示默认项，它启动完就换回来。
 
 ## 版本与演进
 
-- 清单里的 `folium: 1` 是 major；宿主通过 `folium.host.folium.minor` / `api.host.folium.minor` 暴露 minor。
-- 1.x 内只做新增：可选的清单字段、新注册表、新事件、新服务方法、新权限、新参数类型、新公开 part。
+- 清单里的 `folium: 1` 是 major；宿主通过 `folium.host.folium.minor` / `api.host.folium.minor` 暴露 minor。当前是 Folium 1.6，契约里的每个成员 1.6 起都有。
+- 1.x 内只做新增：可选的清单字段、新注册表、新事件、新服务方法、新权限、新设置字段类型、新公开 part。
 - DTO（`contract.ts`）字段只增不减；宿主内部类型不出现在任何稳定契约里。
 - 删除或改变语义必须升 major；之前至少有一个 minor 在日志里标记废弃。
 - 实验接口可以在任何 minor 变动；稳定下来后原名字保留，`experimental` 里的选用变成空操作。
-- 1.3 是 Folium 1 的首个稳定版本，发布时一次性调整了 DTO 形状，让歌词和主题与内置 visualizer 同构：
-  `FoliumLine.text` 改名 `fullText`，`endTime` 改为歌词原始结束时间（渲染结束时间移到 `renderHints.renderEndTime`）；
-  `FoliumTheme.fontFamily` 改为用户字体名，可直接用的字体栈改由 `folium.theme.resolveFontStack(theme)` 得到，`fontWeight` 变为可选。
-- 1.4 新增稳定的歌词原文接口，不依赖 `omni.providers` 也能用：
-  - DTO：`FoliumLyricFormat`、`FoliumLyricsTrack`、`FoliumLyricsResult`、`FoliumParsedLyrics`。
-  - 方法：`folium.lyrics.parse`。
-  - 实验接口 `omni.providers` 的 `getLyrics` 改为返回 `FoliumLyricsResult`；它注册的音源可以在首页切换器里选为当前音源。
-  - **废弃**：`getLyrics` 的旧返回形状 `{ lrc, translationLrc }`（`FoliumLegacyLyricsResult`）。1.x 内照旧可用，Folium 2 移除。
-  仓库里的样例已同步。
-- 1.5 一次加入下面这些稳定接口，`folium.host.folium.minor >= 5`（main 入口是 `api.host.folium.minor`）即全部可用：
-  - 播放控制补全：`folium.playback` 的 `getVolume`、`setVolume`、`setMuted`、`getLoopMode`、`setLoopMode`、`getQueue`、`playQueueItem`，
-    通知 `playback.volumeChanged`、`playback.loopModeChanged`、`playback.queueChanged`；DTO `FoliumLoopMode`、`FoliumQueueItem`、`FoliumQueueSnapshot`。
-  - 首页页面：注册表 `homeTabs`（`FoliumHomeTabDef`）与 `folium.ui.openHomeTab`。
-  - 播放失败通知：`playback.failed` 与原因分类 `FoliumPlaybackFailureReason`。
-  - main 入口的文件目录：`api.storage.paths`（`FoliumModPaths`）。
-  - main 入口的播放快照 `FoliumPlaybackSnapshot` 新增 `volume`、`muted`、`loopMode`。
-  - 宿主侧变化，契约不变、模组不用改：
-    - 模组声明的 `type: 'select'` 参数（设置分区、visualizer / background 设置、tunings、命令参数）改用宿主自己的下拉框渲染，不再是原生
-      `<select>`：外观随主题；可以用键盘选（↑↓ / Home / End 移动，Enter 选中；停在当前项上按 Enter 和 Esc 一样只关下拉框，不算改值），
-      读屏会读出移到的选项；存储的值不在选项里时，显示 `defaultValue`（它也不在选项里就显示第一项），存储的值不变，直到用户自己选一次。
-    - 新增宿主设置「无法播放时自动跳过」，在播放设置的「播放队列」卡片里，命令面板里也能切换，**默认关闭**。打开后，受限类和原因不明的失败
-      也像已下架的歌一样倒计时跳到下一首，`playback.failed` 的 `willAutoSkip` 随之为 `true`；需要登录和网络问题仍然不跳。
+- Folium 2 要去掉的名字在 1.x 里照旧能用：为 Folium 1.5 写的模组不用改，用到一个旧名字，「设置 → 模组」里这个模组那一行提醒一次。
+  旧名字和现在的写法见 API 参考的[仍可用的旧名字](../docs/folium/api.md#仍可用的旧名字)，`npm run folium:check` 也会列出来。
+- 模组停掉之后，它原来那个 `folium` 对象的 `register` 和 `events.on` 不再生效；挂载结束之后经 `ctx` 订的监听同样不再生效。
+- 监听属于订阅它的那一次挂载：同一个函数在两处挂载里各订一次，每次变化各调用一次。
 
 ## 从 UI 安装与管理
 
@@ -765,9 +857,9 @@ folium.experimental['omni.providers'].register({
   - **原子安装**：先解压到 `userData/mods/.staging/` 校验（清单、声明的 `main` / `client` 文件必须存在），通过后才换入；
     失败则回滚，旧版本原样保留。
   - 同 id 覆盖即升级；内容指纹改变后模组保持禁用，直到重新确认。
-- **占用与清空缓存**（1.5）：声明了 `filesystem.data` 的模组，展开它的行时会显示「数据 X」「缓存 Y」两行和「清空缓存」按钮。
+- **占用与清空缓存**：声明了 `filesystem.data` 的模组，展开它的行时会显示「数据 X」「缓存 Y」两行和「清空缓存」按钮。
   - 只在展开时统计，停用的模组也能查、能清。统计只算普通文件，不跟随符号链接或 junction。
-  - 「数据」是整个 `mods-data/<id>`（含 `storage.data` 的数据文件），「缓存」是 `mods-cache/<id>`。
+  - 「数据」是整个 `mods-data/<id>`（含 `api.storage` 的数据文件），「缓存」是 `mods-cache/<id>`。
   - 「清空缓存」删除缓存目录里的所有内容，保留目录本身，然后重新统计，并在面板上方的提示条里报告释放了多少。缓存为 0 或目录不存在时按钮不可用。
     缓存目录的位置上是一个文件或目标已经不在的链接时（这时模组读 `paths.cache` 会一直抛错），面板显示缓存目录已损坏，按钮可用，
     清空会删掉这个条目本身（不跟随链接），模组下次读取时重新建出目录。指向现存目录的链接照常可用，只是不统计。
@@ -780,5 +872,16 @@ folium.experimental['omni.providers'].register({
 ## 稳定性约束
 
 - 单模组加载失败不影响宿主与其他模组；依赖图损坏只波及相关子图。
+- **开销看得见**：模组面板里每个运行中的模组展开后写着启动用了多久、运行时每秒约用多少毫秒、出错几次在几个地方，
+  以及 Node 入口在主进程里用掉的时间；慢的标「慢」（启动满 1.5 秒或过了 5 秒还没启动完、运行时每秒满 240 毫秒、主进程里一次调用满 100 毫秒）。
+  这些数是宿主调用模组时顺手记的，面板关着的时候不读也不画。宿主不会因为慢关掉任何东西。
+- **安全启动**：应用打开、有模组要启动时，主进程在用户数据目录写一个启动记号（`mod-start-note.json`）；
+  每个模组的界面代码都启动完（或过了 5 秒时限）、第一屏也挂载完之后撤掉。下次打开时记号还在，说明上次没有启动完：
+  宿主在运行任何模组代码之前问一次「这次要不要不带模组启动」（一个模组都没启用时不问，直接撤掉记号）；回答之前，谁来要求加载都不运行模组。
+  选「不带」只管这一次运行，不改任何设置，这期间模组面板里启用着的模组显示为「这次没有启动」。
+  启动还没完就正常退出（用户退出、系统关机、更新重启）也撤掉记号，只有被杀掉、崩溃、卡住才留着：启动期间页面每秒告诉主进程一次「我在响应」，
+  退出时最近 3 秒听到过就撤，页面已经不出声（可能卡在某个模组上）就留着。记号删不掉时另写一个文件把它作废，不会每次启动都问。
+- **窗口没有反应**：有模组在运行时窗口卡住，宿主弹一个系统对话框，可以继续等，也可以不带模组重新打开窗口（同样只管这一次运行）。
+  卡在启动阶段又选了「不带模组重新打开」的，启动记号留着，下次打开会问。
 - 每次加载周期先停用当前模组再重新激活，不会叠加多代定时器与监听器。
 - 导出会话全局互斥（`export-already-running`）；取消 / 失败时清理 ffmpeg 进程、离屏窗口与半成品文件。

@@ -1,21 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProviderAccountSummary } from '../../../types/onlineMusic';
-import type { LibraryAccountController } from '../../core/contracts/account';
-import { useLibraryAccountProviders, useLibraryAccountSelector } from '../../core/bindings/useLibraryAccount';
-import { canLogoutProvider, resolveProviderSelectLabel } from '../../core/model/accountRules';
-import { canSwitchToProviderDirectly } from '../../core/model/onlineProviderAccountView';
-import { translateHomeMessage } from '../../core/model/homeSources';
+import type { LibraryAccountController } from '../../core/account/account.contract';
+import { useLibraryAccountProviders, useLibraryAccountSelector } from '../../core/account/useLibraryAccount';
+import { canLogoutProvider, resolveProviderSelectLabel } from '../../core/account/accountRules';
+import { canSwitchToProviderDirectly } from '../../core/account/onlineProviderAccountView';
+import { translateHomeMessage } from '../../core/home/homeSources';
 import { colorWithAlpha } from '../../../components/visualizer/colorMix';
+import { openLoginWindow } from '../../../components/login/loginWindowStore';
 import { useLibraryTuiAccountListKeys } from './useLibraryTuiHomeKeyboard';
 
 // src/library/suites/tui/LibraryTuiAccountList.tsx
 // TUI 首页在线页签的平台列表（account-select / account-logout）：每个在线平台一行——当前标记、名称、账户状态
 // （昵称 / 未登录 / 无需登录 / 未配置）、选它会做什么（切换到 / 登录）。未登录（guest）时它就是在线页签的内容，
 // 已登录时由 F2 打开（替换目录列表，Esc / F2 关掉）。
-// - ↑↓ / Home / End 移动焦点，Enter 调 account.selectProvider（能直接切的问确认，要登录的打开登录框，未配置的忽略）；
-// - Delete 只对「当前且已登录」的平台登出（canLogoutProvider，且没有登出在途，与 AccountTab 同一条规则）。
-// 数据来自账户 controller 的绑定，动作全部调 controller；确认框与登录框由 account surface（LibraryTuiAccount）画。
+// - ↑↓ / Home / End 移动焦点，Enter 调 account.selectProvider（能直接切的切过去、播放器里有歌先问，要登录的打开共用的
+//   登录窗口，未配置的忽略）；
+// - Delete 只对「当前且已登录」的平台登出（canLogoutProvider，且没有登出在途，与 AccountTab 同一条规则），controller 先问。
+// 数据来自账户 controller 的绑定，动作全部调 controller；确认框由 account surface（LibraryTuiAccount）画，登录在窗口里。
 
 type LibraryTuiAccountListProps = {
     account: LibraryAccountController;
@@ -53,10 +55,12 @@ const LibraryTuiAccountList: React.FC<LibraryTuiAccountListProps> = ({ account, 
     const select = (provider: ProviderAccountSummary | undefined) => {
         if (!provider || !provider.availability.configured) return;
         setFocusedId(provider.providerId);
-        void account.selectProvider(provider.providerId);
+        void account.selectProvider(provider.providerId).then(result => {
+            if (result.action === 'login') openLoginWindow(result.providerId);
+        });
     };
     const canLogout = (provider: ProviderAccountSummary | undefined) => (
-        Boolean(provider) && canLogoutProvider(provider, activeProviderId) && !logoutPending
+        provider?.providerId === activeProviderId && canLogoutProvider(provider) && !logoutPending
     );
     const runLogout = (provider: ProviderAccountSummary | undefined) => {
         if (!provider || !canLogout(provider)) return;
@@ -87,7 +91,7 @@ const LibraryTuiAccountList: React.FC<LibraryTuiAccountListProps> = ({ account, 
                     const active = provider.providerId === activeProviderId;
                     const isFocused = index === focusedIndex;
                     const configured = provider.availability.configured;
-                    const showLogout = canLogoutProvider(provider, activeProviderId);
+                    const showLogout = active && canLogoutProvider(provider);
                     const actionLabel = active || !configured
                         ? ''
                         : translateHomeMessage(t, resolveProviderSelectLabel(provider));

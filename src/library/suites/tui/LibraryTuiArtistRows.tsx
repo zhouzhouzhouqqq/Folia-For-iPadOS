@@ -1,8 +1,8 @@
 import React from 'react';
 import type { RowComponentProps } from 'react-window';
 import type { SongResult } from '../../../types';
-import type { LibraryArtistAlbum } from '../../core/contracts/artist';
-import type { TrackArtistLink } from '../../core/model/trackLinks';
+import type { LibraryArtistAlbum } from '../../core/artist/artist.contract';
+import type { TrackArtistLink } from '../../core/shared/trackLinks';
 import { isSongUnavailable } from '../../../services/onlineMusic/songAvailability';
 import { formatTime } from '../../../utils/appPlaybackHelpers';
 

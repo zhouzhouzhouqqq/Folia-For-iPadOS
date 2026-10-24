@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // test/unit/hooks/usePersonalFmModeController.test.ts
-// 和 useOnlineProviderQrLogin.test.ts 同样的做法：仓库的 vitest 跑在 node 环境，没有 jsdom 也没有
+// 和 useProviderLogin.test.ts 同样的做法：仓库的 vitest 跑在 node 环境，没有 jsdom 也没有
 // testing-library，为一个 hook 引进整套渲染依赖并不值得。被测 hook 只用到 useCallback / useMemo，
 // 就地复刻这两个即可驱动真实实现。
 

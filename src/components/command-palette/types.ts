@@ -8,9 +8,9 @@ import type { AppLanguagePreference } from '../../i18n/config';
 import type { PanelTab } from '../UnifiedPanel';
 import type { AppView, CommandFilterHandle } from '../../stores/useAppViewStore';
 import type { GridSurfaceHandle } from '../../types/gridCommandSurface';
-import type { LibraryDirectorySurfaceHandle } from '../../library/core/contracts/directory';
-import type { LibraryArtistSurfaceHandle } from '../../library/core/contracts/artist';
-import type { LibrarySuiteChromeHandle } from '../../library/core/contracts/suiteChrome';
+import type { LibraryDirectorySurfaceHandle } from '../../library/core/directory/directory.contract';
+import type { LibraryArtistSurfaceHandle } from '../../library/core/artist/artist.contract';
+import type { LibrarySuiteChromeHandle } from '../../library/core/suite/suiteChrome.contract';
 import { type SettingsModalInitialTab, type SettingsSubviewId, type VisualizerSettingsSection } from '../../stores/useSettingsModalStore';
 import type { SettingsAnchorId } from '../modal/settings/navigation/settingsAnchorModel';
 import type { LyricStaffAbsorbMode, LyricStaffPolicy } from '../../utils/lyrics/staffCreditsPolicy';
@@ -195,8 +195,10 @@ export type CommandPaletteNavigationContext = {
     navigateToHome: () => void;
     navigateToPlayer: () => void;
     navigateToLattice: () => void;
-    focusLatticeCurrentSong: () => boolean;
-    canFocusLatticeCurrentSong: boolean;
+    /** The wall's own locate button: shows the tile of the song that is playing on the wall that is up. */
+    locatePlayingSongOnWall: () => void;
+    /** Shows the card of the song that is playing, opening its collection's page where needed. */
+    locatePlayingSong: () => void;
     /**
      * Selects a native home tab without the home surface's tab handle: none is registered while no home surface
      * is mounted (Lattice, or the player view once home is hidden), or the handle refused the tab. The host also
@@ -208,6 +210,8 @@ export type CommandPaletteNavigationContext = {
     toggleMainWindowAlwaysOnTop: () => Promise<boolean>;
     /** Window-level toggles (fullscreen, always-on-top) are meaningless in wallpaper mode. */
     isWallpaperMode: boolean;
+    /** False on native Wayland, where Electron's always-on-top is silently ignored. */
+    isWindowAlwaysOnTopSupported: boolean;
 };
 
 export type CommandPalettePanelContext = {
@@ -241,7 +245,7 @@ export type CommandPaletteSettingsContext = {
     /** Switches suites the way the settings section does (current session key + switchLibrarySuite). */
     chooseLibrarySuite: (suiteId: string) => void;
     /**
-     * Same predicate the settings block (LibraryWallLookSettings) shows itself with: the *active* suite is bravais.
+     * Same predicate the settings group (pages/BravaisWallGroup) shows itself with: the *active* suite is bravais.
      * A function, because switching suites while the palette is open has to close the wall-look commands off.
      */
     isLibraryWallLookAvailable: () => boolean;
@@ -294,6 +298,7 @@ export type CommandPaletteSettingsContext = {
     toggleHideFullscreenButton: () => void;
     toggleNativeMacFullscreenButton: () => void;
     toggleAutoHideCursorWithPlayerChrome: () => void;
+    toggleHideCursorWhenIdle: () => void;
     /** Lab switch: whether the restored session starts playing by itself on launch. */
     toggleAutoPlayOnLaunch: () => void;
     toggleTranscodeFallback: () => void;
@@ -309,12 +314,12 @@ export type CommandPaletteSettingsContext = {
     canAutoScanLocalLibrary: () => boolean;
     toggleLocalLibraryAutoScan: () => void;
     /**
-     * Whether NetEase listening reports can be turned on at all - the provider supports them and the
+     * Whether listening reports can be turned on at all - a provider takes them and its
      * account is signed in. A getter because signing in and out changes the answer while the palette
      * is open, and the settings panel gates its toggle on the same predicate.
      */
-    canReportNeteasePlayback: () => boolean;
-    toggleNeteaseScrobble: () => void;
+    canReportPlayback: () => boolean;
+    togglePlaybackReport: () => void;
     voiceInputPauseSupported: boolean;
     /** Lab switch for the experimental mod system; gates the `mods` command. */
     modSystemEnabled: boolean;
@@ -325,6 +330,8 @@ export type CommandPaletteSettingsContext = {
     toggleCloseToTray: () => void;
     /** Remote control window: hide the top floating window-control bar. */
     toggleHideRemoteControlTitlebar: () => void;
+    /** Remote control window: when idle, expand the cover into the large sleeve. */
+    toggleRemoteControlExpandCover: () => void;
     /** Turns remote control click-through off (the way back into a click-through window). */
     unlockRemoteControl: () => void;
     /** OBS browser source: keep the main window's heavy animation while an OBS client is connected. */
@@ -396,6 +403,8 @@ export type CommandPaletteVisualizerContext = {
     setLatentBackgroundTuning: (patch: Partial<LatentBackgroundTuning>) => void;
     /** The built-in video layer behind the lyrics. */
     toggleVideoLayer: () => void;
+    /** 智能动感模式 (beat_this-driven FX in every mode and background that draws them) on/off. */
+    toggleSmartBeat: () => void;
     /** Opens the file picker for the video layer; resolves to the picked name, or null when cancelled. */
     pickVideoLayerFile: () => Promise<string | null>;
     /**

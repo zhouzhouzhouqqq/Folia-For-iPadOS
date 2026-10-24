@@ -2,8 +2,10 @@
 import type { MotionValue } from 'framer-motion';
 import type { Filter } from 'pixi.js';
 import type { AudioBands, LumiereTuning, Theme } from '../../../types';
-import { loadPixi } from '../loadPixi';
 import { PixiSceneCache } from '../pixiSceneCache';
+import { loadPixi } from '../pixi/loadPixi';
+import { linkPixiPrograms } from '../pixi/pixiProgramLinks';
+import { makePixiContext } from '../pixi/pixiWebGLContext';
 import { createLumiereAudioSampler, type LumiereAudioSampler } from './lumiereAudio';
 import { findLumiereParagraphIndexAtTime, type LumiereProgram } from './lumiereProgram';
 import {
@@ -121,6 +123,15 @@ export class LumierePixiRuntime {
 
     static async create(options: LumiereRuntimeOptions) {
         const pixi = await loadPixi();
+        // WebGL 上下文按这几项先建好，再交给 Pixi（makePixiContext）。
+        const contextOptions = {
+            // 画布透明：folia 的共享背景层要透出来，由运行时的暗场层按暗场强度压暗。
+            backgroundAlpha: 0,
+            // 大头（图形组）画进 filter 纹理，MSAA 管不到；只剩画框细线，不值得整屏多重采样的解析开销。
+            antialias: false,
+            powerPreference: 'high-performance',
+        } as const;
+        const context = await makePixiContext(pixi, contextOptions, options.signal);
         const app = new pixi.Application();
         const width = Math.max(options.host.clientWidth, MIN_WIDTH);
         const height = Math.max(options.host.clientHeight, MIN_HEIGHT);
@@ -128,16 +139,13 @@ export class LumierePixiRuntime {
         await app.init({
             width,
             height,
-            // 画布透明：folia 的共享背景层要透出来，由运行时的暗场层按暗场强度压暗。
-            backgroundAlpha: 0,
-            // 大头（图形组）画进 filter 纹理，MSAA 管不到；只剩画框细线，不值得整屏多重采样的解析开销。
-            antialias: false,
+            ...contextOptions,
+            ...context,
             autoDensity: true,
             resolution,
             autoStart: false,
             sharedTicker: false,
             preference: 'webgl',
-            powerPreference: 'high-performance',
         });
         if (app.renderer.type !== pixi.RendererType.WEBGL) {
             app.destroy({ removeView: true });
@@ -160,21 +168,34 @@ export class LumierePixiRuntime {
             runtime.destroy();
             throw new DOMException('Lumiere runtime creation was cancelled', 'AbortError');
         }
-        options.host.appendChild(app.canvas);
-        app.canvas.style.cssText = 'width:100%;height:100%;display:block';
-        runtime.install();
+        await runtime.install();
+        if (options.signal?.aborted) {
+            runtime.destroy();
+            throw new DOMException('Lumiere runtime creation was cancelled', 'AbortError');
+        }
         return runtime;
     }
 
-    private install() {
+    /**
+     * 第一帧分几步做，步与步之间页面照常跑：建 WebGL 上下文之后另起一个任务建第一个场景，它的着色器程序
+     * 在页面照常跑时链接（linkPixiPrograms），之后画布才放上页面、画出来。中途取消就提前返回。
+     */
+    private async install() {
+        await new Promise((resolve) => { window.setTimeout(resolve); });
+        if (this.options.signal?.aborted) return;
         this.resizeToHost(true);
+        this.renderFrame();
+        await linkPixiPrograms(this.pixi, this.app.renderer, this.app.stage, 'Lumiere', this.options.signal);
+        if (this.options.signal?.aborted) return;
+        this.options.host.appendChild(this.app.canvas);
+        this.app.canvas.style.cssText = 'width:100%;height:100%;display:block';
         this.app.ticker.add(this.renderFrame);
         this.resizeObserver = new ResizeObserver(() => {
             if (this.destroyed || !this.resizeToHost(false)) return;
             if (this.options.paused) this.renderOnce();
         });
         this.resizeObserver.observe(this.options.host);
-        this.renderOnce();
+        this.app.renderer.render(this.app.stage);
         if (!this.options.paused) this.app.start();
     }
 

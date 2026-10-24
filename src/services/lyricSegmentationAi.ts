@@ -5,11 +5,12 @@ import { requireNativeAiConsent } from '../platform/ios/dataConsent';
 import { foliaApiUrl } from './nativeConnections';
 // Plain ESM module shared with the Vercel and Worker runtimes; resolved through allowJs.
 import { buildSegmentationManualPrompt } from '../../shared/lyricSegmentationPrompt.mjs';
+import { requestLyricSegmentation } from './aiText';
 
 // src/services/lyricSegmentationAi.ts
-// Renderer-side entry to lyric word segmentation, mirroring the Electron/web split in gemini.ts:
-// the desktop build goes through IPC so it can use the model the user configured in settings, and
-// the web build posts to the deployment's own endpoint because its credentials live server-side.
+// Renderer-side entry to lyric word segmentation. Each request leaves through ./aiText (the
+// desktop bridge, or the deployment's own route on the web); this file batches the lines, checks
+// what comes back and reports progress.
 //
 // The prompt shown to the user for the copy-and-paste path comes from the same shared module the
 // three server paths use, so "run it yourself" and "run it for me" ask for identical output.
@@ -31,21 +32,6 @@ import { buildSegmentationManualPrompt } from '../../shared/lyricSegmentationPro
  */
 export const SEGMENTATION_BATCH_SIZE = 100;
 
-type ElectronBridge = {
-    segmentLyrics?: (lines: string[]) => Promise<string[][]>;
-};
-
-const getElectronBridge = (): ElectronBridge | null => {
-    if (typeof window === 'undefined') return null;
-    const bridge = (window as unknown as { electron?: ElectronBridge }).electron;
-    return bridge && typeof bridge.segmentLyrics === 'function' ? bridge : null;
-};
-
-/** Whether an AI segmentation request can be made at all from this build. */
-export const isLyricSegmentationAiAvailable = (): boolean => (
-    typeof window !== 'undefined' && (Boolean(getElectronBridge()) || typeof fetch === 'function')
-);
-
 /** The full prompt a user copies into a model site, lyrics included. */
 export const buildLyricSegmentationPrompt = (lines: string[]): string => (
     buildSegmentationManualPrompt(lines)
@@ -62,31 +48,10 @@ const assertBoundaries = (value: unknown, lines: string[]): (string[] | null)[] 
     return value.map(row => (Array.isArray(row) ? row.map(segment => String(segment)) : null));
 };
 
-/** One request. `signal` only reaches the web path; ipcRenderer.invoke cannot be cancelled. */
-const segmentBatch = async (lines: string[], signal?: AbortSignal): Promise<(string[] | null)[]> => {
-    const bridge = getElectronBridge();
-    if (bridge?.segmentLyrics) {
-        return assertBoundaries(await bridge.segmentLyrics(lines), lines);
-    }
-
-    if (isNativeIOS() && (await FoliaAI.getSettings()).hasKey) return segmentNativeAILyrics(lines, signal);
-
-    const url = foliaApiUrl('/api/segment-lyrics');
-    requireNativeAiConsent(url);
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lines }),
-        signal,
-    });
-
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-        throw new Error((payload as { error?: string }).error || 'Failed to segment lyrics');
-    }
-
-    return assertBoundaries((payload as { lines?: unknown }).lines, lines);
-};
+/** One request, with its answer checked against the lines. */
+const segmentBatch = async (lines: string[], signal?: AbortSignal): Promise<(string[] | null)[]> => (
+    assertBoundaries(await requestLyricSegmentation(lines, signal), lines)
+);
 
 export interface SegmentationProgress {
     /** Lines whose batch has come back, successfully or not. */

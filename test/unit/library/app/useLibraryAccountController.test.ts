@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // 应用持有的在线账户 controller（A4）用真实的默认装配（omni、账户 store、provider 注册表）跑：
 // - 原 test/unit/onlineMusic/onlineProviderPlatform.test.ts 的四条（Folium mod 源运行时增删：列表跟着注册表、
 //   切到 mod 源后搜索浮层跟着走、不经切换写入的当前平台也跟、mod 源消失时回落网易并记住）迁到这里，
-//   切换改成「请求 + 确认」（每次切换都要确认）；
-// - 宿主表经 ref 现读最新的一份；没有刷新器的平台不刷新；卸载时 dispose。
+//   播放器里有歌（这里的假端口说有）时切换是「请求 + 确认」；
+// - 宿主表（退出、退出前的那一问、清空播放器）经 ref 现读最新的一份；卸载时 dispose。
 
 const storage = vi.hoisted(() => {
     // jsdom 环境下 node 自带的 localStorage 占位没有 getItem，store 初始化会直接抛。
@@ -29,8 +29,8 @@ const storage = vi.hoisted(() => {
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { useLibraryAccountController, type LibraryAccountHostTables } from '@/library/app/useLibraryAccountController';
-import { useLibraryAccountProviders } from '@/library/core/bindings/useLibraryAccount';
-import type { LibraryAccountController } from '@/library/core/contracts/account';
+import { useLibraryAccountProviders } from '@/library/core/account/useLibraryAccount';
+import type { LibraryAccountController } from '@/library/core/account/account.contract';
 import { registerOnlineMusicProvider, unregisterOnlineMusicProvider } from '@/services/onlineMusic/providerRegistry';
 import { useOnlineProviderAccountStore } from '@/stores/useOnlineProviderAccountStore';
 import { useSearchNavigationStore } from '@/stores/useSearchNavigationStore';
@@ -70,10 +70,10 @@ const Probe = ({ tables }: { tables: LibraryAccountHostTables }) => {
     return null;
 };
 
-const cleanup = { resetForProviderSwitch: vi.fn() };
+const cleanup = { holdsSongs: () => true, resetForProviderSwitch: vi.fn() };
 const tables = (overrides: Partial<LibraryAccountHostTables> = {}): LibraryAccountHostTables => ({
-    refreshers: {},
-    logouts: {},
+    logout: async () => { },
+    confirmLogout: async () => true,
     switchCleanup: cleanup,
     ...overrides,
 });
@@ -169,24 +169,7 @@ describe('application account controller with Folium mod sources', () => {
 });
 
 describe('application account controller host tables', () => {
-    it('keeps one controller across renders and reads the newest refresher table', async () => {
-        registerOnlineMusicProvider(modProvider);
-        mount();
-        const first = controller;
-
-        // 第一份表里没有 mod 源的刷新器：切过去不刷新。
-        await switchAndConfirm(MOD_PROVIDER_ID);
-        await switchAndConfirm('netease');
-
-        const refreshMod = vi.fn().mockResolvedValue(true);
-        rerender(tables({ refreshers: { [MOD_PROVIDER_ID]: refreshMod } }));
-        expect(controller).toBe(first);
-
-        await switchAndConfirm(MOD_PROVIDER_ID);
-        expect(refreshMod).toHaveBeenCalledTimes(1);
-    });
-
-    it('logs out through the newest logout table', async () => {
+    it('keeps one controller across renders and asks through the newest table before signing out through it', async () => {
         useOnlineProviderAccountStore.getState().updateAccount('netease', {
             status: 'authenticated',
             user: { id: 'u1', nickname: 'U1' },
@@ -194,10 +177,14 @@ describe('application account controller host tables', () => {
             hydration: 'ready',
             freshness: 'fresh',
         });
+        const staleAsk = vi.fn().mockResolvedValue(false);
+        const freshAsk = vi.fn().mockResolvedValue(true);
         const stale = vi.fn().mockResolvedValue(undefined);
         const fresh = vi.fn().mockResolvedValue(undefined);
-        mount(tables({ logouts: { netease: stale } }));
-        rerender(tables({ logouts: { netease: fresh } }));
+        mount(tables({ confirmLogout: staleAsk, logout: stale }));
+        const first = controller;
+        rerender(tables({ confirmLogout: freshAsk, logout: fresh }));
+        expect(controller).toBe(first);
 
         let result: unknown = null;
         await act(async () => {
@@ -205,8 +192,12 @@ describe('application account controller host tables', () => {
         });
 
         expect(result).toEqual({ status: 'logged-out', providerId: 'netease' });
-        expect(fresh).toHaveBeenCalledTimes(1);
+        expect(freshAsk).toHaveBeenCalledExactlyOnceWith({ providerId: 'netease', emptiesPlayer: true });
+        expect(fresh).toHaveBeenCalledExactlyOnceWith('netease');
+        expect(staleAsk).not.toHaveBeenCalled();
         expect(stale).not.toHaveBeenCalled();
+        // Signing out of the active platform empties the player, the way a switch does.
+        expect(cleanup.resetForProviderSwitch).toHaveBeenCalledWith('netease', 'netease');
         useOnlineProviderAccountStore.getState().clearAccount('netease');
     });
 

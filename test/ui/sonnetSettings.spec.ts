@@ -26,7 +26,7 @@ test('enters Sonnet from settings and exposes its layer controls', async ({ page
         useSettingsModalStore.getState().openSettings('options', 'visualizer', 'visualizer');
     });
 
-    const sonnetMode = page.getByRole('button', { name: 'Sonnet', exact: true });
+    const sonnetMode = page.getByRole('radio', { name: 'Sonnet', exact: true });
     await expect(sonnetMode).toBeVisible();
     await sonnetMode.click();
 

@@ -54,7 +54,7 @@ export function onNativeModsChanged(callback: (mods: ModRuntimeInfo[]) => void):
     const listener = () => callback(nativeModList()); events.addEventListener('change', listener);
     return () => events.removeEventListener('change', listener);
 }
-export async function listNativeMods(): Promise<ModsListPayload> { return { mods: nativeModList(), ffmpeg, directories: [] }; }
+export async function listNativeMods(): Promise<ModsListPayload> { return { mods: nativeModList(), ffmpeg, directories: [], startSkipped: false }; }
 export async function setNativeModEnabled(id: string, enabled: boolean) {
     const installed = readIndex(); const item = installed.find(value => value.info.id === id);
     if (!item) return { ok: false, error: 'mod-not-found', mods: nativeModList() };

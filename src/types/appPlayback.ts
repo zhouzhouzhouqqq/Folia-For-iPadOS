@@ -25,15 +25,6 @@ export type PlaybackNavigationOptions = {
     isAutomixAdvance?: boolean;
 };
 
-/** 本地 / Navidrome 歌曲的播放选项（onPlayLocalSong / onPlayNavidromeSong）。 */
-export type LibraryPlayOptions = PlaybackNavigationOptions & {
-    /**
-     * 这次点歌是否仍是最新请求，由 playSong 传入。为 false 时这次播放的失败既不提示也不报告：用户已经点了别的歌，
-     * 旧请求的失败不该盖住新歌的消息，也不该让模组（playback.failed）对新歌动手。不传时只看库内播放之间的先后。
-     */
-    isCurrent?: () => boolean;
-};
-
 export type NextTrackOptions = PlaybackNavigationOptions & {
     allowStopOnMissing?: boolean;
     /**
@@ -56,8 +47,6 @@ export type UnavailableReplacementRequest = {
     isFmCall: boolean;
     options: PlaybackNavigationOptions;
 };
-
-export type SkipPromptMessageKey = 'status.songUnavailablePrompt' | 'status.playbackErrorPrompt' | 'status.songUnplayableSkipPrompt';
 
 export type PlaybackSnapshot = {
     currentSong: SongResult | null;

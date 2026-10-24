@@ -47,7 +47,7 @@ test('does not remount a mod visualizer when the player UI changes on a lyric-le
         probe.__mounts = 0;
         const api = createFoliumClientApi(
             { id: 'remount-probe', name: 'probe', version: '1.0.0', author: null, description: null, permissions: [], status: 'active', error: null, enabled: true },
-            { context: 'main', internals: null },
+            { context: 'main', experimental: {}, onRelease: () => {}, stopped: () => false },
         );
         api.registries.visualizers.register({
             id: 'count',

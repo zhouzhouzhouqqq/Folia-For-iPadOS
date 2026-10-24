@@ -1,7 +1,8 @@
 import type { PlaybackNavigationOptions } from '../../../types/appPlayback';
 import type { SongResult } from '../../../types';
 import { useAppViewStore } from '../../../stores/useAppViewStore';
-import { focusLatticeCurrentSong, useLatticeControlsStore } from '../../../stores/useLatticeControlsStore';
+import { locatePlayingSong } from '../playing-song-locator/playingSongLocator';
+import { locatePlayingSongOnWall } from '../lattice/wallLocate';
 import type { CommandPaletteContext } from '../../command-palette/types';
 import { setStatusMessage } from '../../../stores/useStatusMessageStore';
 import { useAudioSettingsStore } from '../../../stores/useAudioSettingsStore';
@@ -84,9 +85,10 @@ export const buildNavigationCommandContext = (
     deps: NavigationCommandContextDeps,
 ): CommandPaletteContext['navigation'] => ({
     ...deps,
-    focusLatticeCurrentSong,
-    canFocusLatticeCurrentSong: Boolean(useLatticeControlsStore.getState().focusCurrentSong),
+    locatePlayingSongOnWall,
+    locatePlayingSong,
     isWallpaperMode: useDesktopSettingsStore.getState().wallpaperMode,
+    isWindowAlwaysOnTopSupported: useDesktopSettingsStore.getState().windowAlwaysOnTopSupported,
 });
 
 export const buildPanelCommandContext = (

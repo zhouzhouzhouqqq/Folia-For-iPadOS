@@ -58,6 +58,9 @@ const resolveClassicTuning = (tuning?: ClassicTuning): ClassicTuning => ({
 // Helper to determine if text contains CJK characters
 const isCJK = (text: string) => /[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]/.test(text);
 
+/** How the shown line leaves when the text is hidden, rather than replaced by the next line. */
+const TEXT_HIDDEN_EXIT = { opacity: 0, transition: { duration: 0.2, ease: 'easeOut' as const } };
+
 let classicMeasureCanvas: HTMLCanvasElement | null = null;
 
 /**
@@ -309,13 +312,17 @@ const Visualizer: React.FC<VisualizerProps> = (props) => {
                 animate={lyricContainerFloat?.animate}
                 transition={lyricContainerFloat?.transition}
             >
-                <AnimatePresence mode='popLayout'>
+                {/* A line hidden because the text is (a window over the player) only fades: the next line's
+                    exit grows and blurs it, and this layer covers most of the screen. */}
+                <AnimatePresence mode='popLayout' custom={!showText}>
                     {showText && activeLine && (
                         <motion.div
                             key={activeLine.startTime}
                             initial={activeLineContainerMotion.initial}
                             animate={activeLineContainerMotion.animate}
-                            exit={activeLineContainerMotion.exit}
+                            custom={!showText}
+                            variants={{ leave: (hidden: boolean) => (hidden ? TEXT_HIDDEN_EXIT : activeLineContainerMotion.exit) }}
+                            exit="leave"
                             className={`flex flex-wrap w-full max-w-6xl content-center ${lineConfig.justifyContent} ${lineConfig.alignItems}`}
                             style={{ perspective: `${lineConfig.perspective}px`, minHeight: '300px' }}
                         >

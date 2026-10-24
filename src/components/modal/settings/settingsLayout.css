@@ -1,0 +1,24 @@
+/* The settings surface fits the usable viewport in portrait, landscape and small windows. */
+.folia-settings-overlay {
+    --settings-top-gap: max(16px, env(safe-area-inset-top));
+    --settings-bottom-gap: max(16px, env(safe-area-inset-bottom));
+    padding-top: var(--settings-top-gap);
+    padding-bottom: var(--settings-bottom-gap);
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+}
+
+.folia-settings-window {
+    min-height: 0;
+    max-width: 100%;
+    max-height: calc(100dvh - var(--settings-top-gap) - var(--settings-bottom-gap));
+}
+
+@media (min-width: 640px) {
+    .folia-settings-overlay {
+        --settings-top-gap: max(32px, env(safe-area-inset-top));
+        --settings-bottom-gap: max(32px, env(safe-area-inset-bottom));
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+    }
+}

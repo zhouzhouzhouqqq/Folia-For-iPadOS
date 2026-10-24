@@ -17,7 +17,6 @@ import BravaisDirectoryPanel from './BravaisDirectoryPanel';
 import BravaisSeamArtist from './BravaisSeamArtist';
 import BravaisSeamAbout from './BravaisSeamAbout';
 import BravaisSeamCrumbs from './BravaisSeamCrumbs';
-import BravaisSeamAccount from './BravaisSeamAccount';
 import BravaisSeamPoster from './BravaisSeamPoster';
 import BravaisSeamAlbumPoster from './BravaisSeamAlbumPoster';
 import { BravaisSeamFlipText } from './BravaisSeamFlip';
@@ -30,7 +29,6 @@ import { BravaisSeamFlipText } from './BravaisSeamFlip';
 // 展开，两边一致），「折叠」挪进「⋯ 更多」的末尾；收藏星标在播放全部 / 加入队列那一行的末尾。
 // B9：首页窄缝 / 书脊换成 BravaisSeamHome（页签、二级切换、工具按钮、管理隐藏、账户位），另有全局搜索框（search）；
 // 首页层的面板是目录树（BravaisDirectoryPanel），集合层的面板仍是歌曲列表。
-// B10：账户的登录态 / 确认态（login / confirm）不属于任何一层，内容来自 bravaisAccountStore（BravaisSeamAccount）。
 // 集合页的描述在标题下方（元数据行之后），与歌手页的「关于艺术家」共用 BravaisSeamAbout（同一套正文样式、
 // 截断 + 展开，都不加小节标题），书脊上没有。歌手页的统计是那一节的附注，元数据行与它相同时不再重复。
 // 换层 / 换形态由外层整条翻（useBravaisSeam）；同一层里元数据（计数、匹配数）与状态文字变了，新的一行翻进来（BravaisSeamFlipText）。
@@ -181,8 +179,6 @@ const BravaisSeamContent: React.FC<BravaisSeamContentProps> = ({ variant, layer,
                 ? <BravaisDirectoryPanel layer={layer} actions={actions.panel} />
                 : <BravaisListPanel layer={layer} depth={depth} actions={actions.panel} />;
         case 'form': return layer.seam.collection?.form ? <BravaisSeamFormView form={layer.seam.collection.form} /> : null;
-        case 'login':
-        case 'confirm': return <BravaisSeamAccount variant={variant} />;
         default: return null;
     }
 };

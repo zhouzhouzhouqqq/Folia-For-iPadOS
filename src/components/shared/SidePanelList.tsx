@@ -16,6 +16,8 @@ export interface SidePanelListProps<T> {
     itemHeight: number;
     isDaylight: boolean;
     focusedIndex?: number;
+    /** A change of this number scrolls to the focused row again, though it is the row it was. */
+    revealTimes?: number;
     hideTitle?: boolean;
     headerLeadingActions?: React.ReactNode;
     headerActions?: React.ReactNode;
@@ -34,6 +36,7 @@ export function SidePanelList<T>({
     itemHeight,
     isDaylight,
     focusedIndex,
+    revealTimes,
     hideTitle = false,
     headerLeadingActions,
     headerActions,
@@ -92,7 +95,7 @@ export function SidePanelList<T>({
             } else if (!isOpen) {
                 lastScrollTargetRef.current = null;
             }
-    }, [isOpen, focusedIndex]);
+    }, [isOpen, focusedIndex, revealTimes]);
 
     return (
         <AnimatePresence>

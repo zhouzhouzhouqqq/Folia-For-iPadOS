@@ -58,6 +58,22 @@ describe('buildLatticeTiles', () => {
         expect(tiles).toHaveLength(3);
     });
 
+    it('makes every queue entry a song tile that keeps its number and plays within the queue', () => {
+        const queue = [online('one'), online('two')];
+
+        const tiles = buildLatticeTiles({ queue, currentSong: null });
+
+        // Only a tile of the explore page has a label in place of the number, and a queue of its own.
+        expect(tiles).toMatchObject([
+            { kind: 'song', song: queue[0], queueIndex: 0 },
+            { kind: 'song', song: queue[1], queueIndex: 1 },
+        ]);
+        for (const tile of tiles) {
+            expect(tile.label).toBeUndefined();
+            expect(tile).not.toHaveProperty('queue');
+        }
+    });
+
     it('returns nothing for an empty queue', () => {
         expect(buildLatticeTiles({ queue: [], currentSong: null })).toEqual([]);
     });

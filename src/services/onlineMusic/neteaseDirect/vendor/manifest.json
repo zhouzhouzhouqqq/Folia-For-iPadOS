@@ -13,6 +13,11 @@
       "upstreamSha256": "64a4c7ff56b4de0fc950ece4d26b5f12d54d6885cd16d1ce4e4dbee50f10e63c"
     },
     {
+      "route": "/album/new",
+      "module": "album_new",
+      "upstreamSha256": "1e0f3a130b08a12f2ee5255772321964b1eae887442a7b1a7f2ea83cc3f08573"
+    },
+    {
       "route": "/album/sub",
       "module": "album_sub",
       "upstreamSha256": "96aa0cd0d4abc345774a33439d4133a8a01e98183e9df2a01cd41fc16c9379e1"
@@ -66,6 +71,11 @@
       "route": "/history/recommend/songs/detail",
       "module": "history_recommend_songs_detail",
       "upstreamSha256": "75c997da1ae4c02a4505a63e436cdad1ed24db107cdea9c905bf8bd1823f481b"
+    },
+    {
+      "route": "/homepage/block/page",
+      "module": "homepage_block_page",
+      "upstreamSha256": "b37f377001f3e00c7b8b3f33252f0e4ee665894fcb16a39d0ef40ae670ac2694"
     },
     {
       "route": "/like",
@@ -138,6 +148,11 @@
       "upstreamSha256": "882688ccb3053cf93910d1ab8d80ebacb7e89309145191fcee747b4b12714a8c"
     },
     {
+      "route": "/recommend/resource",
+      "module": "recommend_resource",
+      "upstreamSha256": "c60687445d968c85cd3b62a71964ddb731bd4b73ce682d3e30adc4dffcc59df8"
+    },
+    {
       "route": "/recommend/songs",
       "module": "recommend_songs",
       "upstreamSha256": "2a09b5ca8f0609c4d0efcac5c10ef49e6d457361ce3134b04f75b0e09edd35b2"
@@ -146,6 +161,11 @@
       "route": "/recommend/songs/dislike",
       "module": "recommend_songs_dislike",
       "upstreamSha256": "59fe44e57718ccb14c4be0c28d2b25922f5ac184a8be3b7d980fccaf1c135248"
+    },
+    {
+      "route": "/simi/song",
+      "module": "simi_song",
+      "upstreamSha256": "fb69376cdc70a47389af70c7b57d81cebfeb608453382f1e7a51d6dfb749ed95"
     },
     {
       "route": "/song/chorus",
@@ -161,6 +181,21 @@
       "route": "/song/detail",
       "module": "song_detail",
       "upstreamSha256": "a85e79d888667b645301597a8c755fc468d62be0506fa94ca98e551bf4ee58a9"
+    },
+    {
+      "route": "/top/playlist",
+      "module": "top_playlist",
+      "upstreamSha256": "f392b386e39df3b4bdaf385b98a149e1385ebbdf640222a76d959e3321bd3b77"
+    },
+    {
+      "route": "/top/song",
+      "module": "top_song",
+      "upstreamSha256": "68a8ec70d8f492243349a968d72546bd55c90219b1b1548b94dcc77aa6eae000"
+    },
+    {
+      "route": "/toplist",
+      "module": "toplist",
+      "upstreamSha256": "c50b3bef037484d253b0402ab321b3b483d16e4ca70e58130e22524bb04f3043"
     },
     {
       "route": "/user/account",

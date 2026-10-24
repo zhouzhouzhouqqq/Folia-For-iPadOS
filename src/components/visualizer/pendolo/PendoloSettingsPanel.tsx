@@ -1,174 +1,102 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { DEFAULT_PENDOLO_TUNING, type PendoloTuning } from '../../../types';
+import { Group, Row, Segmented, type SettingsGroupDef } from '../../modal/settings/kit';
 import { type VisualizerSettingsPanelProps } from '../definition';
-import VisualizerPresetGroup, { type VisualizerPresetOption } from '../VisualizerPresetGroup';
+import { percent, SliderRow, times, ToggleRow } from '../panelRows';
 
 // src/components/visualizer/pendolo/PendoloSettingsPanel.tsx
-// Owns Pendolo-specific tuning controls while reusing the shared themed preset group.
-const PendoloSettingsPanel: React.FC<VisualizerSettingsPanelProps> = ({
+// Owns Pendolo-specific tuning controls, drawn as one group of the settings kit.
+const PENDOLO_GROUP: SettingsGroupDef = { id: 'vis-pendolo', titleKey: 'options.pendoloSettings' };
+
+const PendoloSettingsPanel: React.FC<VisualizerSettingsPanelProps<PendoloTuning>> = ({
     t,
-    isDaylight,
-    theme,
-    rangeInputClass,
-    pendoloTuning,
-    onPendoloTuningChange,
+    tuning: pendoloTuning,
+    onTuningChange: onPendoloTuningChange,
     onSliderPointerDown,
     onSliderCommit,
 }) => {
     const resolvedTuning = pendoloTuning ?? DEFAULT_PENDOLO_TUNING;
-    const centerGradientOptions: VisualizerPresetOption<boolean>[] = useMemo(() => ([
-        { value: true, label: t('options.pendoloCenterGradientOn') },
-        { value: false, label: t('options.pendoloCenterGradientOff') },
-    ]), [t]);
-    const coverOnWatchFaceOptions: VisualizerPresetOption<boolean>[] = useMemo(() => ([
-        { value: true, label: t('options.pendoloCoverOnWatchFaceOn') },
-        { value: false, label: t('options.pendoloCoverOnWatchFaceOff') },
-    ]), [t]);
-    const lineGlowOptions: VisualizerPresetOption<boolean>[] = useMemo(() => ([
-        { value: true, label: t('options.pendoloLineGlowOn') },
-        { value: false, label: t('options.pendoloLineGlowOff') },
-    ]), [t]);
-    const gearDecorOptions: VisualizerPresetOption<PendoloTuning['showGearDecor']>[] = useMemo(() => ([
-        { value: 'none', label: t('options.decorNone') },
-        { value: 'subtle', label: t('options.decorSubtle') },
-        { value: 'full', label: t('options.decorFull') },
-    ]), [t]);
+    const drag = { onDragStart: onSliderPointerDown, onDragEnd: onSliderCommit };
 
     return (
-        <div className="space-y-4">
-            <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
-                    <span>{t('options.pendoloWheelCenterX')}</span>
-                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                        {resolvedTuning.wheelCenterX > 0 ? '+' : ''}{Math.round(resolvedTuning.wheelCenterX * 100)}%
-                    </span>
-                </div>
-                <input
-                    type="range"
-                    min="-0.20"
-                    max="0.40"
-                    step="0.01"
-                    value={resolvedTuning.wheelCenterX}
-                    onChange={(event) => onPendoloTuningChange?.({ wheelCenterX: parseFloat(event.target.value) })}
-                    onPointerDown={onSliderPointerDown}
-                    onPointerUp={onSliderCommit}
-                    className={rangeInputClass}
-                />
-            </div>
-
-            <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
-                    <span>{t('options.pendoloArcRadius')}</span>
-                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                        {Math.round(resolvedTuning.arcRadius * 100)}%
-                    </span>
-                </div>
-                <input
-                    type="range"
-                    min="0.25"
-                    max="0.80"
-                    step="0.01"
-                    value={resolvedTuning.arcRadius}
-                    onChange={(event) => onPendoloTuningChange?.({ arcRadius: parseFloat(event.target.value) })}
-                    onPointerDown={onSliderPointerDown}
-                    onPointerUp={onSliderCommit}
-                    className={rangeInputClass}
-                />
-            </div>
-
-            <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
-                    <span>{t('options.pendoloArcAngleDeg')}</span>
-                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                        {Math.round(resolvedTuning.arcAngleDeg)}°
-                    </span>
-                </div>
-                <input
-                    type="range"
-                    min="40"
-                    max="160"
-                    step="5"
-                    value={resolvedTuning.arcAngleDeg}
-                    onChange={(event) => onPendoloTuningChange?.({ arcAngleDeg: parseFloat(event.target.value) })}
-                    onPointerDown={onSliderPointerDown}
-                    onPointerUp={onSliderCommit}
-                    className={rangeInputClass}
-                />
-            </div>
-
-            <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
-                    <span>{t('options.pendoloTickSnappiness')}</span>
-                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                        {resolvedTuning.tickSnappiness.toFixed(1)}x
-                    </span>
-                </div>
-                <input
-                    type="range"
-                    min="0.5"
-                    max="2.0"
-                    step="0.1"
-                    value={resolvedTuning.tickSnappiness}
-                    onChange={(event) => onPendoloTuningChange?.({ tickSnappiness: parseFloat(event.target.value) })}
-                    onPointerDown={onSliderPointerDown}
-                    onPointerUp={onSliderCommit}
-                    className={rangeInputClass}
-                />
-            </div>
-
-            <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm" style={{ color: 'var(--text-primary)' }}>
-                    <span>{t('options.pendoloActiveScale')}</span>
-                    <span className="font-mono opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                        {resolvedTuning.activeScale.toFixed(2)}x
-                    </span>
-                </div>
-                <input
-                    type="range"
-                    min="1.00"
-                    max="1.60"
-                    step="0.05"
-                    value={resolvedTuning.activeScale}
-                    onChange={(event) => onPendoloTuningChange?.({ activeScale: parseFloat(event.target.value) })}
-                    onPointerDown={onSliderPointerDown}
-                    onPointerUp={onSliderCommit}
-                    className={rangeInputClass}
-                />
-            </div>
-
-            <VisualizerPresetGroup
-                label={t('options.pendoloShowGearDecor')}
-                value={resolvedTuning.showGearDecor}
-                options={gearDecorOptions}
-                onChange={(next) => onPendoloTuningChange?.({ showGearDecor: next })}
-                isDaylight={isDaylight}
-                theme={theme}
+        <Group def={PENDOLO_GROUP}>
+            <SliderRow
+                {...drag}
+                label={t('options.pendoloWheelCenterX')}
+                value={resolvedTuning.wheelCenterX}
+                min={-0.2}
+                max={0.4}
+                step={0.01}
+                format={(value) => `${value > 0 ? '+' : ''}${percent(value)}`}
+                onChange={(value) => onPendoloTuningChange?.({ wheelCenterX: value })}
             />
-            <VisualizerPresetGroup
+            <SliderRow
+                {...drag}
+                label={t('options.pendoloArcRadius')}
+                value={resolvedTuning.arcRadius}
+                min={0.25}
+                max={0.8}
+                step={0.01}
+                format={percent}
+                onChange={(value) => onPendoloTuningChange?.({ arcRadius: value })}
+            />
+            <SliderRow
+                {...drag}
+                label={t('options.pendoloArcAngleDeg')}
+                value={resolvedTuning.arcAngleDeg}
+                min={40}
+                max={160}
+                step={5}
+                format={(value) => `${Math.round(value)}°`}
+                onChange={(value) => onPendoloTuningChange?.({ arcAngleDeg: value })}
+            />
+            <SliderRow
+                {...drag}
+                label={t('options.pendoloTickSnappiness')}
+                value={resolvedTuning.tickSnappiness}
+                min={0.5}
+                max={2}
+                step={0.1}
+                format={(value) => `${value.toFixed(1)}x`}
+                onChange={(value) => onPendoloTuningChange?.({ tickSnappiness: value })}
+            />
+            <SliderRow
+                {...drag}
+                label={t('options.pendoloActiveScale')}
+                value={resolvedTuning.activeScale}
+                min={1}
+                max={1.6}
+                step={0.05}
+                format={times}
+                onChange={(value) => onPendoloTuningChange?.({ activeScale: value })}
+            />
+            <Row label={t('options.pendoloShowGearDecor')}>
+                <Segmented<PendoloTuning['showGearDecor']>
+                    value={resolvedTuning.showGearDecor}
+                    options={[
+                        { value: 'none', label: t('options.decorNone') },
+                        { value: 'subtle', label: t('options.decorSubtle') },
+                        { value: 'full', label: t('options.decorFull') },
+                    ]}
+                    onChange={(next) => onPendoloTuningChange?.({ showGearDecor: next })}
+                />
+            </Row>
+            <ToggleRow
                 label={t('options.pendoloShowCenterGradient')}
-                value={resolvedTuning.showCenterGradient ?? true}
-                options={centerGradientOptions}
+                checked={resolvedTuning.showCenterGradient ?? true}
                 onChange={(next) => onPendoloTuningChange?.({ showCenterGradient: next })}
-                isDaylight={isDaylight}
-                theme={theme}
             />
-            <VisualizerPresetGroup
+            <ToggleRow
                 label={t('options.pendoloShowCoverOnWatchFace')}
-                value={resolvedTuning.showCoverOnWatchFace ?? false}
-                options={coverOnWatchFaceOptions}
+                checked={resolvedTuning.showCoverOnWatchFace ?? false}
                 onChange={(next) => onPendoloTuningChange?.({ showCoverOnWatchFace: next })}
-                isDaylight={isDaylight}
-                theme={theme}
             />
-            <VisualizerPresetGroup
+            <ToggleRow
                 label={t('options.pendoloEnableLineGlow')}
-                value={resolvedTuning.enableLineGlow ?? false}
-                options={lineGlowOptions}
+                checked={resolvedTuning.enableLineGlow ?? false}
                 onChange={(next) => onPendoloTuningChange?.({ enableLineGlow: next })}
-                isDaylight={isDaylight}
-                theme={theme}
             />
-        </div>
+        </Group>
     );
 };
 

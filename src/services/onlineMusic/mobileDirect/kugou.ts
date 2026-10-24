@@ -3,7 +3,7 @@ import { Buffer } from 'buffer';
 import { operations, helper, calculateMid } from './vendor/kugou.js';
 import { createNativeHttp } from './http';
 import { loadSecureState } from './state';
-import type { KugouOperation, KugouParams } from '../kugouTransport';
+import type { KugouOperation, KugouParams } from '../kugou/kugouTransport';
 import { OnlineProviderError } from '../../../types/onlineMusic';
 import { removeProviderSessionValue } from '../providerStorage';
 

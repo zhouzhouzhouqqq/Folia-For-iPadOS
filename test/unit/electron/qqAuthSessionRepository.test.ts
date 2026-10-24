@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 const {
     SESSION_KEY,
     createQqAuthSessionRepository,
-} = require('../../../electron/qqAuthSessionRepository.cjs') as {
+} = require('../../../electron/qq/qqAuthSessionRepository.cjs') as {
     SESSION_KEY: string;
     createQqAuthSessionRepository: (options: Record<string, unknown>) => {
         kind: string;

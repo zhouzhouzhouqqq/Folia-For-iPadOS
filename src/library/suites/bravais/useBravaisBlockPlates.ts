@@ -67,7 +67,7 @@ export const useBravaisBlockPlates = ({
                 block = cached && isSamePlateBlock(cached.block, fresh) ? cached.block : fresh;
             }
             next.set(key, { display, expandedSlotKey, reflow, anchorX, block });
-            (isLeftOfAnchor(column, anchorX) ? left : right).push(block);
+            (isLeftOfAnchor(column, anchorX, display.shape.blockSize) ? left : right).push(block);
         }
         cacheRef.current = next;
         return { left, right };

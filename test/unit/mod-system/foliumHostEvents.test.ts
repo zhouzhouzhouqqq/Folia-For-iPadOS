@@ -20,8 +20,18 @@ vi.hoisted(() => {
 import type { Line, LyricData, SongResult } from '@/types';
 import { usePlaybackStore } from '@/stores/usePlaybackStore';
 import { useAudioSettingsStore } from '@/stores/useAudioSettingsStore';
-import { applyLyricsTransform, hasBeforePlayHook, notifyPlaybackFailed, runBeforePlayHook, untransformedLyrics } from '@/services/hostExtensionHooks';
-import { installFoliumHostEvents } from '@/mods/folium/hostEvents';
+import {
+    applyLyricsTransform,
+    hasBeforePlayHook,
+    lyricsForNoLyrics,
+    notifyPlaybackFailed,
+    rerunLyricsTransform,
+    runBeforePlayHook,
+    untransformedLyrics,
+} from '@/services/hostExtensionHooks';
+import { supplyLyricsAfterEmptyLoad } from '@/components/app/playback/createLyricsSetter';
+import type { FoliumLine } from '@/mods/folium/contract';
+import { installFoliumHostEvents } from '@/mods/runtime/hostEvents';
 import { addFoliumEventHandler, removeFoliumEventHandlers } from '@/mods/folium/events';
 import { resolveFoliumSongRef, toFoliumSong } from '@/mods/folium/dto';
 import { buildLineRenderHints } from '@/utils/lyrics/renderHints';
@@ -29,7 +39,8 @@ import { buildLineRenderHints } from '@/utils/lyrics/renderHints';
 // test/unit/mod-system/foliumHostEvents.test.ts
 // The two host hooks as wired by installFoliumHostEvents: lyrics.transform at
 // the end of the lyrics pipeline (untouched lines keep their host data, the
-// transform never stacks on its own output), and
+// transform never stacks on its own output, and it can supply lyrics to a
+// song whose load ended with none), and
 // playback.beforePlay in front of playSong (cancel, replace, pass-through).
 // Folium 1.5 notifications from the same wiring: volumeChanged and
 // loopModeChanged from the audio settings store, and queueChanged, one per
@@ -90,6 +101,57 @@ describe('lyrics.transform hook', () => {
         expect(once.lines).toHaveLength(2);
         expect(untransformedLyrics(once)).toBe(source);
         expect(applyLyricsTransform(once)!.lines).toHaveLength(2);
+    });
+});
+
+describe('lyrics.transform on a song whose lyric load ended with none', () => {
+    const supplied = (text: string): FoliumLine => ({
+        fullText: text, startTime: 1, endTime: 2, words: [], renderHints: buildLineRenderHints(1, 2),
+    });
+
+    it('leaves the song without lyrics with no mod, and with a mod that only rewrites the lines it gets', () => {
+        expect(lyricsForNoLyrics()).toBeNull();
+        addFoliumEventHandler('mod-a', 'lyrics.transform', (event) => {
+            event.lines = event.lines.map((each) => ({ ...each, fullText: each.fullText.toUpperCase() }));
+        });
+        expect(lyricsForNoLyrics()).toBeNull();
+        supplyLyricsAfterEmptyLoad();
+        expect(usePlaybackStore.getState().lyrics).toBeNull();
+    });
+
+    it('shows what a mod supplies, for the displayed song, and leaves lyrics a load did find alone', () => {
+        usePlaybackStore.getState().setCurrentSong({ id: 7, name: 'Seven', artists: [], album: { name: '' }, durationMs: 0 } as unknown as SongResult);
+        const seen: Array<{ title: string | undefined; lines: number }> = [];
+        addFoliumEventHandler('mod-a', 'lyrics.transform', (event) => {
+            seen.push({ title: event.song?.title, lines: event.lines.length });
+            if (event.lines.length === 0) event.lines = [supplied('from the mod')];
+        });
+        supplyLyricsAfterEmptyLoad();
+        expect(seen).toEqual([{ title: 'Seven', lines: 0 }]);
+        expect(usePlaybackStore.getState().lyrics?.lines.map((each) => each.fullText)).toEqual(['from the mod']);
+
+        const found: LyricData = { lines: [line('found', 0)] };
+        usePlaybackStore.getState().setLyricsState(found);
+        supplyLyricsAfterEmptyLoad();
+        expect(usePlaybackStore.getState().lyrics).toBe(found);
+        expect(seen).toHaveLength(1);
+        usePlaybackStore.getState().setCurrentSong(null);
+    });
+
+    it('runs again on the empty lines, not on its own output, and an empty answer then takes the lyrics away', () => {
+        let answer = ['first'];
+        const seen: number[] = [];
+        addFoliumEventHandler('mod-a', 'lyrics.transform', (event) => {
+            seen.push(event.lines.length);
+            event.lines = answer.map(supplied);
+        });
+        const once = rerunLyricsTransform(null);
+        expect(once?.lines.map((each) => each.fullText)).toEqual(['first']);
+        answer = ['second'];
+        expect(rerunLyricsTransform(once)?.lines.map((each) => each.fullText)).toEqual(['second']);
+        answer = [];
+        expect(rerunLyricsTransform(once)).toBeNull();
+        expect(seen).toEqual([0, 0, 0]);
     });
 });
 
@@ -222,7 +284,7 @@ describe('playback.failed', () => {
 
     it('does no DTO work while nobody listens, so the shared ref pool is not used up', () => {
         const before = refNumber(toFoliumSong(song(10))!.ref);
-        notifyPlaybackFailed({ song: song(11), reason: 'network', phase: 'play', willAutoSkip: false });
+        notifyPlaybackFailed({ song: song(11), reason: 'unreachable', phase: 'play', willAutoSkip: false });
         const after = refNumber(toFoliumSong(song(12))!.ref);
         expect(after).toBe(before + 1);
     });
@@ -231,7 +293,7 @@ describe('playback.failed', () => {
         const handler = vi.fn();
         addFoliumEventHandler('mod-a', 'playback.failed', handler);
         const failed = song(20);
-        notifyPlaybackFailed({ song: failed, reason: 'membership-required', phase: 'mid-playback', willAutoSkip: true });
+        notifyPlaybackFailed({ song: failed, reason: 'subscription-required', phase: 'mid-playback', willAutoSkip: true });
 
         expect(handler).toHaveBeenCalledOnce();
         const event = handler.mock.calls[0][0];

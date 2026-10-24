@@ -1,27 +1,30 @@
 import React from 'react';
 import type { Theme } from '@/types';
-import type { FoliumParam, FoliumParamAccess, FoliumSettingsSectionDef } from '../contract';
-import { resolveFoliumLabel, sanitizeFoliumParams } from '../params';
-import { createFoliumParamAccess } from '../paramStore';
-import { createFoliumRegistry, useFoliumRegistryEntries } from '../registry';
-import { FoliumSettingsCard } from '../FoliumSettingsCard';
+import type { FoliumSetting, FoliumSettingAccess, FoliumSettingsSectionDef } from '../contract';
+import { resolveFoliumLabel, sanitizeFoliumParams } from '../../params/params';
+import { createFoliumParamAccess } from '../../params/paramStore';
+import { createFoliumRegistry, useFoliumRegistryEntries } from '../../runtime/registry';
+import { FoliumSettingsCard } from '../../params/FoliumSettingsCard';
+import { foliumMountName } from '../kinds';
 
 // src/mods/folium/registries/settingsSections.tsx
 // `folium.registries.settingsSections`: a mod's own settings, shown in the
 // mods panel when that mod's row is expanded (next to its commands). The
 // schema is the store: values persist under `settings:<id>`, ride along in
 // visual config import/export, and the mod reads them through the handle's
-// `params`.
+// `settings`.
 
 export interface StoredFoliumSettingsSection {
     def: FoliumSettingsSectionDef;
-    settings: FoliumParam[];
-    access: FoliumParamAccess;
+    settings: FoliumSetting[];
+    access: FoliumSettingAccess;
 }
 
+const SETTINGS_SECTION = foliumMountName('settingsSections', 'settings');
+
 export const settingsSectionsRegistry = createFoliumRegistry<FoliumSettingsSectionDef, StoredFoliumSettingsSection>('settingsSections', {
-    validate: (def, { id }) => {
-        const settings = sanitizeFoliumParams(def.settings);
+    validate: (def, { id, modId }) => {
+        const settings = sanitizeFoliumParams(def.settings, modId);
         if (settings.length === 0) {
             throw new Error('settingsSections.register: settings must declare at least one valid field');
         }
@@ -53,7 +56,7 @@ export const FoliumSettingsSections: React.FC<{
                     key={entry.id}
                     modId={entry.modId}
                     where={`settings section ${entry.id}`}
-                    entryKind="settings-section"
+                    entryKind={SETTINGS_SECTION}
                     entryId={entry.id}
                     title={entry.def.def.label}
                     fallbackTitle={entry.id}

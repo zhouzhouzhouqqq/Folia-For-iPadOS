@@ -1,5 +1,31 @@
 ## 2026-10-19：开发预览 2 发布验证
 
+## 2026-10-23：0.7.21 合入验证（当前结果）
+
+本节取代下面历史报告对“当前”的描述。源码基于官方 `33b25ff75252435a78006af45114fdf10e64727a`；设备暂时无法连接，未作真机验收。验证日志与截图保存在工作区 `work/upstream-0721-validation/`，没有放入源码或上传个人数据。
+
+| 检查 | 本次结果及边界 |
+| --- | --- |
+| npm 依赖安装 | 成功，使用更新后的锁文件；未改动个人 checkout 的共享依赖 |
+| TypeScript | `npm run typecheck` 通过 |
+| Web/PWA | `npm run build` 通过，原 Web/PWA 路径保留 |
+| iOS 本地资源 | `npm run ios:sync`（iOS build + Capacitor sync）通过，无远程首页，无 iOS Service Worker |
+| 原生设备编译 | Xcode 26.5、App scheme、iphoneos arm64 Debug、`CODE_SIGNING_ALLOWED=NO`，BUILD SUCCEEDED；不证明真机后台播放 |
+| 相关逻辑回归 | 272 文件共 3,672 项：首次 3,669 通过、1 跳过、2 失败；诊断 mock 补充后 27 项通过；Fume 排版项以单 worker 复测通过。没有把首次失败隐去，也未将定向复测算作再次全套通过 |
+| 正式工作目录最终定向回归 | 4 文件、35 项通过，覆盖 native smart beat、QQ 登录诊断、Omni 架构与 Fume 排版；最后类型检查、iOS sync、App scheme arm64 Debug 构建再次通过 |
+| 新原生智能动感桥 | 2 项通过：无 WebGPU 的原生 beat 路径、鼓声数据送回原版 overlap-add 与取消 |
+| 系统媒体 WebKit 探针 | 横屏/手机竖屏 2 项通过：元数据、封面、seek、上一首/下一首只触发一次。未验证真实锁屏/控制中心 |
+| 视觉清单 | 14 歌词 + 6 背景，121 个真实 Tempera 分镜 ID；校验 registry 与声明一致 |
+| macOS WebKit 视觉 | 26 个场景均挂载并 resize/卸载。初次 25 项无 pageerror；URL 复测已无 pageerror/console error 且像素变化，修复测试框架注入并使用静态夹具，未放宽 iframe 沙盒；Still/部分 Nomand 截图可不变化，未据此改成动画或宣布全部动态参数通过 |
+| 设备与账号 | 未连接；真实扫码、QQ 完整/试听音源、内存/帧率、后台/锁屏/蓝牙、中断、模型性能、导出均待验 |
+
+当前未实现的新版功能是 Spotify 与 YouTube Music 的 iOS 登录/播放桥；原生模型与官方 GPU 权重的差异详见 [0.7.21 适配记录](ipados-upstream-0.7.21.md)。旧手机重载/后台无声故障也必须真机复验，不能据本次编译宣称已彻底解决。
+
+---
+
+以下为先前版本的历史报告，保留排查记录；其中“尚未实现 BeatThis/HTDemucs”及 WebKit 无法启动等描述不代表本次结果。
+
+
 公开源码使用占位 Bundle ID `org.folia.personal`、无 Team ID，iOS 构建号提升至 2，桌面与 Docker 版本不变。对同一公开工作树实际执行 `npm run typecheck` 和 `npm run ios:sync` 均 exit 0；后者包含 iOS Vite build、资源复制与 Capacitor Swift Package 更新。项目结构检查确认 App scheme / Release / iphoneos26.5。
 
 QQ／酷狗相关 11 文件、310 项测试最终全部通过，耗时 17.88 秒。首轮有 3 项测试在模块导入时达到 30 秒超时（同期 Vite transform 耗时超过 300 秒），保留失败日志；该文件单独复跑 54/54 通过，随后相同 11 文件全量复跑 310/310 通过，没有放宽 timeout 或修改测试。[最终测试](ipados-validation/preview2-tests-final.log)、[首轮记录](ipados-validation/preview2-tests.log)、[文件复跑](ipados-validation/preview2-tests-retry.log)、[类型检查](ipados-validation/preview2-typecheck.log)、[iOS 同步](ipados-validation/preview2-ios-sync.log)。
@@ -251,3 +277,9 @@ SPM官方Capacitor8.5.3 artifacts按原Package校验：Capacitor ZIP SHA256 `931
 2. 若使用，Navidrome、同步、NowPlaying/PlayerCap的可达HTTPS/WSS地址和服务版本。
 3. iPad型号和iPadOS版本；在自己的Xcode选择Team、唯一Bundle ID并连接设备。**无需把Apple账号、密码、Team私钥、证书、音乐Token或服务端密钥发给Codex。**
 4. 账号联调、部署/付费、远程分析等外部操作需按具体操作取得授权；本次没有执行这些操作。
+## 2026-10-22：构建 4 手机播放故障验证
+
+本轮 34 项定向单测、两项真实 Mac WebKit 媒体横竖屏检查、ImageIO 解码检查、typecheck、iOS 前端、标准 Web/PWA、Capacitor sync、arm64 Debug build 与 Release archive 通过。个人 Debug build 4 已签名，但覆盖安装时 iPhone 13 Pro 从 available 变为 unavailable，CoreDevice 返回 peer unreachable，因此本轮真机结果仍未取得。原构建的 Jetsam 已确认 WebContent 约 1.5 GiB highwater；不要将 Mac 测试或新包生成当作解决真机重载/后台无声的证据。全部复现边界、代码与下一步见 [故障跟踪](ipados-phone-playback-reload.md)。
+
+
+2026-10-23 最终产物补记：正式工作目录 App scheme 的 iphoneos arm64 Debug 与 Release 无签名构建均为 BUILD SUCCEEDED；Release IPA 已在源码目录外生成并通过 ZIP CRC/执行权限/arm64/无个人 Team/无 profile/无远程首页/无 iOS Service Worker 检查，SHA-256 随产物保存。该 IPA 必须自行签名后安装，未上传 GitHub，未安装真机，不能代表播放与视觉的最终验收。

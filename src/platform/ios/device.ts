@@ -8,6 +8,7 @@ interface FoliaDevice {
     configureAudio(options: { webMediaSession: boolean }): Promise<void>;
     setMusicControls(options: { next: boolean; previous: boolean }): Promise<{ next: boolean; previous: boolean; skipForward: boolean; skipBackward: boolean }>;
     publishNowPlaying(data: { clear?: boolean; trackKey?: string; title?: string; artist?: string; album?: string; duration?: number; position?: number; rate?: number; playing?: boolean; artwork?: string }): Promise<void>;
+    prepareMediaArtwork(options: { data: string }): Promise<{ data: string }>;
     showOutputPicker(): Promise<void>;
     getStorage(): Promise<{ uri: string }>;
     importLibrary(options: { files?: boolean; single?: boolean; accept?: string; title?: string; folderLabel?: string; filesLabel?: string; cancelLabel?: string }): Promise<{ cancelled: boolean; path?: string; name?: string }>;

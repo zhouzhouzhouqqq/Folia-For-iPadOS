@@ -1,4 +1,4 @@
-import type { LibraryMutationResult } from '../../core/contracts/mutations';
+import type { LibraryMutationResult } from '../../core/collection/mutations/mutations.contract';
 
 // src/library/suites/bravais/bravaisFormModel.ts
 // 缝的表单态（设计稿 §10.1「表单态」、§10.2 rename / delete-collection / add-to-playlist / create-playlist）的状态机，纯规则。

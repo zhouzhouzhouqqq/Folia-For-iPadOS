@@ -18,7 +18,7 @@ async function walk(directory) {
 const declaredSource = await readFile(resolve(root, 'src/types/visualizerModes.ts'), 'utf8');
 const getDeclared = name => [...declaredSource.match(new RegExp(`${name} = \\[([\\s\\S]*?)\\] as const`))[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
 const groups = [['lyrics', visualRoot, getDeclared('BUILTIN_VISUALIZER_MODES')], ['backgrounds', resolve(visualRoot, 'backgrounds'), getDeclared('BUILTIN_VISUALIZER_BACKGROUND_MODES')]];
-const inventory = { baseline: '35db05ccef6065e868fab14f49b433c8344e9ca1', modes: [] };
+const inventory = { baseline: '33b25ff75252435a78006af45114fdf10e64727a', modes: [] };
 for (const [kind, directory, declared] of groups) {
     const actual = [];
     for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -46,7 +46,13 @@ inventory.parameterDefinitions = sharedAst.program.body.map(node => node.type ==
     || node.type === 'VariableDeclaration' && node.declarations.some(item => item.id.type === 'Identifier' && /DEFAULT_.*TUNING/.test(item.id.name))
 )).map(node => ({ source: 'src/types.ts', declaration: sharedText.slice(node.start, node.end) }));
 const shotSource = await readFile(resolve(visualRoot, 'tempera/types.ts'), 'utf8');
-inventory.temperaShots = [...shotSource.match(/TEMPERA_SHOT_KINDS = \[([\s\S]*?)\] as const/)[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
+const shotAst = parse(shotSource, { sourceType: 'module', plugins: ['typescript'] });
+const shotDeclaration = shotAst.program.body.flatMap(node => node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'VariableDeclaration' ? node.declaration.declarations : []).find(node => node.id.name === 'TEMPERA_SHOT_KINDS');
+const shotArray = shotDeclaration.init.type === 'TSAsExpression' ? shotDeclaration.init.expression : shotDeclaration.init;
+inventory.temperaShots = shotArray.elements.map(node => {
+    if (node.type !== 'StringLiteral') throw new Error('Non-literal Tempera shot ID');
+    return node.value;
+});
 inventory.sharedSources = [];
 for (const path of ['src/types.ts', 'src/types/visualizerModes.ts', 'src/components/visualizer/registry.tsx',
     'src/components/visualizer/tuningRegistry.ts', 'src/components/visualizer/backgrounds/registry.tsx',

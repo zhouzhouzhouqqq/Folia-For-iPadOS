@@ -166,13 +166,13 @@ describe('library wall windows picker', () => {
             expect(entry.isAvailable?.(createContext({ available: true, look: 'solid', windows: 3 }).context)).toBe(true);
             expect(entry.isAvailable?.(createContext({ available: false, look: 'solid', windows: 3 }).context)).toBe(false);
         }
-        expect(anchor.settingsTarget).toEqual({ subview: 'general', anchorId: 'bravaisSettings' });
+        expect(anchor.settingsTarget).toEqual({ subview: 'home', anchorId: 'bravaisSettings' });
 
         const { context, toggleLibraryWallStackEdges, openSettings } = createContext({ available: true, look: 'solid', windows: 3 });
         expect(toggle.execute('', context)).toBe(true);
         expect(toggleLibraryWallStackEdges).toHaveBeenCalledTimes(1);
         expect(anchor.execute('', context)).toBe(true);
-        expect(openSettings).toHaveBeenCalledWith('options', 'general', null, 'bravaisSettings');
+        expect(openSettings).toHaveBeenCalledWith('options', 'home', null, 'bravaisSettings');
     });
 });
 

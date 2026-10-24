@@ -17,8 +17,8 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 describe.each(['qq', 'kugou'] as const)('%s native routing', provider => {
     const load = async () => provider === 'qq'
-        ? { request: (await import('@/services/onlineMusic/qqTransport')).requestQq, availability: (await import('@/services/onlineMusic/qqTransport')).getQqTransportAvailability }
-        : { request: (await import('@/services/onlineMusic/kugouTransport')).requestKugou, availability: (await import('@/services/onlineMusic/kugouTransport')).getKugouTransportAvailability };
+        ? { request: (await import('@/services/onlineMusic/qq/qqTransport')).requestQq, availability: (await import('@/services/onlineMusic/qq/qqTransport')).getQqTransportAvailability }
+        : { request: (await import('@/services/onlineMusic/kugou/kugouTransport')).requestKugou, availability: (await import('@/services/onlineMusic/kugou/kugouTransport')).getKugouTransportAvailability };
     it('obtains a QR directly with no configured API', async () => {
         const transport = await load();
         expect(transport.availability()).toEqual({ configured: true });

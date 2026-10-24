@@ -44,6 +44,16 @@ const timeoutSignal = (timeoutMs) => (
 
 const isAbort = (error) => error && (error.name === 'TimeoutError' || error.name === 'AbortError');
 
+/** An address without its credentials and query: what a message may show of it. */
+const addressForMessage = (rawUrl) => {
+  try {
+    const parsed = new URL(rawUrl);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return 'the AI service';
+  }
+};
+
 /** Thrown with an HTTP status so both adapters can map failures without re-deriving them. */
 export class SegmentationRequestError extends Error {
   constructor(message, status = 500) {
@@ -83,15 +93,7 @@ const resolveOpenAICompatibleModel = (apiUrl, configuredModel) => {
   if (trimmedModel) {
     return trimmedModel;
   }
-  try {
-    const hostname = new URL(apiUrl).hostname.toLowerCase();
-    if (hostname === 'api.deepseek.com' || hostname.endsWith('.deepseek.com')) {
-      return DEEPSEEK_DEFAULT_MODEL;
-    }
-  } catch {
-    // Fall back to the generic OpenAI default when URL parsing fails.
-  }
-  return DEFAULT_OPENAI_MODEL;
+  return detectOpenAICompatibleProvider(apiUrl) === 'deepseek' ? DEEPSEEK_DEFAULT_MODEL : DEFAULT_OPENAI_MODEL;
 };
 
 const resolveTemperature = (value) => {
@@ -170,7 +172,7 @@ const sendOpenAICompatible = async (apiUrl, apiKey, body, fetchImpl) => {
     });
   } catch (error) {
     if (isAbort(error)) {
-      throw new SegmentationRequestError(`Request to ${apiUrl} timed out`, 504);
+      throw new SegmentationRequestError(`Request to ${addressForMessage(apiUrl)} timed out`, 504);
     }
     throw error;
   }

@@ -2,25 +2,26 @@
 
 这份指南面向想为 Folia 写模组的开发者：从零写出第一个模组、在本地调试，到把它发布到 [模组市场](https://folium-compound.cielaniska.top) 并获得官方认证。
 
-三份文档分工如下：
+四份文档分工如下：
 
 | 文档 | 内容 |
 | --- | --- |
+| [第一个模组：从零到跑起来](quickstart.md) | 第一次写先看这一页：一条命令生成起点，一条命令检查，在应用里跑起来 |
 | 本指南 | 怎么做：开发环境、示例、编写要点、发布流程 |
 | [Folium API 参考](api.md) | 查什么：每个接口、成员和类型（由契约自动生成） |
 | [Folium 规范](../../mods/README.md) | 规则是什么：清单字段、权限、注册表语义、事件、安全模型、版本策略 |
 
 ## 1. 开始之前
 
-- **先确认接口边界。** Folium 1.3 是首个稳定版本，稳定扩展接口目前只有 UI 相关部分，1.4 起的歌词原文解析（`folium.lyrics.parse` 与 `getLyrics` 的返回形状），以及 1.5 起的播放控制补全（音量、静音、循环模式、播放队列）、首页页面（`homeTabs`）、播放失败通知（`playback.failed`）与 main 入口的文件目录（`api.storage.paths`）。其余部分，尤其是 `omni.providers` 等 Omni provider 接口，仍属实验接口，能力尚不能与应用内置 Omni provider 对等。在 Folium v2 发布前，请绝对不要尝试制作超出当前实验接口能力的完整音源模组；这类实现必然遇到接口缺口，浪费开发者和维护者的时间。
+- **先确认接口边界。** 稳定扩展接口目前只有 UI 相关部分、歌词原文解析（`folium.lyrics.parse` 与 `getLyrics` 的返回形状），以及播放控制补全（音量、静音、循环模式、播放队列）、首页页面（`homeTabs`）、播放失败通知（`playback.failed`）与 main 入口的文件目录（`api.storage.paths`）。其余部分，尤其是 `omni.providers` 等 Omni provider 接口，仍属实验接口，能力尚不能与应用内置 Omni provider 对等。在 Folium v2 发布前，请绝对不要尝试制作超出当前实验接口能力的完整音源模组；这类实现必然遇到接口缺口，浪费开发者和维护者的时间。
 - **原始音频导出模组不得上架。** 任何尝试导出 provider 的原始音频流或解密之后的原始音频文件的模组，都有极高的平台法律风险。无论采用何种实现方式，此类模组都不会上架官方模组市场。
 - **模组是可信代码，不是沙箱。** `client` 入口运行在主界面的渲染进程里，`main` 入口运行在主进程里、拥有完整的 Node.js 权限。`mod.json` 里的权限是功能开关，不是安全边界。
 - **只在桌面版可用。** 网页版和 PWA 没有模组系统。
-- **默认关闭。** 需要在「设置 → 实验室 → 模组系统」里开启；开启后每个模组仍默认禁用，启用时会弹出主进程的原生确认窗口。
+- **默认关闭。** 需要在「设置 → 模组」里开启；开启后每个模组仍默认禁用，启用时会弹出主进程的原生确认窗口。
 - **确认绑定到文件内容。** 模组目录里任何文件变化都会让确认失效，模组被自动禁用，需要重新确认。唯一的例外是开发版里仓库 `mods/` 目录中的模组，见[调试循环](#调试循环)。
 - **签名只是标识。** 发布到模组市场的模组带有 Folium 签名，安装后显示「官方认证」（先行测试渠道显示「先行测试」），但启用时同样要确认，权限也不会因此变少。
 
-当前契约版本是 Folium 1.5，运行时通过 `folium.host.folium.minor` 判断宿主支持哪些功能（见[兼容与版本](#兼容与版本)）。
+当前契约版本是 Folium 1.6（见[兼容与版本](#兼容与版本)）。
 
 ## 2. 准备开发环境
 
@@ -39,7 +40,7 @@ npm run dev:electron
 
 **打开模组面板**
 
-开启「设置 → 实验室 → 模组系统」后，在命令面板里执行「模组」命令。面板列出所有发现的模组、它们的状态、签名标识、权限、设置分区和命令，出错时也会在这里显示。
+开启「设置 → 模组」后，在命令面板里执行「模组」命令。面板列出所有发现的模组、它们的状态、签名标识、权限、设置分区和命令，出错时也会在这里显示。
 
 ### 调试循环
 
@@ -59,6 +60,8 @@ npm run dev:electron
 `client` 入口按内容指纹带版本号导入，所以重载后加载的一定是最新代码。修改已签名的模组（比如仓库里的示范模组）后，它会显示「签名不匹配」，这是预期的。调试渲染端代码时可以直接打开开发者工具；模组调用 `folium.log.error()` 或抛出的错误会显示在模组面板里该模组的「界面代码出错」下。
 
 ## 3. 第一个模组：一个歌词动画
+
+想直接要一个能跑的起点，用 `npm run folium:new <文件夹名>` 生成，再用 `npm run folium:check <文件夹名>` 检查（见[第一个模组：从零到跑起来](quickstart.md)）。下面是手写的做法，看得到每一行是干什么的。
 
 新建目录 `mods/hello-lyrics/`，放三个文件。
 
@@ -91,7 +94,7 @@ export default function activate(folium) {
   });
 }
 
-// 挂载一次；换行、暂停、换主题、改显示设置都通过 ctx.subscribe 得知，不需要重新挂载。
+// 挂载一次；换行、暂停、换主题、改显示设置都通过 ctx.onChange 得知，不需要重新挂载。
 function mountHello(folium, container, ctx) {
   const box = document.createElement('div');
   box.style.cssText = 'position:absolute;inset:0;display:grid;place-items:center;padding:0 8%;text-align:center;line-height:1.3;';
@@ -109,11 +112,8 @@ function mountHello(folium, container, ctx) {
   };
 
   render();
-  const unsubscribe = ctx.subscribe(render);
-  return () => {
-    unsubscribe();
-    box.remove();
-  };
+  ctx.onChange(render); // 挂载结束时宿主替你停掉
+  return () => box.remove();
 }
 ```
 
@@ -129,21 +129,21 @@ function mountHello(folium, container, ctx) {
 | --- | --- | --- | --- |
 | 新的歌词动画模式 | `registries.visualizers` | — | [FoliumVisualizerDef](api.md#foliumvisualizerdef)，`sample-aurora-visualizer`、`visualizer52hz` |
 | 新的背景类型 | `registries.backgrounds` | — | [FoliumBackgroundDef](api.md#foliumbackgrounddef) |
-| 在播放页上叠加内容 | `registries.stageLayers` | `ui.stage` | [FoliumStageLayerDef](api.md#foliumstagelayerdef)，`sample-rickroll` |
+| 在播放页上叠加内容 | `registries.stageLayers` | `stageLayers` | [FoliumStageLayerDef](api.md#foliumstagelayerdef)，`sample-rickroll` |
 | 给内置模式加调参项 | `registries.tunings` | — | [FoliumTuningDef](api.md#foliumtuningdef)，`k3panel` |
 | 模组自己的设置 | `registries.settingsSections` | — | [FoliumSettingsSectionDef](api.md#foliumsettingssectiondef) |
 | 命令（模组面板与命令面板） | `registries.commands` | — | [FoliumCommandDef](api.md#foliumcommanddef) |
 | 播放器面板里的标签页 | `registries.playerPanelTabs` | — | [FoliumPlayerPanelTabDef](api.md#foliumplayerpaneltabdef) |
-| 首页导航里的完整页面（1.5） | `registries.homeTabs`，用 `folium.ui.openHomeTab` 打开 | — | [FoliumHomeTabDef](api.md#foliumhometabdef)，[首页页面](home-tabs.md)，`dev/folium/sample-home-tab` |
-| 进度条旁的按钮、轨道上的标记 | `registries.controlButtons` / `progressLayers` | — | [FoliumProgressContext](api.md#foliumprogresscontext)，`sample-progress-bar` |
+| 首页导航里的完整页面 | `registries.homeTabs`，用 `folium.ui.openHomeTab` 打开 | — | [FoliumHomeTabDef](api.md#foliumhometabdef)，[首页页面](home-tabs.md)，`dev/folium/sample-home-tab` |
+| 进度条旁的按钮、轨道上的标记 | `registries.progressButtons` / `progressLayers` | — | [FoliumProgressContext](api.md#foliumprogresscontext)，`sample-progress-bar` |
 | 改宿主外观 | `registries.styles`（只针对公开 part） | — | [FoliumStyleDef](api.md#foliumstyledef)，规范里的「styles 与公开 part」 |
 | 改写歌词、拦截播放 | `events.on('lyrics.transform' / 'playback.beforePlay')` | — | [FoliumHookEvents](api.md#foliumhookevents) |
 | 读取或控制播放、点击歌词跳转 | `folium.playback` | 控制需 `playback.control` | [FoliumPlaybackService](api.md#foliumplaybackservice) |
-| 音量、静音、循环模式，浏览并点播播放队列（1.5） | `folium.playback.getVolume` / `setVolume` / `setMuted` / `getLoopMode` / `setLoopMode` / `getQueue` / `playQueueItem`，变化看 `playback.volumeChanged` / `loopModeChanged` / `queueChanged` | 读取不需要；设置与点播需 `playback.control` | [FoliumPlaybackService](api.md#foliumplaybackservice)，[FoliumQueueSnapshot](api.md#foliumqueuesnapshot)，`dev/folium/sample-playback-console` |
-| 得知一首歌放不了（1.5） | `events.on('playback.failed')` | — | [FoliumNotificationEvents](api.md#foliumnotificationevents)，规范里的「事件」 |
+| 音量、静音、循环模式，浏览并点播播放队列 | `folium.playback.getVolume` / `setVolume` / `setMuted` / `getLoopMode` / `setLoopMode` / `getQueue` / `playQueueItem`，变化看 `playback.volumeChanged` / `loopModeChanged` / `queueChanged` | 读取不需要；设置与点播需 `playback.control` | [FoliumPlaybackService](api.md#foliumplaybackservice)，[FoliumQueueSnapshot](api.md#foliumqueuesnapshot)，`dev/folium/sample-playback-console` |
+| 得知一首歌放不了 | `events.on('playback.failed')` | — | [FoliumNotificationEvents](api.md#foliumnotificationevents)，规范里的「事件」 |
 | 访问网络（不受 CORS 限制） | `folium.net.fetch` | `net.fetch` | [FoliumNetService](api.md#foliumnetservice) |
 | 嵌入外部网页 | `folium.ui.embed` | `net.embed` + `embedOrigins` | [FoliumUiService](api.md#foliumuiservice) |
-| 保存数据 | 设置大小的数据（上限 1 MB）：`folium.storage`，与 main 入口的 `api.storage.data` 共用；文件（1.5）：main 入口写进 `api.storage.paths.data`，可重建的放 `api.storage.paths.cache` | `filesystem.data` | [FoliumStorage](api.md#foliumstorage)，[FoliumModPaths](api.md#foliummodpaths)，`dev/folium/sample-playback-console` |
+| 保存数据 | 设置大小的数据（上限 1 MB）：`folium.storage`，与 main 入口的 `api.storage` 共用；文件：main 入口写进 `api.storage.paths.data`，可重建的放 `api.storage.paths.cache` | `filesystem.data` | [FoliumStorage](api.md#foliumstorage)，[FoliumModPaths](api.md#foliummodpaths)，`dev/folium/sample-playback-console` |
 | 让用户选择本地文件 | `folium.ui.pickFile` / `restoreFile` | — | [FoliumFileHandle](api.md#foliumfilehandle) |
 | 使用宿主图标 | `folium.ui.icon` | — | [FoliumIconOptions](api.md#foliumiconoptions) |
 | 需要 Node 的工作（文件、进程、ffmpeg） | `main` 入口 + `folium.rpc` | 视用到的 api 而定 | [main 入口](api.md#main-入口node)，`sample-transparent-mov-export` |
@@ -153,15 +153,86 @@ function mountHello(folium, container, ctx) {
 ### 生命周期
 
 - 所有界面类条目都是 `mount(container, ctx) => dispose`。只在宿主给的容器里操作，不要查询或修改容器以外的宿主 DOM。
-- `dispose` 里释放你创建的一切：动画帧、定时器、事件订阅、WebGL 上下文。`activate` 也可以返回一个清理函数。
+- `dispose` 里释放你创建的一切：动画帧、定时器、事件订阅、WebGL 上下文。`activate` 也可以返回一个清理函数。用[现成的函数](#现成的函数)开的监听和定时器不用自己释放。
 - 模组被禁用、重载或卸载时，宿主会先调用你的清理函数，再撤下你注册的所有条目和事件处理器。
+- 启动有时限：从宿主开始导入你的 `client` 到 `activate` 返回（返回 promise 的话，到它给出结果），一共 5 秒。超过了不算出错，算慢：宿主提示用户一次「过了 5 秒还没有启动完」，然后去启动下一个模组；你的启动不会被取消，之后完成了，登记的条目照样生效，你那一行写着启动用了多少秒并标「慢」。启动时抛错才算出错，按时抛的和超时之后抛的都算；你的模组已经被禁用或被新代码换掉之后，旧的那次启动才抛的错不记在你头上。
+- 应用打开时，第一屏最多等所有模组 1.5 秒。到时间还没启动完的模组在第一屏出来之后继续启动；用户存着的歌词样式或背景是你的，等你启动完会自动换回来。**晚启动的模组收不到第一首歌的 `lyrics.transform` 和 `playback.beforePlay`**（那首歌开始时你还没在听）。要赶上第一屏，就别在 `activate` 里等网络或大文件：先登记条目，数据到了再用。
+- 导出窗口不设 1.5 秒这一条，它等每个模组启动完（各自最多 5 秒）；要导出的歌词样式所属的模组那时还在启动，导出就一直等到它启动完（用户可以取消导出）；它启动时出了错、没有这个模组、或者它启动完了却没登记这个样式，这次导出会报错停下，不会换成内置样式去导。
+- 你的代码抛错时，宿主接住它、照常运行，并提示用户一次是哪个模组的哪一种条目出了错；每个出错的地方在「设置 → 模组」里这个模组那一行各记一行（次数、最近一次的时间和原因）。宿主不会因此停掉你的条目，所以 `mount` 抛错之后容器是空的，每帧都抛错的绘制会一直抛下去：自己接住能恢复的错，接不住的让它抛出来。
+
+### 现成的函数
+
+`ctx` 上有几个函数，它们替你反复调用你给的函数，直到这次挂载结束；挂载结束时宿主替你停掉，不用自己写取消的代码。除了 `onDispose`（它什么都不返回），每个都返回一个「停止」函数，想提前停就调用它，调用两次也没关系。`mount` 抛错（或它返回的 promise 失败）的话，这次挂载当场结束：它在抛错之前用这些函数开的监听和定时器，宿主当场停掉，登记给 `onDispose` 的函数当场调用。
+
+监听属于订阅它的那一次挂载：同一个函数在两处挂载里各订一次，每次变化就各调用一次。
+
+**`ctx.onLyricTime(listener)`**：歌词时钟每次变化时调用，参数是秒（`ctx.lyricTime.get()` 读到的那个数）。歌词动画和播放页图层的 `ctx` 有它。进度条的按钮和图层用 `ctx.onPlaybackTime(listener)`，参数是播放位置（`ctx.playbackTime`，`seek` 收的就是这个时间）。两个钟可以不同：用户调了歌词偏移时，歌词时钟和播放位置差这么多。
+
+```js
+const mount = (container, ctx) => {
+  ctx.onLyricTime((seconds) => { container.textContent = seconds.toFixed(1); });
+};
+```
+
+**`ctx.onChange(listener)`**：`ctx` 的某个 getter 读到的值变了就调用；每种 `ctx` 在 API 参考里写着哪些值会通知。
+
+```js
+const mount = (container, ctx) => {
+  ctx.onChange(() => { container.style.color = ctx.getTheme().primaryColor; });
+};
+```
+
+**`ctx.onFrame(listener)`**：应用每画一帧调用一次，参数是应用的帧循环开始这一帧的时刻（毫秒，和 `performance.now()` 是同一个钟；它比浏览器传给 `requestAnimationFrame` 回调的那个数晚一点，两个数不要混着比）。所有模组共用应用自己的那一个帧循环。一帧里每个监听最多调用一次：在监听里停掉自己再订一次，新订的从下一帧开始。它跟着屏幕走，不跟着歌走；跟着歌走的内容用 `onLyricTime`。
+
+```js
+const mount = (container, ctx) => {
+  ctx.onFrame((timestamp) => { draw(timestamp, ctx.lyricTime.get()); });
+};
+```
+
+**`ctx.onResize(listener)`**：容器排好版时调用一次，之后大小每变一次调用一次，参数是 `{ width, height }`（CSS 像素）。
+
+```js
+const mount = (container, ctx) => {
+  ctx.onResize(({ width, height }) => { resizeCanvas(width, height); });
+};
+```
+
+**`ctx.every(ms, listener)`**：每隔 `ms` 毫秒调用一次。`ms` 最小是 16，最大是 2147483647（浏览器的定时器最长只能等这么久），超出的按这两个数算；每帧都要做的事用 `onFrame`。`folium.every(ms, listener)` 是模组级的同一个函数，到模组停掉为止。
+
+```js
+const mount = (container, ctx) => {
+  ctx.every(5000, () => { refresh(container); });
+};
+```
+
+**`ctx.onDispose(fn)`**：挂载结束时调用 `fn`，排在 `mount` 返回的清理函数之后，后登记的先调用。挂载已经结束才登记，就立刻调用。`folium.onDispose(fn)` 是模组级的，在模组停掉时调用。
+
+```js
+const mount = (container, ctx) => {
+  const app = createApp(container);
+  ctx.onDispose(() => app.destroy());
+};
+```
+
+`mount` 也可以是异步的：返回一个 promise，它最后给出清理函数。清理函数到的时候挂载已经结束，宿主立刻调用它。
+
+```js
+const mount = async (container, ctx) => {
+  const app = await createApp(container);
+  return () => app.destroy();
+};
+```
+
+模组停掉之后（被禁用、重载或卸载），它手里那个 `folium` 对象的 `registries.*.register` 和 `events.on` 不再生效，开发者日志里会有一行带模组名的警告。挂载结束之后再调用上面这些函数也一样。
 
 ### 时间与性能
 
-- 歌词动画只在歌词、歌曲、`staticMode` 或静态预览行变化时重新挂载；换行不会。当前行从 `ctx.getLineIndex()` 读，连续时间用 `ctx.currentTime.on('change')` 或在自己的帧循环里 `ctx.currentTime.get()`。
-- 暂停时时钟不走，行号、主题、设置、显示设置的变化靠 `ctx.subscribe` 得知。
+- 歌词动画只在歌词、歌曲、`staticMode` 或静态预览行变化时重新挂载；换行不会。当前行从 `ctx.getLineIndex()` 读，连续时间用 `ctx.onLyricTime` 或在自己的帧循环里 `ctx.lyricTime.get()`。
+- 暂停时时钟不走，行号、主题、设置、显示设置的变化靠 `ctx.onChange` 得知。
 - `ctx.audio.getBands()` 每次返回同一个对象、原地刷新，要保留读数就复制一份。
 - 各个 getter 在帧循环里调用没有问题；不要为了读取它们触发 React 或 DOM 布局。
+- 用户看得到你的开销。「设置 → 模组」里你那一行展开后写着：启动用了多少秒（启动时出了错就写「启动时出错了」，不写秒数）；运行时每秒约用多少毫秒（宿主反复调用的那些函数，也就是经 `ctx`、`folium` 订的监听和[现成的函数](#现成的函数)的回调，在它们运行的那些秒里用掉的时间，除以这些秒的个数；宿主不知道一帧在哪里结束，所以这个数不按帧算）；出错几次、在几个地方；有 Node 入口的话，它在主进程里一共用了多少毫秒、最长的一次多少毫秒。启动满 1.5 秒（或者过了 5 秒还没启动完）、运行时每秒满 240 毫秒、主进程里一次调用满 100 毫秒，这一行会标「慢」。宿主不会因为慢关掉任何东西。你自己开的 `requestAnimationFrame` 和定时器不经过宿主，不在这些数里。
 
 ### 预览、静态与导出
 
@@ -181,8 +252,8 @@ function mountHello(folium, container, ctx) {
 
 ### 设置
 
-- 用 [FoliumParam](api.md#foliumparam) 声明 `settings`，宿主负责渲染表单、校验、持久化，并把值带进视觉配置的导入导出和导出窗口。
-- 想要自己的面板外观时用 `settingsPanel(container, panelCtx)`，但仍然必须声明 `settings`：键、默认值和校验由 schema 决定，面板通过 `panelCtx.params` 读写。
+- 用 [FoliumSetting](api.md#foliumsetting) 声明 `settings`，宿主负责渲染表单、校验、持久化，并把值带进视觉配置的导入导出和导出窗口。
+- 想要自己的面板外观时用 `settingsPanel(container, panelCtx)`，但仍然必须声明 `settings`：键、默认值和校验由 schema 决定，面板通过 `panelCtx.settings`（`get`、`set`、`reset`、`onChange`）读写。
 
 ### 第三方库
 
@@ -190,9 +261,9 @@ function mountHello(folium, container, ctx) {
 
 ### 兼容与版本
 
-- 用 `folium.host.folium.minor` 做功能探测，例如 `if (folium.host.folium.minor >= 5)` 再使用 1.5 新增的接口（如 `folium.playback.getQueue`、`folium.registries.homeTabs`）。main 入口读 `api.host.folium.minor`，或用 `'paths' in api.storage` 判断有没有 1.5 的文件目录。
-- 实验接口（`omni.providers`、`omni.hooks`、`ponder.targets`）需要在清单的 `experimental` 里选用，任何 minor 版本都可能变化。
-- `folium.internals` 没有兼容承诺，使用时必须在清单里用 `folia` 固定宿主版本范围；社区模组应尽量不用。
+- 清单里写 `"folium": 1`。Folium 1.6 的宿主上，[API 参考](api.md)里的每个成员都在；`folium.host` 给显示和日志用。
+- 为 Folium 1.5 写的模组照旧能用，用到的旧名字在「设置 → 模组」里这个模组那一行各提醒一次，`npm run folium:check` 也会列出来。改成现在的写法见 API 参考的[仍可用的旧名字](api.md#仍可用的旧名字)，Folium 2 起旧名字不再有效。
+- 实验接口（`omni.providers`、`omni.hooks`、`ponder.targets`、`player.layout`、`remote.actions`）需要在清单的 `experimental` 里选用，任何 minor 版本都可能变化。
 - 模组更新时提升 `mod.json` 的 `version`（`MAJOR.MINOR.PATCH`）。
 
 ## 6. 发布到模组市场

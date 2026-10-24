@@ -5,6 +5,7 @@ import BravaisBlockPlates from './BravaisBlockPlates';
 import { resolveSlotFace, type BravaisDisplay } from './bravaisDisplay';
 import { isSeeThroughFace } from './bravaisLook';
 import BravaisTile, { type BravaisTileHandlers, type BravaisTileRect } from './BravaisTile';
+import { BRAVAIS_BLOCK_SHAPE } from './bravaisWallShape';
 
 // src/library/suites/bravais/BravaisWall.tsx
 // 墙的两半：缝锚点左边的 slot 进左边的世界层，右边的进右边的（缝只开在块边界上，没有 slot 跨过它）。两个世界层的
@@ -50,12 +51,14 @@ const BravaisWall: React.FC<BravaisWallProps> = ({
     const left: React.ReactNode[] = [];
     const right: React.ReactNode[] = [];
     const nowPlayingKey = display?.layer.nowPlayingKey ?? null;
+    // 形状换了，同一个 slot key 可能是另一块矩形：磁贴按块的矩形套重新挂载（落回），不在原地跳；矩形套没变的块原样留着。
+    const shape = display?.shape ?? BRAVAIS_BLOCK_SHAPE;
     for (const slot of slots) {
         const { item, kind } = resolveSlotFace(display, slot);
         const expanded = slot.key === expandedSlotKey;
         const tile = (
             <BravaisTile
-                key={slot.key}
+                key={`${shape.blockKey(slot.column, slot.row)}:${slot.key}`}
                 slotKey={slot.key}
                 rect={reflow.get(slot.key) ?? slot}
                 item={item}

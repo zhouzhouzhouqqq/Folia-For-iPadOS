@@ -6,7 +6,7 @@
 
 iPad 默认为设备内直连，不需要部署 API；[实现与验证](ipados-netease-direct.md)。下面是桌面/远程 provider 的原能力声明。设备直连中 **playlistSubscription 与 playbackReports 当前返回 false**：Watchman v2 与 NCBL 尚未实现，显式配置远程 API 或桌面模式仍保持原值。普通歌单读取/增删歌曲、红心、专辑收藏等映射保留，未用真实账号验证写操作。
 
-来源：`src/services/onlineMusic/neteaseProvider.ts`。
+来源：`src/services/onlineMusic/netease/neteaseProvider.ts`。
 
 ```ts
 capabilities: {
@@ -34,7 +34,7 @@ capabilities: {
 
 ## kugou
 
-来源：`src/services/onlineMusic/kugouProvider.ts`。
+来源：`src/services/onlineMusic/kugou/kugouProvider.ts`。
 
 ```ts
 capabilities: {
@@ -47,7 +47,7 @@ capabilities: {
 
 ## qq
 
-来源：`src/services/onlineMusic/qqProvider.ts`。
+来源：`src/services/onlineMusic/qq/qqProvider.ts`。
 
 ```ts
 capabilities: {
@@ -72,7 +72,7 @@ capabilities: {
 
 ## bodian
 
-来源：`src/services/onlineMusic/bodianProvider.ts`。
+来源：`src/services/onlineMusic/bodian/bodianProvider.ts`。
 
 ```ts
 capabilities: {

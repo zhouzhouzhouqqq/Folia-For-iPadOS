@@ -161,6 +161,8 @@ export const createBloomFilter = (pixi: PixiModule, initial: BloomOptions): Bloo
 
     class LumiereBloomFilter extends Filter {
         options: BloomOptions;
+        /** 分遍画用的三个 filter。放在字段上，第一帧之前 linkPixiPrograms 才找得到它们的着色器程序。 */
+        readonly passes = [down, up, combine];
 
         constructor(options: BloomOptions) {
             super({ resources: {}, compatibleRenderers: pixi.RendererType.BOTH });

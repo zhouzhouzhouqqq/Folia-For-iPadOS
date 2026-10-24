@@ -2,8 +2,8 @@
 
 const { REASONING_SUPPRESSION_ATTEMPTS } = require('./lyricSegmentationPrompt.cjs');
 
-// shared/aiTextClient.cjs
-// Pure provider client shared by Electron and the iPad adapter; no Node or Electron APIs.
+// electron/aiTextClient.cjs
+// Provider-agnostic "send a system + user prompt, get JSON back" client for the main process.
 //
 // Every one of these helpers already existed inline in main.cjs, written for the single AI feature
 // the app had (theme generation). Segmentation needs the same plumbing with a different schema, so
@@ -443,7 +443,7 @@ async function readOpenAIStreamResponse(response) {
 async function sendOpenAICompatible({ apiUrl, apiKey, body, customFetch, timeoutMs }) {
   let response;
   try {
-    const { sendOpenAICompatibleRequest } = await import('./openAICompatibleRequest.mjs');
+    const { sendOpenAICompatibleRequest } = await import('../shared/openAICompatibleRequest.mjs');
     response = await sendOpenAICompatibleRequest({
       apiUrl,
       provider: detectOpenAICompatibleProvider(apiUrl),
@@ -459,7 +459,7 @@ async function sendOpenAICompatible({ apiUrl, apiKey, body, customFetch, timeout
       fetchImpl: customFetch,
     });
   } catch (error) {
-    throw describeFetchFailure(error, timeoutMs, `Request to ${apiUrl}`);
+    throw describeFetchFailure(error, timeoutMs, `Request to ${redactUrl(apiUrl)}`);
   }
 
   if (!response.ok) {
@@ -470,7 +470,7 @@ async function sendOpenAICompatible({ apiUrl, apiKey, body, customFetch, timeout
     try {
       return { ok: true, status: response.status, ...(await readOpenAIStreamResponse(response)) };
     } catch (error) {
-      throw describeFetchFailure(error, timeoutMs, `Reading the response from ${apiUrl}`);
+      throw describeFetchFailure(error, timeoutMs, `Reading the response from ${redactUrl(apiUrl)}`);
     }
   }
 
@@ -478,7 +478,7 @@ async function sendOpenAICompatible({ apiUrl, apiKey, body, customFetch, timeout
   try {
     data = await response.json();
   } catch (error) {
-    throw describeFetchFailure(error, timeoutMs, `Reading the response from ${apiUrl}`);
+    throw describeFetchFailure(error, timeoutMs, `Reading the response from ${redactUrl(apiUrl)}`);
   }
 
   const choice = data.choices && data.choices[0];
@@ -518,7 +518,7 @@ async function runOpenAICompatibleCompletion({ store, systemPrompt, sourcePrompt
   const learned = disableReasoning ? reasoningAttemptCache.get(cacheKey) : 0;
   const firstIndex = typeof learned === 'number' ? learned : 0;
 
-  const { rejectsOpenAICompatibleParameter } = await import('./openAICompatibleRequest.mjs');
+  const { rejectsOpenAICompatibleParameter } = await import('../shared/openAICompatibleRequest.mjs');
 
   let lastEmpty = null;
   for (let index = firstIndex; index < attempts.length; index += 1) {
@@ -535,7 +535,7 @@ async function runOpenAICompatibleCompletion({ store, systemPrompt, sourcePrompt
     );
 
     const described = Object.keys(params).length ? Object.keys(params).join('+') : 'plain';
-    console.log(`[ai] POST ${apiUrl} model=${model} provider=${provider} reasoning=${described}${stream ? ' stream=on' : ''}`);
+    console.log(`[ai] POST ${redactUrl(apiUrl)} model=${model} provider=${provider} reasoning=${described}${stream ? ' stream=on' : ''}`);
     const startedAt = Date.now();
     const result = await sendOpenAICompatible({ apiUrl, apiKey, body, customFetch, timeoutMs });
 
@@ -550,7 +550,7 @@ async function runOpenAICompatibleCompletion({ store, systemPrompt, sourcePrompt
       throw new Error(result.errorText);
     }
 
-    console.log(`[ai] ${apiUrl} answered in ${Date.now() - startedAt}ms`);
+    console.log(`[ai] ${redactUrl(apiUrl)} answered in ${Date.now() - startedAt}ms`);
 
     if (result.content) {
       reasoningAttemptCache.set(cacheKey, index);
@@ -573,16 +573,24 @@ async function runOpenAICompatibleCompletion({ store, systemPrompt, sourcePrompt
 }
 
 /**
- * Raw JSON text from Gemini. The model name is fixed here, matching the existing theme path: the
- * settings UI only exposes an API key for this provider, not a model field.
+ * One request to Gemini, answered with the text of the model's reply. The model name is fixed
+ * here: the settings UI only exposes an API key for this provider, not a model field.
+ *
+ * With `timeoutMs` the request runs under that deadline, and a failure to send or to read says
+ * what timed out; without it there is no deadline and a failure is handed on as it came. `log`
+ * prints how long each step took. `emptyMessage` is what an answer with no text fails with.
  */
-async function runGeminiCompletion({ store, systemPrompt, sourcePrompt, responseSchema, generationConfig, customFetch, timeoutMs = DEFAULT_AI_TIMEOUT_MS, maxTokens }) {
+async function sendGemini({ store, systemPrompt, sourcePrompt, generationConfig, customFetch, timeoutMs, log = false, emptyMessage }) {
   const apiKey = store.get('GEMINI_API_KEY');
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not configured in settings');
   }
 
-  console.log('[ai] POST gemini-3-flash-preview');
+  const timed = typeof timeoutMs === 'number';
+  const failure = (error, label) => (timed ? describeFetchFailure(error, timeoutMs, label) : error);
+  if (log) {
+    console.log('[ai] POST gemini-3-flash-preview');
+  }
   const startedAt = Date.now();
 
   let response;
@@ -596,20 +604,16 @@ async function runGeminiCompletion({ store, systemPrompt, sourcePrompt, response
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: [{ parts: [{ text: sourcePrompt }] }],
-        // A caller with tuned settings (a thinking budget, a schema) passes the whole config;
-        // otherwise it is assembled from the individual options.
-        generationConfig: generationConfig ?? {
-          responseMimeType: 'application/json',
-          ...(responseSchema ? { responseSchema } : {}),
-          ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
-        },
+        generationConfig,
       }),
-      signal: timeoutSignal(timeoutMs),
+      ...(timed ? { signal: timeoutSignal(timeoutMs) } : {}),
     });
   } catch (error) {
-    throw describeFetchFailure(error, timeoutMs, 'Request to Gemini');
+    throw failure(error, 'Request to Gemini');
   }
-  console.log(`[ai] gemini headers ${response.status} in ${Date.now() - startedAt}ms, reading body…`);
+  if (log) {
+    console.log(`[ai] gemini headers ${response.status} in ${Date.now() - startedAt}ms, reading body…`);
+  }
 
   if (!response.ok) {
     const errText = await response.text();
@@ -620,9 +624,11 @@ async function runGeminiCompletion({ store, systemPrompt, sourcePrompt, response
   try {
     data = await response.json();
   } catch (error) {
-    throw describeFetchFailure(error, timeoutMs, 'Reading the response from Gemini');
+    throw failure(error, 'Reading the response from Gemini');
   }
-  console.log(`[ai] gemini body complete in ${Date.now() - startedAt}ms total`);
+  if (log) {
+    console.log(`[ai] gemini body complete in ${Date.now() - startedAt}ms total`);
+  }
 
   const parts = data && data.candidates && data.candidates[0] && data.candidates[0].content
     ? data.candidates[0].content.parts
@@ -631,10 +637,46 @@ async function runGeminiCompletion({ store, systemPrompt, sourcePrompt, response
     ? (parts.find((part) => part && typeof part.text === 'string') || {}).text
     : null;
   if (!jsonText) {
-    throw new Error('Model returned an empty response');
+    throw new Error(emptyMessage);
   }
 
   return jsonText;
+}
+
+/** Raw JSON text from Gemini, under a deadline and with its steps logged. */
+async function runGeminiCompletion({ store, systemPrompt, sourcePrompt, responseSchema, generationConfig, customFetch, timeoutMs = DEFAULT_AI_TIMEOUT_MS, maxTokens }) {
+  return sendGemini({
+    store,
+    systemPrompt,
+    sourcePrompt,
+    // A caller with tuned settings (a thinking budget, a schema) passes the whole config;
+    // otherwise it is assembled from the individual options.
+    generationConfig: generationConfig ?? {
+      responseMimeType: 'application/json',
+      ...(responseSchema ? { responseSchema } : {}),
+      ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
+    },
+    customFetch,
+    timeoutMs,
+    log: true,
+    emptyMessage: 'Model returned an empty response',
+  });
+}
+
+/**
+ * The theme ask on Gemini, already parsed. It behaves as it did while the 'generate-theme' handler
+ * in main.cjs wrote this request itself: no deadline, no log lines, its own message for an empty
+ * answer.
+ */
+async function runGeminiThemeCompletion({ store, systemPrompt, sourcePrompt, responseSchema, customFetch }) {
+  return JSON.parse(await sendGemini({
+    store,
+    systemPrompt,
+    sourcePrompt,
+    generationConfig: { responseMimeType: 'application/json', responseSchema },
+    customFetch,
+    emptyMessage: 'Failed to generate theme JSON',
+  }));
 }
 
 /**
@@ -890,5 +932,6 @@ module.exports = {
   resolveOpenAICompatibleTemperature,
   runAiConnectionTest,
   runAiJsonCompletion,
+  runGeminiThemeCompletion,
   validateAiConnectionTestInput,
 };

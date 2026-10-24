@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { omni } from '@/services/onlineMusic/omni';
 import { getOnlineMusicProvider } from '@/services/onlineMusic/providerRegistry';
-import { normalizeQqCollection, normalizeQqSong } from '@/services/onlineMusic/qqNormalize';
+import { normalizeQqCollection, normalizeQqSong } from '@/services/onlineMusic/qq/qqNormalize';
 import { useOnlineProviderAccountStore } from '@/stores/useOnlineProviderAccountStore';
 import { canDislikeCurrentSong } from '@/utils/playerLikeAvailability';
 import type { UnifiedSong } from '@/types';

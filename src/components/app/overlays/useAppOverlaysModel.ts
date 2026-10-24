@@ -16,6 +16,7 @@ import {
     usePlaybackStore,
 } from '../../../stores/usePlaybackStore';
 import { resolveLikeAvailability } from '../../../utils/playerLikeAvailability';
+import { canShuffleQueue } from '../../../utils/playbackNeighbors';
 import { buildAppOverlaysModel, type AppOverlaysDeps, type AppOverlaysModel } from './buildAppOverlaysModel';
 
 // src/components/app/overlays/useAppOverlaysModel.ts
@@ -56,7 +57,7 @@ export const useAppOverlaysModel = (deps: AppOverlaysDeps): AppOverlaysModel => 
     const displayPlayerState = usePlaybackStore(selectDisplayPlayerState);
     const playerControlSlotContext = useMemo(() => ({
         onShuffle: deps.shuffleQueue,
-        canShuffle: !isFmMode && playQueue.length > 1,
+        canShuffle: canShuffleQueue(playQueue.length, isFmMode, deps.isNowPlayingStageActive),
         onLike: deps.handleLike,
         isLiked: deps.isDisplaySongLiked,
         likeDisabled: resolveLikeAvailability(
@@ -73,6 +74,7 @@ export const useAppOverlaysModel = (deps: AppOverlaysDeps): AppOverlaysModel => 
         deps.invokeCommandById,
         deps.isDisplaySongLiked,
         deps.isNowPlayingControlDisabled,
+        deps.isNowPlayingStageActive,
         deps.shuffleQueue,
         displaySong,
         isFmMode,
@@ -106,7 +108,7 @@ export const useAppOverlaysModel = (deps: AppOverlaysDeps): AppOverlaysModel => 
         nextTrackLabel: t('ui.nextTrack'),
         stageTrackPillOpenPlayerLabel: t('ui.stageTrackPillOpenPlayer'),
         stageTrackPillOpenSongCardLabel: t('ui.stageTrackPillOpenSongCard'),
-        stageTrackPillFocusLatticeLabel: t('home.latticeFocusCurrent'),
+        stageTrackPillFocusLatticeLabel: t('playlist.locatePlaying'),
         playerControlSlotPrimary,
         playerControlSlotSecondary,
         playerControlSlotContext,

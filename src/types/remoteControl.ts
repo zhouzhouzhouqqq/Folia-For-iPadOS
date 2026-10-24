@@ -1,9 +1,31 @@
-import type { PlayerState, LyricData } from '../types';
+import type { PlayerState, LyricData, SubtitleContentMode } from '../types';
 import type { VideoExportPreset, VideoExportStartMode, VideoExportState } from './videoExport';
+import type { FoliumRemoteActionDef } from '../mods/folium/contract';
 
 // src/types/remoteControl.ts
 // Shared payloads for the Electron remote control window.
 export type PlayerChromeVisibilityMode = 'always-hidden' | 'always-visible' | 'auto-hide';
+
+/** Serializable presentation only; action callbacks stay in the main window. */
+export type RemoteActionDescriptor = Pick<FoliumRemoteActionDef,
+    'id' | 'label' | 'icon' | 'disabled' | 'pressed' | 'count' | 'tone'> & {
+    readonly handle: string;
+};
+
+export interface RemoteActionsSnapshot {
+    readonly epoch: string;
+    /** Presentation revision, not an execution precondition. */
+    readonly revision: number;
+    readonly trackKey: string | null;
+    readonly items: readonly RemoteActionDescriptor[];
+}
+
+export interface RemoteActionActivation {
+    type: 'remote-action';
+    epoch: string;
+    handle: string;
+    trackKey: string | null;
+}
 
 export interface RemoteTrackTransition {
     /** Unix time when the audible AutoMix/Crossfade transition started. */
@@ -29,11 +51,13 @@ export type RemoteControlCommand =
     | { type: 'set-transparent-mode-enabled'; enabled: boolean }
     | { type: 'disable-transparent-mode' }
     | { type: 'cycle-player-chrome-visibility-mode' }
+    | { type: 'set-player-chrome-visibility-mode'; mode: PlayerChromeVisibilityMode }
     | { type: 'open-export' }
     | { type: 'start-export'; preset: VideoExportPreset; startMode: VideoExportStartMode }
     | { type: 'stop-export' }
     | { type: 'cancel-export' }
-    | { type: 'toggle-like' };
+    | { type: 'toggle-like' }
+    | RemoteActionActivation;
 
 export interface RemoteControlSnapshot {
     hasTrack: boolean;
@@ -70,10 +94,13 @@ export interface RemoteControlSnapshot {
     isDaylight?: boolean;
     lyrics?: LyricData | null;
     lyricOffsetMs?: number;
+    /** The main window's setting for what sits under a lyric line; the remote's second line follows it. */
+    subtitleContentMode: SubtitleContentMode;
     isLiked?: boolean;
     canLike?: boolean;
     likeUnavailableProvider?: string;
     updatedAt: number;
     mainWindowWidth?: number;
     mainWindowHeight?: number;
+    remoteActions?: RemoteActionsSnapshot;
 }

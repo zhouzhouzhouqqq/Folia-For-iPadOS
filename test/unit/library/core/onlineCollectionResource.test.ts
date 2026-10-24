@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import type { SongResult } from '@/types';
 import type { OmniPage, ProviderCollection } from '@/types/onlineMusic';
 import { OmniError } from '@/types/onlineMusic';
-import type { OnlineGridViewCollectionDescriptor } from '@/library/core/contracts/collection';
-import { createOnlineCollectionResource, type OnlineCollectionResourceDeps } from '@/library/core/services/onlineCollectionResource';
-import { ONLINE_TRACKS_CACHE_SCHEMA_VERSION, type OnlineTracksCacheEntry } from '@/library/core/services/onlineCollectionCache';
+import type { OnlineGridViewCollectionDescriptor } from '@/library/core/collection/collection.contract';
+import { createOnlineCollectionResource, type OnlineCollectionResourceDeps } from '@/library/core/collection/resource/onlineCollectionResource.service';
+import { ONLINE_TRACKS_CACHE_SCHEMA_VERSION, type OnlineTracksCacheEntry } from '@/library/core/collection/resource/onlineCollectionCache.service';
 import { getPlaybackSongKey } from '@/utils/appPlaybackGuards';
 
 // test/unit/library/core/onlineCollectionResource.test.ts
@@ -217,7 +217,8 @@ describe('online collection resource: background sync', () => {
         const resource = createOnlineCollectionResource('k', h.deps);
         resource.ensure(playlist({ trackCount: 400 }), {});
         await settle();
-        expect(resource.getSnapshot().sync).toEqual({ status: 'interrupted', message: 'page down', offset: 150 });
+        // What was thrown goes with it (`cause`): the page sorts it into a named case before it says it.
+        expect(resource.getSnapshot().sync).toMatchObject({ status: 'interrupted', message: 'page down', offset: 150 });
         expect(resource.getSnapshot().tracks).toHaveLength(150);
 
         h.pages.length = 0;

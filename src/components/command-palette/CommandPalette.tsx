@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, CircleHelp, Command, CornerDownLeft, Loader2, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -111,6 +111,26 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 }) => {
     const { t, i18n } = useTranslation();
     const inputRef = useRef<HTMLInputElement | null>(null);
+    // Puts the focus back into the query input a frame later: a click has put it on what was
+    // clicked. While a command runs the input is disabled and cannot take the focus, so a request
+    // that finds it disabled is kept, and done in the commit that enables the input again.
+    const focusAskedRef = useRef(false);
+    const refocusInput = useCallback(() => {
+        focusAskedRef.current = true;
+        window.requestAnimationFrame(() => {
+            const input = inputRef.current;
+            if (focusAskedRef.current && !input?.disabled) {
+                focusAskedRef.current = false;
+                input?.focus();
+            }
+        });
+    }, []);
+    useLayoutEffect(() => {
+        if (!isExecuting && focusAskedRef.current) {
+            focusAskedRef.current = false;
+            inputRef.current?.focus();
+        }
+    }, [isExecuting]);
     const [idlePlaceholderIndex, setIdlePlaceholderIndex] = useState(() => Math.floor(Math.random() * IDLE_PLACEHOLDER_COUNT));
     const [isShowingAllCommands, setIsShowingAllCommands] = useState(false);
     const surface = activeCommand?.surface ?? null;
@@ -165,8 +185,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     const acceptSyntaxSuggestion = useCallback((suggestion: SyntaxSuggestion) => {
         onQueryCommit(suggestion.replacement);
-        window.requestAnimationFrame(() => inputRef.current?.focus());
-    }, [onQueryCommit]);
+        refocusInput();
+    }, [onQueryCommit, refocusInput]);
     // An inline surface draws itself where the control it replaces used to sit, so it needs a host
     // element from the surface that registered. Without one there is nowhere to put it, and the
     // overlay is the honest fallback rather than a box floating at a guessed offset.
@@ -508,14 +528,14 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                                         onQueryChange(primaryTermOf(command));
                                         onActiveIndexChange(0);
                                         setIsShowingAllCommands(false);
-                                        window.requestAnimationFrame(() => inputRef.current?.focus());
+                                        refocusInput();
                                     }}
                                 />
                             ) : surfaceBody ? (
                                 <Suspense fallback={<div className="flex h-full items-center justify-center opacity-40"><Loader2 size={20} className="animate-spin" /></div>}>
                                     {React.createElement(surfaceBody, {
                                         ...surface?.mapProps?.(surfaceArgs),
-                                        refocusInput: () => window.requestAnimationFrame(() => inputRef.current?.focus()),
+                                        refocusInput,
                                     })}
                                 </Suspense>
                             ) : matches.length === 0 ? (
@@ -594,9 +614,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                             isExecuting={isExecuting}
                             theme={theme}
                             onExecute={(command) => {
-                                void onExecutePinnedCommand(command).then(() => {
-                                    window.requestAnimationFrame(() => inputRef.current?.focus());
-                                });
+                                void onExecutePinnedCommand(command).then(refocusInput);
                             }}
                         />
                     </motion.div>

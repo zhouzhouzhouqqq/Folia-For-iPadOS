@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useReducer, useRef } from 'react';
 import type { SongResult } from '../../../types';
-import type { CollectionMutationController, LibraryMutationResult } from '../../core/contracts/mutations';
+import type { CollectionMutationController, LibraryMutationResult } from '../../core/collection/mutations/mutations.contract';
 import { reduceBravaisForm, type BravaisPlaylistScope } from './bravaisFormModel';
 
 // src/library/suites/bravais/useBravaisCollectionForms.ts

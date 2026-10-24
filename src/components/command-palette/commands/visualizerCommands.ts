@@ -2,11 +2,57 @@ import { defineCommand } from '../commandFactories';
 import { backgroundPickerSurface, visualizerPickerSurface } from '../surfaces/pickerSurface';
 import { LayoutGrid, Wallpaper } from 'lucide-react';
 import type { CommandPaletteCommand } from '../types';
-import { createToggleCommand, createVisualizerCommand } from '../commandFactories';
+import { createBackgroundCommand, createToggleCommand, createVisualizerCommand } from '../commandFactories';
 import { lyricSegmentationCommand } from './lyricSegmentationCommand';
+import { VISUALIZER_REGISTRY } from '../../visualizer/registry';
+import { VISUALIZER_BACKGROUND_REGISTRY } from '../../visualizer/backgrounds/registry';
 
 // src/components/command-palette/commands/visualizerCommands.ts
 // Commands in the `visualizer` group: switching lyric animation modes and background layouts.
+//
+// The command that switches to a lyric style or to a background is written in that mode's own
+// entry.tsx (`command`) and listed here in registry order, so a new mode adds no line to this file.
+// A mod's mode has no command of its own; the two pickers list it.
+
+// Latent's three display variants. They are listed right after Latent's own switch command.
+const LATENT_VARIANT_COMMANDS: CommandPaletteCommand[] = [
+    {
+        id: 'background-latent-dithering',
+        group: 'visualizer',
+        title: 'Latent: Pixel',
+        description: 'Show only the Dithering layer in Latent background',
+        keywords: ['latent dithering', '隐现像素', '像素层'],
+        execute: (_input, context) => {
+            context.visualizer.setVisualizerBackgroundMode('latent');
+            context.visualizer.setLatentBackgroundTuning({ displayMode: 'dithering' });
+            return true;
+        },
+    },
+    {
+        id: 'background-latent-mesh',
+        group: 'visualizer',
+        title: 'Latent: Fluid',
+        description: 'Show only the MeshGradient layer in Latent background',
+        keywords: ['latent mesh', 'mesh gradient', '隐现流体', '流体层'],
+        execute: (_input, context) => {
+            context.visualizer.setVisualizerBackgroundMode('latent');
+            context.visualizer.setLatentBackgroundTuning({ displayMode: 'mesh' });
+            return true;
+        },
+    },
+    {
+        id: 'background-latent-both',
+        group: 'visualizer',
+        title: 'Latent: Mixed',
+        description: 'Show both shader layers in Latent background',
+        keywords: ['latent both', '隐现混合', '双层背景'],
+        execute: (_input, context) => {
+            context.visualizer.setVisualizerBackgroundMode('latent');
+            context.visualizer.setLatentBackgroundTuning({ displayMode: 'both' });
+            return true;
+        },
+    },
+];
 
 export const visualizerCommands: CommandPaletteCommand[] = [
     lyricSegmentationCommand,
@@ -36,20 +82,10 @@ export const visualizerCommands: CommandPaletteCommand[] = [
         placeholder: context => context.shared.t('commandPalette.pickerFilterPlaceholder', 'Type to filter, then click or press Enter'),
         execute: () => false,
     }),
-    createVisualizerCommand('sonnet', 'Visualizer: Sonnet', 'Switch to Sonnet visualizer', ['sonnet', '商籁', '文字 pv', 'mg pv', 'vocaloid']),
-    createVisualizerCommand('tempera', 'Visualizer: Tempera', 'Switch to Tempera visualizer', ['tempera', '凝彩', 'dancai', 'dc', '色块 pv', 'block pv']),
-    createVisualizerCommand('lumiere', 'Visualizer: Lumiere', 'Switch to Lumiere visualizer', ['lumiere', '绘光', '光束', '舞台光', 'stage light', 'light pv']),
-    createVisualizerCommand('classic', 'Visualizer: Luminous', 'Switch to classic visualizer', ['visualizer classic', 'classic', '流光']),
-    createVisualizerCommand('cadenza', 'Visualizer: Mindscape', 'Switch to cadenza visualizer', ['visualizer cadenza', 'cadenza', 'mindscape', '心象']),
-    createVisualizerCommand('partita', 'Visualizer: Partita', 'Switch to partita visualizer', ['partita', '云阶']),
-    createVisualizerCommand('fume', 'Visualizer: Fume', 'Switch to fume visualizer', ['fume', '浮名']),
-    createVisualizerCommand('tilt', 'Visualizer: Tilt', 'Switch to tilt visualizer', ['tilt', '倾诉']),
-    createVisualizerCommand('claddagh', 'Visualizer: Claddagh', 'Switch to Claddagh visualizer', ['claddagh', '回环']),
-    createVisualizerCommand('monet', 'Visualizer: Monet', 'Switch to Monet visualizer', ['monet', '莫奈', '切换到可视化：莫奈', '切换到可视化莫奈']),
-    createVisualizerCommand('pendolo', 'Visualizer: Pendolo', 'Switch to Pendolo visualizer', ['pendolo', '擒纵', '摆轮', 'pd', '切换到可视化：擒纵', '切换到可视化擒纵']),
-    createVisualizerCommand('cappella', 'Visualizer: Cappella', 'Switch to cappella visualizer', ['cappella', '群唱']),
-    createVisualizerCommand('diorama', 'Visualizer: Diorama', 'Switch to Diorama visualizer', ['diorama', '镜台', '切换到可视化：镜台', '切换到可视化镜台']),
-    createVisualizerCommand('still', 'Visualizer: Still', 'Switch to the static low-resource visualizer', ['still', 'static', 'low resource', '静止', '静态', '低占用']),
+    createToggleCommand('smart-beat-toggle', 'visualizer', 'Smart beat mode', 'Turn the beat effects (Sonnet and Diorama on the beats, Pendolo on the drums) on or off', ['smart beat', 'beat fx', 'beat this', 'sonnet beat', 'diorama beat', 'pendolo drums', '智能动感模式', '动感', '节拍', '鼓点', '推镜裂光', '水镜涟漪', '仿真鼓面', '商籁动感', '镜台涟漪', '时计'], context => context.visualizer.toggleSmartBeat()),
+    ...VISUALIZER_REGISTRY.flatMap(({ mode, command }) => (
+        command ? [createVisualizerCommand(mode, command.title, command.description, command.keywords)] : []
+    )),
     createToggleCommand('video-layer-toggle', 'visualizer', 'Video layer behind lyrics', 'Show or hide the muted video layer behind the lyrics', ['video layer', 'background video', 'video behind lyrics', '视频层', '背景视频', '歌词后方视频'], context => context.visualizer.toggleVideoLayer()),
     defineCommand({
         id: 'video-layer-pick',
@@ -97,95 +133,9 @@ export const visualizerCommands: CommandPaletteCommand[] = [
             return true;
         },
     },
-    {
-        id: 'background-common',
-        group: 'visualizer',
-        title: 'Background: Common',
-        description: 'Switch background to general layout',
-        keywords: ['background general', 'common', 'general', '通用背景', 'ty', '背景切换到 通用', '背景切换到通用'],
-        execute: (_input, context) => {
-            context.visualizer.setVisualizerBackgroundMode('common');
-            return true;
-        },
-    },
-    {
-        id: 'background-nomand',
-        group: 'visualizer',
-        title: 'Background: Nomand',
-        description: 'Switch background to theme-colored image dithering',
-        keywords: ['nomand', 'dithering', 'dither', 'shader background', '漫游', '像素画', '像素画背景', '抖动背景', '网点背景', '主题色背景'],
-        execute: (_input, context) => {
-            context.visualizer.setVisualizerBackgroundMode('nomand');
-            return true;
-        },
-    },
-    {
-        id: 'background-latent',
-        group: 'visualizer',
-        title: 'Background: Latent',
-        description: 'Switch background to cover-colored audio-reactive shaders',
-        keywords: ['latent', 'latent background', 'shader background', '隐现', '隐现背景', '音频响应背景'],
-        execute: (_input, context) => {
-            context.visualizer.setVisualizerBackgroundMode('latent');
-            return true;
-        },
-    },
-    {
-        id: 'background-latent-dithering',
-        group: 'visualizer',
-        title: 'Latent: Pixel',
-        description: 'Show only the Dithering layer in Latent background',
-        keywords: ['latent dithering', '隐现像素', '像素层'],
-        execute: (_input, context) => {
-            context.visualizer.setVisualizerBackgroundMode('latent');
-            context.visualizer.setLatentBackgroundTuning({ displayMode: 'dithering' });
-            return true;
-        },
-    },
-    {
-        id: 'background-latent-mesh',
-        group: 'visualizer',
-        title: 'Latent: Fluid',
-        description: 'Show only the MeshGradient layer in Latent background',
-        keywords: ['latent mesh', 'mesh gradient', '隐现流体', '流体层'],
-        execute: (_input, context) => {
-            context.visualizer.setVisualizerBackgroundMode('latent');
-            context.visualizer.setLatentBackgroundTuning({ displayMode: 'mesh' });
-            return true;
-        },
-    },
-    {
-        id: 'background-latent-both',
-        group: 'visualizer',
-        title: 'Latent: Mixed',
-        description: 'Show both shader layers in Latent background',
-        keywords: ['latent both', '隐现混合', '双层背景'],
-        execute: (_input, context) => {
-            context.visualizer.setVisualizerBackgroundMode('latent');
-            context.visualizer.setLatentBackgroundTuning({ displayMode: 'both' });
-            return true;
-        },
-    },
-    {
-        id: 'background-url',
-        group: 'visualizer',
-        title: 'Background: Embedded Background',
-        description: 'Switch background to embedded webpage mode',
-        keywords: ['embedded background', 'embed background', 'background embed', 'background url', 'url background', 'url', 'webpage', '嵌入背景', '网页背景', '背景切换到 嵌入背景', '背景切换到嵌入背景'],
-        execute: (_input, context) => {
-            context.visualizer.setVisualizerBackgroundMode('url');
-            return true;
-        },
-    },
-    {
-        id: 'background-sora',
-        group: 'visualizer',
-        title: 'Background: Sora',
-        description: 'Switch background to Sora (starry sky) layout',
-        keywords: ['sora', 'starry sky', 'star', '星空', '空', '背景切换到 空', '背景切换到空', '背景切换到Sora', '背景切换到星空'],
-        execute: (_input, context) => {
-            context.visualizer.setVisualizerBackgroundMode('sora');
-            return true;
-        },
-    }
+    // Monet has no plain switch command (the two above pick a layout); Latent's variants follow its own.
+    ...VISUALIZER_BACKGROUND_REGISTRY.flatMap(({ mode, command }) => [
+        ...(command ? [createBackgroundCommand(mode, command.title, command.description, command.keywords)] : []),
+        ...(mode === 'latent' ? LATENT_VARIANT_COMMANDS : []),
+    ]),
 ];
