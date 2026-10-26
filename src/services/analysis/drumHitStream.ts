@@ -14,6 +14,10 @@ import { BEAT_THIS_FPS, type MelSpectrogram } from './beatThis';
 // and the rise detection would read that step as a hit at every cut. Only the track's own ends are
 // kept as they come, as the whole-track pipeline pads them the same way. Frames whose window reaches
 // past the finished head wait for the next stretch.
+//
+// A stream can start from where a stopped one was (`from`: its bands and how many frames were final;
+// analysis service plan, 2b). It then needs the stem only from MARGIN_FRAMES before that on, which is
+// what the stopped separation keeps of it (`streamNeedsFrom`).
 
 /** The stem's rate: a spectrogram frame every STEM_RATE / BEAT_THIS_FPS (882) of its samples. */
 const STEM_RATE = 44100;
@@ -48,12 +52,27 @@ export interface DrumBandStream {
     advance: (drums: Float32Array, final: number, end: boolean) => Promise<void>;
 }
 
-export const createDrumBandStream = (total: number, steps: DrumBandStreamSteps): DrumBandStream => {
+/** The first stem sample a stream with `done` final frames reads again on its next stretch. */
+export const streamNeedsFrom = (done: number): number => Math.max(0, done - MARGIN_FRAMES) * (STEM_RATE / BEAT_THIS_FPS);
+
+export const createDrumBandStream = (
+    total: number,
+    steps: DrumBandStreamSteps,
+    from?: { bands: DrumBands; done: number },
+): DrumBandStream => {
     const frameSamples = STEM_RATE / BEAT_THIS_FPS;
     // One spectrogram of the whole resampled stem would have this many frames (beatThis.ts).
     const frames = Math.floor(Math.ceil(total / 2) / (frameSamples / 2)) + 1;
     const bands: DrumBands = [new Float32Array(frames), new Float32Array(frames), new Float32Array(frames)];
     let done = 0;
+    if (from) {
+        // Carrying on from bands that are not this stream's would read zeros where the stem's head was.
+        if (from.done > frames || from.bands.some(band => band.length < from.done || band.length > frames)) {
+            throw new Error(`drum band stream: cannot carry on from ${from.done} frames of ${from.bands.map(band => band.length).join('/')} into ${frames}`);
+        }
+        from.bands.forEach((band, index) => bands[index].set(band));
+        done = from.done;
+    }
     return {
         frames,
         bands,

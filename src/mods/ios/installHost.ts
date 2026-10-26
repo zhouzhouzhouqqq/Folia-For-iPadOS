@@ -1,3 +1,4 @@
+import { nativeModSecrets, onNativeModSecretChanged } from './secrets';
 import { registerNativeModsBridge } from './bridge';
 import { listNativeMods, setNativeModEnabled, onNativeModsChanged, nativeModStorage, nativeModFetch } from './host';
 import { nativeModPickFile, nativeModRestoreFile, nativeModReleaseFile, cleanTemporaryModCopies } from './files';
@@ -6,6 +7,7 @@ import { nativeModPickFile, nativeModRestoreFile, nativeModReleaseFile, cleanTem
 export async function installNativeModHost(): Promise<void> {
     await cleanTemporaryModCopies();
     registerNativeModsBridge({ listMods: listNativeMods, setModEnabled: setNativeModEnabled, onChanged: onNativeModsChanged,
+        secrets: nativeModSecrets, onSecretChanged: onNativeModSecretChanged,
         storage: nativeModStorage, fetch: nativeModFetch, pickFile: nativeModPickFile,
         restoreFile: nativeModRestoreFile, releaseFile: nativeModReleaseFile });
 }

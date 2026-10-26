@@ -14,6 +14,13 @@ function createBodianApiBridge({ store, safeStorage, requestFactory, onAudioSour
         if (!BODIAN_OPERATIONS.includes(operation)) {
           return { ok: false, error: { code: 'unsupported', message: 'Unsupported Bodian operation' } };
         }
+        // The listener signs out: the stored session goes, also one this run could not read.
+        if (operation === 'logout') sessions.clear({ signOut: true });
+        // A session stored that this run cannot read is not answered as nobody: the renderer would
+        // take the account for gone.
+        if (operation === 'login_status' && sessions.unreadable()) {
+          return { ok: false, error: { code: 'unavailable', message: 'The stored Bodian sign-in cannot be read now' } };
+        }
         const result = await api.request(operation, params);
         if (result.ok && operation === 'audio' && result.data?.url) onAudioSource(result.data.url);
         return result;

@@ -3,10 +3,12 @@ import type { MockInstance } from 'vitest';
 import type { SongResult } from '@/types';
 import { DAY_BEGINS_HOUR, MAX_RECENT_PLAYS, MAX_REPLAYED_SONGS, PLAYS_KEPT_MS, RECENT_PLAYS_KEPT_MS, noteSongListened, noteSongPlayed, recentPlaysOf, replayedSongsOf, resetRecentPlays, watchRecentPlays } from '@/components/app/home/explore/recentPlays';
 import { whenHeard } from '@/components/app/home/explore/useRecentPlaysRecorder';
+import { readOwnExploreSections } from '@/components/app/home/explore/ownSections';
 
 // test/unit/explore/recentPlays.test.ts — Folia's own record of the songs played here: what is
 // kept, for whom and how long, which songs were played lately, which were listened to more than
-// once and in what order, what counts as one listening, and when a report of sound is due.
+// once and in what order, what counts as one listening, and when a report of sound is due. Also the
+// explore page's own sections as they are read from it.
 
 const song = (id: string, providerId = 'ytm', extra: Partial<SongResult> = {}): SongResult => ({
     id, name: `Song ${id}`, artists: [], album: { id: '', name: '' }, duration: 0,
@@ -289,6 +291,33 @@ describe('recent plays', () => {
         expect(idsOf(replayedSongsOf('ytm', 'me'))).toEqual(['a', 'c', 'e', 'd', 'b']);
         later(PLAYS_KEPT_MS);
         expect(replayedSongsOf('ytm', 'me')).toEqual([]);
+    });
+
+    it('hands the explore page its own sections as they are when read, those that hold nothing left out', () => {
+        const t = (key: string) => key;
+        const hear = (...ids: string[]) => ids.forEach(id => { later(5 * MINUTE); listen(id); });
+        const songsIn = (sections: ReturnType<typeof readOwnExploreSections>) => sections.map(section => [
+            section.id, section.title, section.items.map(item => (item.kind === 'song' ? String(item.song.id) : '')),
+        ]);
+        expect(readOwnExploreSections('ytm', 'me', t)).toEqual([]);
+        hear('a', 'b');
+        // Played lately, none of them listened to twice yet: the one section.
+        expect(songsIn(readOwnExploreSections('ytm', 'me', t))).toEqual([['folia-recent-plays', 'home.exploreRecent', ['b', 'a']]]);
+        hear('a');
+        const read = readOwnExploreSections('ytm', 'me', t);
+        expect(songsIn(read)).toEqual([
+            ['folia-recent-plays', 'home.exploreRecent', ['a', 'b']],
+            ['folia-play-again', 'home.exploreAgain', ['a']],
+        ]);
+        // Read once, they stay as they were while songs are played; a read after that has the new play.
+        hear('c');
+        expect(songsIn(read)).toEqual([
+            ['folia-recent-plays', 'home.exploreRecent', ['a', 'b']],
+            ['folia-play-again', 'home.exploreAgain', ['a']],
+        ]);
+        expect(songsIn(readOwnExploreSections('ytm', 'me', t))[0][2]).toEqual(['c', 'a', 'b']);
+        // Apart for each account, as the record is.
+        expect(readOwnExploreSections('ytm', 'someone else', t)).toEqual([]);
     });
 
     it('puts a song come back to on several days before one looped for a night, and a liking of late before an older one', () => {

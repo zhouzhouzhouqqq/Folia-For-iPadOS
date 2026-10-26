@@ -136,10 +136,20 @@ export const shouldDrawCue = (
     renderer: TransitionRenderer,
 ): boolean => (
     switchedOn
-    && !cue.plain
-    && cue.seconds >= MIN_DRAWN_SECONDS
+    && whyCueNotDrawn(cue) === null
     && (!cue.preview || cue.preview === renderer)
 );
+
+/**
+ * Why neither animation draws this transition, from the transition alone - or null when it is one to
+ * draw. The two parts of `shouldDrawCue` that are properties of the transition, in words, so the log
+ * can say it: a refusal that prints nothing looks like the animations being broken.
+ */
+export const whyCueNotDrawn = (cue: TransitionCue): string | null => {
+    if (cue.plain) return 'a plain fade, not a mix';
+    if (!(cue.seconds >= MIN_DRAWN_SECONDS)) return `${cue.seconds.toFixed(2)}s, under the ${MIN_DRAWN_SECONDS}s worth drawing`;
+    return null;
+};
 
 export const subscribeToTransitionCue = (listener: TransitionCueListener): (() => void) => {
     listeners.add(listener);

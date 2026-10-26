@@ -11,9 +11,12 @@ struct AIConfiguration: Codable {
     var apiKey = ""
     var revision = ""
 
-    static func endpoint(provider: String, raw: String) throws -> URL {
+    static func endpoint(provider: String, raw: String, model: String = "") throws -> URL {
         if provider == "gemini" {
-            return URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent")!
+            let chosen = model.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "models/", with: "")
+            let name = chosen.isEmpty ? "gemini-3-flash-preview" : chosen
+            guard name.range(of: #"^[\w.-]{1,256}$"#, options: .regularExpression) != nil else { throw AIError.message("Invalid Gemini model") }
+            return URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(name):generateContent")!
         }
         guard provider == "openai" else { throw AIError.message("Unknown AI provider") }
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -24,11 +27,35 @@ struct AIConfiguration: Codable {
             throw AIError.message("AI URL must use HTTPS without credentials, query or fragment")
         }
         let path = url.path.replacingOccurrences(of: "/+$", with: "", options: .regularExpression)
-        if path.isEmpty { url.path = "/v1/chat/completions" }
+        if host.lowercased() == "api.anthropic.com" {
+            let base = path.replacingOccurrences(of: #"/(chat/completions|messages|models)$"#, with: "", options: .regularExpression)
+            url.path = (base.isEmpty ? "/v1" : base) + "/messages"
+        }
+        else if path.isEmpty { url.path = "/v1/chat/completions" }
         else if path.range(of: #"/v\d+$"#, options: .regularExpression) != nil { url.path = path + "/chat/completions" }
         else { url.path = path }
         guard let result = url.url else { throw AIError.message("Invalid AI URL") }
         return result
+    }
+    func permittedRequest(url raw: String, method: String) throws -> URL {
+        let endpoint = try Self.endpoint(provider: provider, raw: apiUrl, model: model)
+        guard let requested = URLComponents(string: raw), let url = requested.url,
+              requested.scheme == "https", requested.user == nil, requested.password == nil, requested.fragment == nil else {
+            throw AIError.message("Invalid AI request URL")
+        }
+        if method == "POST", url == endpoint { return url }
+        if method == "GET", var catalogue = URLComponents(url: endpoint, resolvingAgainstBaseURL: false) {
+            catalogue.path = provider == "gemini" ? "/v1beta/models"
+                : catalogue.path.replacingOccurrences(of: #"/(chat/completions|messages)$"#, with: "", options: .regularExpression) + "/models"
+            let allowed: Set<String> = ["pageSize", "pageToken", "limit", "after_id", "after", "pageNum", "page_no", "page", "page_size", "offset", "cursor"]
+            guard (requested.queryItems ?? []).allSatisfy({ allowed.contains($0.name) && ($0.value?.count ?? 0) <= 2048 }) else {
+                throw AIError.message("Invalid model catalogue query")
+            }
+            var bare = requested
+            bare.query = nil
+            if bare.url == catalogue.url { return url }
+        }
+        throw AIError.message("AI request does not match the saved endpoint")
     }
     var metadata: [String: Any] {
         ["provider": provider, "apiUrl": apiUrl, "model": model, "temperature": temperature,
@@ -36,11 +63,11 @@ struct AIConfiguration: Codable {
     }
     func replacing(provider: String, apiUrl: String, model: String, temperature: Double,
                    stream: Bool, newKey: String) throws -> AIConfiguration {
-        let url = try Self.endpoint(provider: provider, raw: apiUrl).absoluteString
+        let url = try Self.endpoint(provider: provider, raw: apiUrl, model: model).absoluteString
         let key = newKey.trimmingCharacters(in: .whitespacesAndNewlines)
         guard key.count <= 1024, !key.contains("\n"), !key.contains("\r"), model.count <= 256,
               temperature.isFinite, (0...2).contains(temperature) else { throw AIError.message("Invalid AI settings") }
-        guard !key.isEmpty || (self.provider == provider && self.apiUrl == url && !apiKey.isEmpty) else {
+        guard !key.isEmpty || (self.provider == provider && (self.apiUrl == url || provider == "gemini") && !apiKey.isEmpty) else {
             throw AIError.message("Enter an API key for this endpoint; saved keys are never moved to another URL")
         }
         return AIConfiguration(provider: provider, apiUrl: url, model: model.trimmingCharacters(in: .whitespacesAndNewlines),

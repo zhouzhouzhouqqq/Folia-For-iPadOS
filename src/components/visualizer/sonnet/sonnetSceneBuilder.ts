@@ -66,7 +66,7 @@ export interface SonnetSceneBuildOptions {
     host: HTMLDivElement;
     theme: Theme;
     tuning: SonnetTuning;
-    /** 智能动感模式 (SmartBeatSettings.enabled): builds the MG onset pop and the downbeat tear's filter. */
+    /** 智能动感模式 (`smartBeatActive`: on or cached): builds the MG onset pop and the downbeat tear's filter. */
     smartBeatEnabled: boolean;
     lyricsFontScale: number;
     staticMode: boolean;

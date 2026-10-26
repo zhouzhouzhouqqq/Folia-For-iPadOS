@@ -46,9 +46,14 @@ type EqualizerBandGridProps = {
     gains: number[];
     onBandChange: (index: number, value: number) => void;
     onCommit: () => void;
+    /**
+     * The faders are out of reach (inert), and the strip still scrolls sideways: a narrow window shows the
+     * last bands only that way. The scroll container itself is never inert.
+     */
+    readOnly?: boolean;
 };
 
-const EqualizerBandGrid: React.FC<EqualizerBandGridProps> = ({ gains, onBandChange, onCommit }) => {
+const EqualizerBandGrid: React.FC<EqualizerBandGridProps> = ({ gains, onBandChange, onCommit, readOnly = false }) => {
     const { t } = useTranslation();
     // The gains as the faders last set them: gains that differ from these came from outside. Once
     // gains have come from outside nothing is "set by hand" until a fader moves again, so going back
@@ -78,7 +83,7 @@ const EqualizerBandGrid: React.FC<EqualizerBandGridProps> = ({ gains, onBandChan
                     <span>0</span>
                     <span>{MINUS}{Math.abs(AUDIO_EQUALIZER_MIN_GAIN_DB)} dB</span>
                 </div>
-                <div className="relative grid min-w-[360px] flex-1 grid-cols-10">
+                <div inert={readOnly} className="relative grid min-w-[360px] flex-1 grid-cols-10">
                     {/* Laid over the travel of the thumbs' centres, so the drawing needs no measuring. */}
                     <svg
                         aria-hidden

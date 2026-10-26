@@ -4,8 +4,9 @@ import type { Theme } from '@/types';
 import { colorWithAlpha } from '@/components/visualizer/colorMix';
 import type { FoliumLabel, FoliumMount, FoliumSetting, FoliumSettingAccess, FoliumSettingsPanelContext } from '../folium/contract';
 import { toFoliumTheme } from '../folium/dto';
-import { resolveFoliumLabel } from './params';
+import { isFoliumSecretParam, resolveFoliumLabel } from './params';
 import { FoliumParamFields, type FoliumParamFieldToken } from './FoliumParamFields';
+import { FoliumSecretField, useFoliumSecretsState } from './FoliumSecretField';
 import { FoliumMountHost, foliumEntryAttributes, type FoliumEntryKind } from '../runtime/FoliumMountHost';
 import type { FoliumHostContext } from '../folium/helpers';
 import { useFoliumListeners, useFoliumNotifyOnChange } from '../runtime/listeners';
@@ -16,6 +17,9 @@ import { useFoliumListeners, useFoliumNotifyOnChange } from '../runtime/listener
 // — when the mod supplies a custom panel — mounts that panel in a ShadowRoot
 // and hands it the same FoliumSettingAccess. Either way the schema is the single
 // source of keys, defaults and validation, so there is only one store.
+// Folium 1.7 `secret` fields (settings sections only) are drawn by
+// FoliumSecretField, which talks to the main process; their values are not
+// in that store, and "reset" leaves them alone.
 
 interface FoliumSettingsCardProps {
     modId: string;
@@ -77,6 +81,10 @@ export const FoliumSettingsCard: React.FC<FoliumSettingsCardProps> = ({
     const { t, i18n } = useTranslation();
     const values = useFoliumParamValues(access);
     const panelContext = useSettingsPanelContext(access, i18n.language, theme, isDaylight);
+    const hasSecrets = access.schema.some(isFoliumSecretParam);
+    // Whether the section has anything "reset" would restore.
+    const hasPlainFields = access.schema.some((param) => !isFoliumSecretParam(param));
+    const secretsState = useFoliumSecretsState(modId, hasSecrets && !customPanel);
     const foliumTheme = useMemo(() => toFoliumTheme(theme, isDaylight), [theme, isDaylight]);
 
     /*
@@ -157,18 +165,23 @@ export const FoliumSettingsCard: React.FC<FoliumSettingsCardProps> = ({
                         theme={theme}
                         isDaylight={isDaylight}
                         onChange={handleChange}
+                        renderSecretField={(param) => (
+                            <FoliumSecretField modId={modId} param={param} state={secretsState} token={token} />
+                        )}
                     />
                 </div>
             )}
 
-            <button
-                type="button"
-                onClick={() => access.reset()}
-                className="text-xs underline opacity-50 hover:opacity-80"
-                style={{ color: 'var(--text-secondary)' }}
-            >
-                {t('options.modVisualizerSettingsReset')}
-            </button>
+            {customPanel || hasPlainFields ? (
+                <button
+                    type="button"
+                    onClick={() => access.reset()}
+                    className="text-xs underline opacity-50 hover:opacity-80"
+                    style={{ color: 'var(--text-secondary)' }}
+                >
+                    {t('options.modVisualizerSettingsReset')}
+                </button>
+            ) : null}
         </div>
     );
 };

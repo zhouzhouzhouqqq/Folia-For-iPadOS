@@ -23,6 +23,8 @@ export type AiApiKeyName = 'GEMINI_API_KEY' | 'OPENAI_API_KEY';
 export type ElectronSettingsState = {
     /** Drafts of a replacement key: a saved key never reaches the renderer. */
     GEMINI_API_KEY: string;
+    GEMINI_API_MODEL: string;
+    AI_PROVIDER_PRESET: string;
     OPENAI_API_KEY: string;
     OPENAI_API_URL: string;
     OPENAI_API_MODEL: string;

@@ -114,8 +114,9 @@ const fakeActions = () => ({
     shuffleQueue: vi.fn(() => true), toggleLike: vi.fn(() => false),
     getVolume: vi.fn(() => ({ volume: 0.4, muted: true })), setVolume: vi.fn(), setMuted: vi.fn(),
     getLoopMode: vi.fn(() => 'all' as const), setLoopMode: vi.fn(),
-    getQueue: vi.fn(() => ({ items: [], length: 0, currentIndex: -1, kind: 'queue' as const })),
+    getQueue: vi.fn(() => ({ items: [], length: 0, currentIndex: -1, kind: 'queue' as const, version: 'v' })),
     playQueueItem: vi.fn(async () => true),
+    replaceQueue: vi.fn(() => ({ status: 'replaced' as const, version: 'v2', length: 0, currentIndex: -1 })),
     toast: vi.fn(), openPlayerPanel: vi.fn(), navigate: vi.fn(), openVolume: vi.fn(),
     getLyricLines: () => [], refreshLyrics: vi.fn(),
 });

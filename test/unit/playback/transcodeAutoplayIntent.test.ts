@@ -47,6 +47,8 @@ vi.mock('../../../src/stores/useAudioSettingsStore', () => ({
     useAudioSettingsStore: (selector: (state: Record<string, unknown>) => unknown) => selector({
         enableMediaCache: false,
         audioEqualizerSettings: { enabled: false, effects: {}, bands: [] },
+        // No mod's curve: what is heard is the settings above (utils/audioEqualizerModCurve.ts).
+        audioEqualizerModCurve: null,
     }),
 }));
 vi.mock('../../../src/stores/useAppViewStore', () => ({
@@ -59,7 +61,10 @@ vi.mock('../../../src/stores/useStatusMessageStore', () => ({ setStatusMessage: 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('../../../src/utils/appPlaybackGuards', () => ({ resolveNavidromePlaybackCarrier: () => null }));
 vi.mock('../../../src/utils/replayGain', () => ({ calculateReplayGain: () => ({ linearGain: 1 }) }));
-vi.mock('../../../src/services/audioEqualizerGraph', () => ({ applyAudioEqualizerSettings: vi.fn() }));
+vi.mock('../../../src/services/audioEqualizerGraph', () => ({
+    applyAudioEqualizerSettings: vi.fn(),
+    planAudioEqualizerApply: () => ({ defer: false, timeConstant: 0.015 }),
+}));
 vi.mock('../../../src/services/playbackGraph', () => ({ buildPlaybackGraph: vi.fn() }));
 vi.mock('../../../src/services/playedTrackCache', () => ({ cachePlayedTrackAssets: vi.fn() }));
 vi.mock('../../../src/services/automix/crossfadeGraph', () => ({ rampGain: vi.fn() }));

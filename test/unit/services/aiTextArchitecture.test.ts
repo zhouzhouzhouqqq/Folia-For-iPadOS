@@ -18,8 +18,8 @@ const DOOR = 'src/services/aiText.ts';
 
 const NAMES = {
     route: /\/api\/(?:generate-theme|segment-lyrics)/,
-    bridge: /\b(?:generateTheme|segmentLyrics|testAiConnection)\b/,
-    address: /generativelanguage\.googleapis\.com|api\.openai\.com|api\.deepseek\.com/,
+    bridge: /\b(?:generateTheme|segmentLyrics|testAiConnection|listAiModels)\b/,
+    address: /generativelanguage\.googleapis\.com|api\.openai\.com|api\.deepseek\.com|api\.anthropic\.com|moonshot\.(?:cn|ai)|bigmodel\.cn|api\.z\.ai|dashscope|tencent(?:cloud)?maas|xiaomimimo/,
     setting: /\b(?:GEMINI|OPENAI)_API_\w+|\b(?:VITE_)?AI_PROVIDER\b/i,
 };
 type Kind = keyof typeof NAMES;
@@ -35,7 +35,7 @@ const ALLOWED: Record<string, Kind[]> = {
     'src/components/modal/SettingsModal.tsx': ['setting'],
     // The type of the form's state, which the dialog hands to the page that draws the form.
     'src/components/modal/settings/pages/settingsPageContext.ts': ['setting'],
-    'src/components/modal/settings/pages/AppearancePage.tsx': ['setting', 'address'],
+    'src/components/modal/settings/pages/ai/AiProviderSettings.tsx': ['setting'],
     // Upstream's endpoint check for a stored AI key (is the key still meant for this address).
     'src/utils/openAIEndpoint.ts': ['setting', 'address'],
     // Upstream's wall tools ask the bridge for a theme directly; to move behind services/aiText.
@@ -79,10 +79,11 @@ describe('AI text services in the window', () => {
     });
 });
 
-// The main process sends the requests itself, from electron/aiTextClient.cjs. The two files that
-// carry an ask to it (the IPC handlers in main.cjs, the bridge in preload.cjs) must not write what
-// the client writes today: its three hosts, a model of its three families, Gemini's key header or
-// one of the two key settings. This is a list of the names in use, not a rule: another host,
+// The main process sends the requests itself, from electron/aiTextClient.cjs, with the hosts and
+// models of each provider written in its adapter under shared/ai/. The two files that carry an ask
+// to it (the IPC handlers in main.cjs, the bridge in preload.cjs) must not write what the client
+// and the adapters write today: three of their hosts, a model of three families, Gemini's key
+// header or one of the two key settings. This is a list of the names in use, not a rule: another host,
 // another model family or a Bearer header would pass. The two files still read which service is
 // chosen (AI_PROVIDER) and the user's address (OPENAI_API_URL); this does not look for those, nor
 // at any other file under electron/.
@@ -95,9 +96,15 @@ describe('AI text services in the main process', () => {
         expect(source.match(SERVICE_DETAIL)?.[0]).toBeUndefined();
     });
 
-    it('finds those names in the client, so the pattern still matches something', async () => {
-        const client = await readFile(path.join(repoRoot, 'electron/aiTextClient.cjs'), 'utf8');
+    it('finds those names in the client and the adapters, so the pattern still matches something', async () => {
+        const adapters = (await readdir(path.join(repoRoot, 'shared/ai'))).filter(name => name.endsWith('.mjs'));
+        const sources = await Promise.all(['electron/aiTextClient.cjs', ...adapters.map(name => `shared/ai/${name}`)]
+            .map(file => readFile(path.join(repoRoot, file), 'utf8')));
+        const named = sources.join('\n');
 
-        expect(client).toMatch(SERVICE_DETAIL);
+        expect(named).toMatch(SERVICE_DETAIL);
+        for (const detail of ['api.openai.com', 'api.deepseek.com', 'generativelanguage.googleapis.com', 'gpt-5', 'gemini-3', 'deepseek-v4', 'x-goog-api-key', 'OPENAI_API_KEY']) {
+            expect(named).toContain(detail);
+        }
     });
 });

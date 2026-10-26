@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { FoliumSetting, FoliumSettingAccess, FoliumSettingValues } from '../folium/contract';
-import { filterFoliumParamPatch, mergeFoliumParamValues } from './params';
+import { filterFoliumParamPatch, isFoliumSecretParam, mergeFoliumParamValues } from './params';
 
 // src/mods/params/paramStore.ts
 // Persisted values for every schema-backed Folium surface, keyed by scope:
@@ -14,6 +14,14 @@ import { filterFoliumParamPatch, mergeFoliumParamValues } from './params';
 //
 // The whole map rides along in visual config import/export and in the export
 // window's render config, so exports render with the user's values.
+//
+// Folium 1.7 `secret` fields never have a value here (the main process keeps
+// them, folium/secrets.ts). Once a schema with one is bound to a scope, the
+// store holds that key out of the scope for the rest of the session: a value
+// already saved under it (the field used to be `text`) is dropped, and an
+// import, the export window's copy or a write cannot bring it back. So every
+// reader of `byScope` (the snapshot for export, the host bridge) gets a map
+// without it.
 
 const STORAGE_KEY = 'folia_folium_params_v1';
 
@@ -23,6 +31,30 @@ type ParamsByScope = Record<string, ScopeValues>;
 const isPlainObject = (value: unknown): value is Record<string, unknown> => (
     Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 );
+
+// Keys of `secret` fields by scope, for this session. Only ever grows: a key once known to be a
+// secret stays out of the store even after its mod stops.
+const secretKeysByScope = new Map<string, Set<string>>();
+
+/* `values` without the scope's secret keys; the same object when it holds none. */
+const withoutSecretValues = (scope: string, values: ScopeValues): ScopeValues => {
+    const secretKeys = secretKeysByScope.get(scope);
+    if (!secretKeys || !Object.keys(values).some((key) => secretKeys.has(key))) return values;
+    return Object.fromEntries(Object.entries(values).filter(([key]) => !secretKeys.has(key)));
+};
+
+/* Every scope without its secret keys; the same object when nothing had to go. */
+const withoutSecrets = (byScope: ParamsByScope): ParamsByScope => {
+    if (secretKeysByScope.size === 0) return byScope;
+    let changed = false;
+    const out: ParamsByScope = {};
+    Object.entries(byScope).forEach(([scope, values]) => {
+        const kept = withoutSecretValues(scope, values);
+        if (kept !== values) changed = true;
+        out[scope] = kept;
+    });
+    return changed ? out : byScope;
+};
 
 /*
  * Keeps only entries whose value is a plain object: a corrupt or foreign
@@ -88,12 +120,14 @@ interface FoliumParamStoreState {
     setValues: (scope: string, patch: ScopeValues) => void;
     resetScope: (scope: string) => void;
     replaceAll: (byScope: ParamsByScope) => void;
+    /** Folium 1.7: holds these `secret` keys out of `scope`, dropping a value already saved under one. */
+    excludeSecretKeys: (scope: string, keys: readonly string[]) => void;
 }
 
 export const useFoliumParamStore = create<FoliumParamStoreState>((set) => ({
     byScope: load(),
     setValues: (scope, patch) => set((state) => {
-        const byScope = { ...state.byScope, [scope]: { ...(state.byScope[scope] ?? {}), ...patch } };
+        const byScope = { ...state.byScope, [scope]: { ...(state.byScope[scope] ?? {}), ...withoutSecretValues(scope, patch) } };
         save(byScope);
         return { byScope };
     }),
@@ -105,9 +139,24 @@ export const useFoliumParamStore = create<FoliumParamStoreState>((set) => ({
         return { byScope };
     }),
     replaceAll: (byScope) => {
-        const next = normalizeFoliumParamsPayload(byScope);
+        const next = withoutSecrets(normalizeFoliumParamsPayload(byScope));
         save(next);
         set({ byScope: next });
+    },
+    excludeSecretKeys: (scope, keys) => {
+        if (keys.length === 0) return;
+        const secretKeys = secretKeysByScope.get(scope) ?? new Set<string>();
+        keys.forEach((key) => secretKeys.add(key));
+        secretKeysByScope.set(scope, secretKeys);
+        set((state) => {
+            const stored = state.byScope[scope];
+            if (!stored) return state;
+            const kept = withoutSecretValues(scope, stored);
+            if (kept === stored) return state;
+            const byScope = { ...state.byScope, [scope]: kept };
+            save(byScope);
+            return { byScope };
+        });
     },
 }));
 
@@ -120,16 +169,18 @@ export const importFoliumParams = (raw: unknown) => useFoliumParamStore.getState
 /** Export window: take the injected values without writing them to disk. */
 export const hydrateFoliumParamsForExport = (raw: unknown) => {
     persistenceEnabled = false;
-    useFoliumParamStore.setState({ byScope: normalizeFoliumParamsPayload(raw) });
+    useFoliumParamStore.setState({ byScope: withoutSecrets(normalizeFoliumParamsPayload(raw)) });
 };
 
 /*
  * A FoliumSettingAccess bound to one scope and schema. Reads merge defaults and
  * re-validate; writes are filtered through the schema. The merged object is
  * cached per stored-values identity, so `get()` is stable between changes and
- * safe to call every frame.
+ * safe to call every frame. The schema's `secret` fields are in `schema` but
+ * never in the values, and the store holds their keys out of the scope.
  */
 export const createFoliumParamAccess = (scope: string, schema: readonly FoliumSetting[]): FoliumSettingAccess => {
+    useFoliumParamStore.getState().excludeSecretKeys(scope, schema.filter(isFoliumSecretParam).map((param) => param.key));
     let cachedSource: ScopeValues | undefined;
     let cachedMerged: FoliumSettingValues = Object.freeze(mergeFoliumParamValues(schema, undefined));
     const read = (): FoliumSettingValues => {

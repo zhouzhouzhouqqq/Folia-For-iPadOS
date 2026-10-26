@@ -45,9 +45,11 @@ type KeyCaptureProps = {
     validate?: (key: string) => string | null;
     /** Keys that are always part of the shortcut and are not recorded: they show before the key. */
     prefix?: ReadonlyArray<string>;
+    /** Reads the key a press means; the default is the press's `key` in lower case. */
+    readKey?: (event: KeyboardEvent) => string;
 };
 
-export const KeyCapture: React.FC<KeyCaptureProps> = ({ value, onChange, validate, prefix }) => {
+export const KeyCapture: React.FC<KeyCaptureProps> = ({ value, onChange, validate, prefix, readKey }) => {
     const { t } = useTranslation();
     const { labelId, hintId } = useRowNaming();
     const keysId = useId();
@@ -77,7 +79,7 @@ export const KeyCapture: React.FC<KeyCaptureProps> = ({ value, onChange, validat
                 setRefused(false);
                 return;
             }
-            const key = event.key.toLowerCase();
+            const key = readKey ? readKey(event) : event.key.toLowerCase();
             const refusal = validate?.(key);
             if (refusal) {
                 setReason(refusal);
@@ -90,7 +92,7 @@ export const KeyCapture: React.FC<KeyCaptureProps> = ({ value, onChange, validat
         };
         window.addEventListener('keydown', handleKeyDown, true);
         return () => window.removeEventListener('keydown', handleKeyDown, true);
-    }, [listening, onChange, validate]);
+    }, [listening, onChange, readKey, validate]);
 
     return (
         <div className="flex max-w-full flex-col items-end">

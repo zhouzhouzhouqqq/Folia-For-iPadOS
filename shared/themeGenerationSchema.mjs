@@ -1,6 +1,6 @@
 // Original theme output contract, shared by the edge API and device-local AI adapter.
 export const THEME_JSON_SCHEMA_NAME = 'dual_theme';
-export const THEME_MAX_OUTPUT_TOKENS = 4096;
+export const THEME_MAX_OUTPUT_TOKENS = 8192;
 
 export const THEME_JSON_SCHEMA = {
     type: 'object',

@@ -800,5 +800,70 @@ describe.each([
             expect(account()).toMatchObject({ status: 'authenticated', user, collections: [{ id: 'one' }] });
             expect(stored.has(snapshotKey())).toBe(true);
         });
+
+        // Nothing was kept on disk, and the platform could not be asked at app start: nobody is shown,
+        // though the sign-in may still be good.
+        it('reads the account whole where nobody is shown because who is signed in could not be asked: once, whatever the entries meanwhile', async () => {
+            const status = held<ProviderUser | null>();
+            const getLoginStatus = vi.fn<() => Promise<ProviderUser | null>>().mockRejectedValueOnce(new Error('offline')).mockReturnValueOnce(status.promise);
+            platform({ auth: { getLoginStatus } });
+            await expect(omni.readAccount(providerId, 'start')).resolves.toBe('unknown');
+            expect(account()).toMatchObject({ user: null, freshness: 'error', error: 'offline' });
+            clock += 5_001;
+
+            const entered = omni.accountMoment('home-entered');
+            const again = omni.accountMoment('home-entered');
+            status.answer(user);
+
+            await expect(Promise.all([entered, again])).resolves.toEqual(['read', 'read']);
+            expect(getLoginStatus).toHaveBeenCalledTimes(2);
+            expect(account()).toMatchObject({ status: 'authenticated', user, collections: [{ id: 'one' }], freshness: 'fresh' });
+        });
+
+        it('asks nothing again within HOME_WAIT_MS of the last time who is signed in could not be asked', async () => {
+            const getLoginStatus = vi.fn<() => Promise<ProviderUser | null>>().mockRejectedValue(new Error('offline'));
+            platform({ auth: { getLoginStatus } });
+            await expect(omni.readAccount(providerId, 'start')).resolves.toBe('unknown');
+
+            clock += 4_000;
+            await expect(omni.accountMoment('home-entered')).resolves.toBe('not asked');
+            expect(getLoginStatus).toHaveBeenCalledTimes(1);
+
+            clock += 1_001;
+            await expect(omni.accountMoment('home-entered')).resolves.toBe('unknown');
+            expect(getLoginStatus).toHaveBeenCalledTimes(2);
+        });
+
+        // A platform that cannot answer for the whole run (a sign-in stored that this run cannot unseal) is not
+        // asked at every entry: the wait doubles with each time in a row, up to a minute.
+        it('waits twice as long after each time in a row who is signed in could not be asked, up to a minute', async () => {
+            const getLoginStatus = vi.fn<() => Promise<ProviderUser | null>>().mockRejectedValue(new Error('unreadable'));
+            platform({ auth: { getLoginStatus } });
+            await expect(omni.readAccount(providerId, 'start')).resolves.toBe('unknown');
+
+            const asksAfter = async (wait: number) => {
+                const before = getLoginStatus.mock.calls.length;
+                clock += wait - 1;
+                await expect(omni.accountMoment('home-entered')).resolves.toBe('not asked');
+                clock += 2;
+                await expect(omni.accountMoment('home-entered')).resolves.toBe('unknown');
+                expect(getLoginStatus).toHaveBeenCalledTimes(before + 1);
+            };
+            await asksAfter(5_000);
+            await asksAfter(10_000);
+            await asksAfter(20_000);
+            await asksAfter(40_000);
+            await asksAfter(60_000);
+            await asksAfter(60_000);
+        });
+
+        it('asks nothing at the next entry where the platform named nobody', async () => {
+            const { auth } = platform({ auth: { getLoginStatus: vi.fn(async () => null) } });
+            await expect(omni.readAccount(providerId, 'start')).resolves.toBe('nobody');
+            clock += 60_000;
+
+            await expect(omni.accountMoment('home-entered')).resolves.toBe('not asked');
+            expect(auth.getLoginStatus).toHaveBeenCalledTimes(1);
+        });
     });
 });

@@ -2,7 +2,7 @@
 
 基线：Folia 0.7.21 / 33b25ff。以 `src/types/visualizerModes.ts`、`visualizer/registry.tsx`、`backgrounds/registry.tsx`、`tuningRegistry.ts` 和真实 entry 为准。当前 **14 个歌词模式 + 6 个背景 entry 全部参与本地构建**，没有按设备屏蔽 renderer，没有将动态效果换成静态图。
 
-本表的真机空框均未验收。本次 macOS WebKit 已成功挂载全部 14 种歌词和 6 种背景，并检查旋转 resize、卸载和截图；另覆盖四项 Nomand 后处理、两项 Latent 显示变体，共 26 个场景。URL 背景初次受开发脚本和 Playwright 的 Service Worker 拦截注入影响；改用无注入的静态夹具并取消测试框架的沙盒拦截后，单独复测无 pageerror/console error 且动态像素有变化。挂载与像素变化不代表所有参数、分镜或实体 iPad 的视觉等价、帧率和功耗已通过。
+本表的真机空框均未验收。0.7.21 的 macOS WebKit 历史检查曾挂载 14 种歌词和 6 种背景，并检查旋转 resize、卸载和截图；另覆盖四项 Nomand 后处理、两项 Latent 显示变体，共 26 个场景。URL 背景初次受开发脚本和 Playwright 的 Service Worker 拦截注入影响；改用无注入的静态夹具并取消测试框架的沙盒拦截后，单独复测无 pageerror/console error 且动态像素有变化。挂载与像素变化不代表所有参数、分镜或实体 iPad 的视觉等价、帧率和功耗已通过。
 
 机器清单：[ipados-visual-inventory.json](ipados-visual-inventory.json)，含每个模式源码路径/SHA256/import/局部 tuning 属性观察、共享 Tuning 定义和默认值、121个 Tempera shot ID。运行 `npm run ios:audit` 重建；脚本校验实际 entry 与声明列表一致。清单包含参数定义，不代替像素效果检查；共用 helper 的最终行为仍须按源码/真机判断。
 
@@ -24,6 +24,7 @@
 | [ ] | 歌词 `classic` | `src/components/visualizer/classic/entry.tsx`；DOM/Motion、GlowWord | 原实现已编入 bundle；macOS WebKit 已挂载，待真机 | 未执行 |
 | [ ] | 歌词 `diorama` | `src/components/visualizer/diorama/entry.tsx`；Three.js、React Three Fiber、文字栅格化、粒子 | 原实现已编入 bundle；macOS WebKit 已挂载，待真机 | 未执行 |
 | [ ] | 歌词 `fume` | `src/components/visualizer/fume/entry.tsx`；Canvas/DOM、测量、RAF | 原实现已编入 bundle；macOS WebKit 已挂载，待真机 | 未执行 |
+| [ ] | 歌词 `hanabi` 花火 | `src/components/visualizer/hanabi/entry.tsx`；Pixi、字形纹理、烟火粒子、bloom、beat FX、拼贴转场 | 0.7.22 原动态实现和全部参数已编入；本轮 WebKit 结果见报告 | 未执行 |
 | [ ] | 歌词 `lumiere` | `src/components/visualizer/lumiere/entry.tsx`；Pixi.js、滤镜、纹理、full/balanced/low tuning | 原实现已编入 bundle；macOS WebKit 已挂载，待真机 | 未执行 |
 | [ ] | 歌词 `monet` | `src/components/visualizer/monet/entry.tsx`；DOM、音频 overlay、图像处理、歌词 rail | 原实现已编入 bundle；macOS WebKit 已挂载，待真机 | 未执行 |
 | [ ] | 歌词 `partita` | `src/components/visualizer/partita/entry.tsx`；DOM/Motion、GlowWord | 原实现已编入 bundle；macOS WebKit 已挂载，待真机 | 未执行 |
@@ -232,3 +233,15 @@ node dev/ipados/webkit-smoke.mjs
 实体设备用 Xcode Instruments/调试内存图检查持续时间与趋势：每模式先2分钟，再选最重的组合连续30分钟；音频长播单独60分钟。记录 frame pacing、主线程阻塞、GPU/纹理占用、RSS/峰值、热状态、电量变化与后台行为，保留设备和场景。不要用 Mac/模拟器帧率替代。
 
 优化顺序：先定位未清理 listener/RAF/context、重复 render、纹理池和图片引用、后台无意义绘制、不必要计算，再评估采样/分辨率。任何画质档差异都必须记录、可恢复 full；没有“所有 iPad 最高画质稳定运行”的承诺。
+
+## 0.7.22 验收补充
+
+本轮注册表为 **15 种歌词 + 6 种背景**，以重新生成的 inventory 为准。此前 0.7.21 的 26 个 macOS WebKit 场景是历史结果，不能直接作为新版通过。新版运行结果及失败项统一见 [测试报告](ipados-test-report.md)。全部真机框仍保持未勾选。
+
+- [ ] 花火：所有预设/布局/色块、逐字唱词、字色对比、enter/sing/exit、烟火 rise/粒子、镜头/拼贴、bloom、节拍/强度参数。
+- [ ] 花火：中文/日文/拉丁长句、旋转、分屏、seek/倒放时序、切歌、prepare/atlas 生命周期、连续切入切出 30 次。
+- [ ] 随机模式：池内全选/部分/单个，切歌不紧邻重复，reroll、视觉配置导出导入、同步和重启；不得私自过滤复杂模式。
+- [ ] 新分析调度：on/cached/off 的节拍/鼓声和旧结果缓存，前后台切换、AutoMix 双 deck，模型缺失可理解提示。
+- [ ] 试听：clipStartMs 在歌词、字幕、Lattice、seek 和 API 一致，实际音频进度不被二次偏移。
+
+本轮执行状态：macOS WebKit 脚本只完成 claddagh 的动态挂载/旋转/卸载记录；cadenza/cappella/classic/diorama/fume/hanabi 未能在页面/探针超时内通过，其余场景尚未执行完。全部保留为待验，不继承历史勾选，具体失败日志见测试报告。

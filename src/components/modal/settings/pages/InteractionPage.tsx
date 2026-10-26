@@ -8,11 +8,14 @@ import { useInteractionSettingsStore } from '../../../../stores/useInteractionSe
 import { useSettingsModalStore } from '../../../../stores/useSettingsModalStore';
 import { PRIMARY_MODIFIER_LABEL } from '../../../../utils/platform';
 import { Group, KeyCapture, Row, Segmented, Select, Toggle, Value, option, type SettingsGroupDef, type SettingsOptionDef } from '../kit';
+import { GLOBAL_SHORTCUTS_OPTIONS, GlobalShortcutsGroup } from './GlobalShortcutsGroup';
+import { useSettingsPage } from './settingsPageContext';
 
 // src/components/modal/settings/pages/InteractionPage.tsx
 // The 快捷操作 page: how a person reaches a command quickly. First the command palette: the three
-// commands pinned under it and the one shortcut a person defines themselves. Then the grids: where
-// a slide on their action button leads, and whether a bare S there filters or opens the palette.
+// commands pinned under it and the one shortcut a person defines themselves. Then, in the desktop
+// app, the system-wide playback shortcuts (GlobalShortcutsGroup). Then the grids: where a slide on
+// their action button leads, and whether a bare S there filters or opens the palette.
 
 const PALETTE: SettingsGroupDef = { id: 'pinnedCommands', titleKey: 'options.settingsHeadingCommandPalette' };
 const GRIDS: SettingsGroupDef = { id: 'gridActionButton', titleKey: 'options.settingsHeadingGrids' };
@@ -24,10 +27,11 @@ const O = {
     paletteHotkey: option(GRIDS, 'gridPaletteHotkey', 'options.gridPaletteHotkey'),
 };
 
-export const OPTIONS: SettingsOptionDef[] = Object.values(O);
+export const OPTIONS: SettingsOptionDef[] = [...Object.values(O), ...GLOBAL_SHORTCUTS_OPTIONS];
 
 const InteractionPage: React.FC = () => {
     const { t } = useTranslation();
+    const { isElectron } = useSettingsPage();
     const { pinnedCommandIds, setPinnedCommandId } = useSettingsModalStore(useShallow(state => ({
         pinnedCommandIds: state.pinnedCommandIds,
         setPinnedCommandId: state.setPinnedCommandId,
@@ -98,6 +102,8 @@ const InteractionPage: React.FC = () => {
                     />
                 </Row>
             </Group>
+
+            {isElectron && <GlobalShortcutsGroup />}
 
             <Group def={GRIDS}>
                 <Row

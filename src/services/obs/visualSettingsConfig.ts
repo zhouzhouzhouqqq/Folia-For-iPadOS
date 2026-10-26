@@ -2,6 +2,7 @@ import { collectVisualizerTunings } from '../../components/visualizer/tuningRegi
 import { readStoredThemeAutoGenerateEnabled, readStoredThemeAutoSwitchEnabled, readStoredThemeGenerationSource } from '../themePreferences';
 import type { CappellaAvatarImage, CappellaEmojiImage, CappellaTuning, MonetBackgroundImage, MonetBackgroundTuning, MonetPortraitImage, MonetTuning, NomandBackgroundTuning } from '../../types';
 import { useVisualizerSettingsStore } from '../../stores/useVisualizerSettingsStore';
+import { toStoredSmartBeat } from '../../stores/visualizerSettingsPersistence';
 import { useVisualizerAssetStore } from '../../stores/useVisualizerAssetStore';
 import { useTypographySettingsStore } from '../../stores/useTypographySettingsStore';
 import { useThemeSettingsStore } from '../../stores/useThemeSettingsStore';
@@ -31,6 +32,7 @@ export function buildVisualSettingsConfig(): Record<string, unknown> {
     followSystemTheme: storeThemeSettings.followSystemTheme,
     visualizerMode: storeVisualizer.visualizerMode,
     randomVisualizerModePerSong: storeVisualizer.randomVisualizerModePerSong,
+    randomVisualizerModes: storeVisualizer.randomVisualizerModes,
     visualizerBackgroundMode: storeVisualizer.visualizerBackgroundMode,
     backgroundOpacity: storeVisualizer.backgroundOpacity,
     // The other three legs of background.common, alongside the opacity above. The local OBS browser
@@ -87,7 +89,8 @@ export function buildVisualSettingsConfig(): Record<string, unknown> {
     monetTuning: storeVisualizer.monetTuning,
     pendoloTuning: storeVisualizer.pendoloTuning,
     sonnetTuning: storeVisualizer.sonnetTuning,
-    smartBeat: storeVisualizer.smartBeat,
+    // With the one switch an older build reads (toStoredSmartBeat).
+    smartBeat: toStoredSmartBeat(storeVisualizer.smartBeat),
     temperaTuning: storeVisualizer.temperaTuning,
     lumiereTuning: storeVisualizer.lumiereTuning,
     urlBackgroundList: storeVisualizer.urlBackgroundList,
@@ -109,6 +112,9 @@ export function buildVisualSettingsConfig(): Record<string, unknown> {
     libraryWallSeamStyle: useLibraryWallLookStore.getState().seamStyle,
     libraryWallBackdropLyrics: useLibraryWallLookStore.getState().backdropLyrics,
     libraryWallBackdropBlur: useLibraryWallLookStore.getState().backdropBlur,
+    // Which way the info strip opens (a column split, a row split across the wall, or by the screen's
+    // shape): part of the wall's look, no user exception.
+    libraryWallSeamDirection: useLibraryWallLookStore.getState().seamDirection,
   };
 }
 

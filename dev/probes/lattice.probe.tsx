@@ -87,7 +87,7 @@ function LatticeProbe({ covers = 'off', queueLength = 12, withLyrics = false }:
         }} queue={songs} currentSong={currentSong} playerState={playerState}
             lyricSource={{ currentTime: time, currentLineIndex: withLyrics ? 0 : -1,
                 lines: withLyrics ? lyricLines : [], theme: DEFAULT_THEME }} lyricKeywordColoringEnabled
-            currentTime={time} playbackDuration={playbackDuration} canTogglePlayback isDaylight={false}
+            currentTime={time} lyricCurrentTime={time} playbackDuration={playbackDuration} canTogglePlayback isDaylight={false}
             onBack={() => setBacks(value => value + 1)} onGoHome={() => setHomes(value => value + 1)} onOpenPlayer={() => {}} onPlaySong={song => setCurrentSong(song)}
             onTogglePlayback={() => setToggles(value => value + 1)} onSeek={setSeek} />
         <AppOverlays model={{

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SMART_BEAT_SETTINGS, DEFAULT_SONNET_TUNING, type SmartBeatSettings } from '@/types';
 import { useVisualizerSettingsStore } from '@/stores/useVisualizerSettingsStore';
-import { readStoredSmartBeatSettings, SMART_BEAT_STORAGE_KEY } from '@/stores/visualizerSettingsPersistence';
+import { readStoredSmartBeatSettings, resolveSmartBeatSettings, SMART_BEAT_STORAGE_KEY, toStoredSmartBeat } from '@/stores/visualizerSettingsPersistence';
 import { compressConfig, decompressConfig } from '@/utils/appearanceCodec';
 import { buildImportPlan } from '@/utils/appearanceImportPlan';
 import { beatImpact, downbeatImpact } from '@/stores/motionSignals';
@@ -15,7 +15,7 @@ import {
     tickBeatFx,
 } from '@/services/beatFx/beatFxLive';
 import { liveBeatEffectStrength, visualizerWantsBeatClock, visualizerWantsBeats, visualizerWantsDrumHits, type BeatClockSettings } from '@/components/visualizer/beatClockTargets';
-import { BEAT_EFFECT_IDS, resolveBeatEffectSetting } from '@/services/beatFx/beatEffects';
+import { BEAT_EFFECT_IDS, resolveBeatEffectSetting, smartBeatActive, smartBeatMayAnalyse } from '@/services/beatFx/beatEffects';
 import {
     SONNET_BEAT_FX,
     applySonnetBeatFxLayers,
@@ -53,7 +53,8 @@ const createLocalStorageMock = (): Storage => {
     };
 };
 
-const on: SmartBeatSettings = { ...DEFAULT_SMART_BEAT_SETTINGS, enabled: true };
+const on: SmartBeatSettings = { ...DEFAULT_SMART_BEAT_SETTINGS, mode: 'on' };
+const cached: SmartBeatSettings = { ...DEFAULT_SMART_BEAT_SETTINGS, mode: 'cached' };
 
 describe('智能动感模式 setting', () => {
     let storage: Storage;
@@ -70,7 +71,7 @@ describe('智能动感模式 setting', () => {
     });
 
     it('is off by default, every effect at the strength it was tuned to', () => {
-        expect(DEFAULT_SMART_BEAT_SETTINGS).toEqual({ enabled: false, effects: {} });
+        expect(DEFAULT_SMART_BEAT_SETTINGS).toEqual({ mode: 'off', effects: {} });
         expect(resolveBeatEffectSetting(DEFAULT_SMART_BEAT_SETTINGS, BEAT_EFFECT_IDS.pendoloDrumhead)).toEqual({ on: true, strength: 1 });
     });
 
@@ -80,29 +81,56 @@ describe('智能动感模式 setting', () => {
 
     it('persists under its own key and clamps each effect\'s strength to 0..2', () => {
         useVisualizerSettingsStore.getState().handleSetSmartBeat({
-            enabled: true,
+            mode: 'cached',
             effects: { 'sonnet.lensTear': { strength: 5 }, 'pendolo.drumhead': { on: false, strength: -1 } },
         });
-        const expected = {
-            enabled: true,
+        const expected: SmartBeatSettings = {
+            mode: 'cached',
             effects: { 'sonnet.lensTear': { on: true, strength: 2 }, 'pendolo.drumhead': { on: false, strength: 0 } },
         };
         expect(useVisualizerSettingsStore.getState().smartBeat).toEqual(expected);
-        expect(JSON.parse(storage.getItem(SMART_BEAT_STORAGE_KEY) ?? '{}')).toEqual(expected);
+        // Stored with the one switch a build before the modes reads: `cached` is off there.
+        expect(JSON.parse(storage.getItem(SMART_BEAT_STORAGE_KEY) ?? '{}')).toEqual({ ...expected, enabled: false });
         expect(readStoredSmartBeatSettings()).toEqual(expected);
     });
 
     it('patches one field of one effect at a time', () => {
-        useVisualizerSettingsStore.getState().handleSetSmartBeat({ enabled: true });
+        useVisualizerSettingsStore.getState().handleSetSmartBeat({ mode: 'on' });
         useVisualizerSettingsStore.getState().handleSetSmartBeat({ effects: { 'diorama.ripple': { strength: 1.5 } } });
         useVisualizerSettingsStore.getState().handleSetSmartBeat({ effects: { 'diorama.ripple': { on: false } } });
-        expect(useVisualizerSettingsStore.getState().smartBeat).toEqual({ enabled: true, effects: { 'diorama.ripple': { on: false, strength: 1.5 } } });
+        expect(useVisualizerSettingsStore.getState().smartBeat).toEqual({ mode: 'on', effects: { 'diorama.ripple': { on: false, strength: 1.5 } } });
+    });
+
+    it('says what each mode does: plays under on and cached, analyses under on only', () => {
+        expect([DEFAULT_SMART_BEAT_SETTINGS, cached, on].map(smartBeatActive)).toEqual([false, true, true]);
+        expect([DEFAULT_SMART_BEAT_SETTINGS, cached, on].map(smartBeatMayAnalyse)).toEqual([false, false, true]);
+    });
+
+    it('reads the one switch of a build before the modes, without letting it turn cached off', () => {
+        const at = (mode: SmartBeatSettings['mode']): SmartBeatSettings => ({ ...DEFAULT_SMART_BEAT_SETTINGS, mode });
+        // A valid mode wins over the switch beside it.
+        expect(resolveSmartBeatSettings({ mode: 'cached', enabled: true }, on).mode).toBe('cached');
+        // The switch alone: on is on from anywhere; off turns only on off.
+        expect(resolveSmartBeatSettings({ enabled: true }, at('off')).mode).toBe('on');
+        expect(resolveSmartBeatSettings({ enabled: true }, cached).mode).toBe('on');
+        expect(resolveSmartBeatSettings({ enabled: false }, on).mode).toBe('off');
+        // An older build synced `cached` back as off: it stays cached.
+        expect(resolveSmartBeatSettings({ enabled: false }, cached).mode).toBe('cached');
+        expect(resolveSmartBeatSettings({ enabled: false }, at('off')).mode).toBe('off');
+        // An unknown mode is ignored, the switch beside it read instead.
+        expect(resolveSmartBeatSettings({ mode: 'half' as never }, cached).mode).toBe('cached');
+        expect(resolveSmartBeatSettings({ mode: 'half' as never, enabled: true }, cached).mode).toBe('on');
+        // A setting stored by such a build.
+        storage.setItem(SMART_BEAT_STORAGE_KEY, JSON.stringify({ enabled: true, effects: {} }));
+        expect(readStoredSmartBeatSettings().mode).toBe('on');
+        expect(toStoredSmartBeat(on).enabled).toBe(true);
+        expect(toStoredSmartBeat(cached).enabled).toBe(false);
     });
 
     it('folds the old 轻拍 / 重拍 pair into the beat-list effects as their mean', () => {
         storage.setItem(SMART_BEAT_STORAGE_KEY, JSON.stringify({ enabled: true, beatIntensity: 1.5, downbeatIntensity: 0.5 }));
         expect(readStoredSmartBeatSettings()).toEqual({
-            enabled: true,
+            mode: 'on',
             effects: { 'sonnet.lensTear': { on: true, strength: 1 }, 'diorama.ripple': { on: true, strength: 1 } },
         });
         storage.setItem(SMART_BEAT_STORAGE_KEY, JSON.stringify({ enabled: false, beatIntensity: 2, downbeatIntensity: 1 }));
@@ -119,10 +147,17 @@ describe('智能动感模式 setting', () => {
         expect(readStoredSmartBeatSettings()).toEqual(DEFAULT_SMART_BEAT_SETTINGS);
     });
 
-    it('round-trips through visual config export and import, minified and long-form', () => {
-        const smartBeat = { enabled: true, effects: { 'sonnet.lensTear': { on: false, strength: 1.4 }, 'pendolo.drumhead': { on: true, strength: 0.3 } } };
-        expect(decompressConfig(compressConfig({ smartBeat })).smartBeat).toEqual(smartBeat);
-        expect(decompressConfig(JSON.stringify({ smartBeat })).smartBeat).toEqual(smartBeat);
+    it('round-trips each mode through visual config export and import, minified and long-form', () => {
+        for (const mode of ['off', 'cached', 'on'] as const) {
+            const smartBeat = toStoredSmartBeat({ mode, effects: { 'sonnet.lensTear': { on: false, strength: 1.4 }, 'pendolo.drumhead': { on: true, strength: 0.3 } } });
+            expect(decompressConfig(compressConfig({ smartBeat })).smartBeat).toEqual(smartBeat);
+            expect(decompressConfig(JSON.stringify({ smartBeat })).smartBeat).toEqual(smartBeat);
+            expect(resolveSmartBeatSettings(decompressConfig(compressConfig({ smartBeat })).smartBeat).mode).toBe(mode);
+        }
+    });
+
+    it('reads a minified config from a build before the modes by its one switch', () => {
+        expect(resolveSmartBeatSettings(decompressConfig(JSON.stringify({ smb: { on: true, ef: {} } })).smartBeat).mode).toBe('on');
     });
 
     it('imports an old minified config\'s 轻拍 / 重拍 pair for the store to fold', () => {
@@ -143,6 +178,24 @@ describe('智能动感模式 setting', () => {
         });
         expect(plan.changes).toContainEqual(expect.objectContaining({ key: 'smartBeat', group: 'visualizer' }));
     });
+
+    // From the PR #750 review: diffed raw, the legacy switch showed as an "enabled" row, and a mode this
+    // build does not know as a change that never lands.
+    const planFor = (smartBeat: unknown) => buildImportPlan({
+        incoming: { smartBeat, visualizerTunings: {} },
+        current: { smartBeat: { ...DEFAULT_SMART_BEAT_SETTINGS, mode: 'off', enabled: false } },
+        switches: { isCustomThemePreferred: false, songThemeAutoSwitchEnabled: false, songThemeAutoGenerateEnabled: false },
+        isCustomThemeActive: true,
+    });
+
+    it('lists the mode alone in the import plan, not the switch older builds read', () => {
+        const row = planFor({ mode: 'cached', enabled: false, effects: {} }).changes.find(change => change.key === 'smartBeat');
+        expect(row?.children?.map(child => [child.key, child.from, child.to])).toEqual([['mode', 'off', 'cached']]);
+    });
+
+    it('offers no change for a mode this build does not know', () => {
+        expect(planFor({ mode: 'turbo', effects: {} }).changes.find(change => change.key === 'smartBeat')).toBeUndefined();
+    });
 });
 
 describe('when the beat clock runs', () => {
@@ -156,6 +209,11 @@ describe('when the beat clock runs', () => {
     it('never while the switch is off', () => {
         expect(visualizerWantsBeatClock(settings({ smartBeat: DEFAULT_SMART_BEAT_SETTINGS, visualizerMode: 'sonnet' }))).toBe(false);
         expect(visualizerWantsBeatClock(settings({ smartBeat: DEFAULT_SMART_BEAT_SETTINGS, visualizerBackgroundMode: 'latent' }))).toBe(false);
+    });
+
+    it('under cached as under on: the effects play, from what is stored', () => {
+        expect(visualizerWantsBeats(settings({ smartBeat: cached, visualizerMode: 'sonnet' }))).toBe(true);
+        expect(visualizerWantsDrumHits(settings({ smartBeat: cached, visualizerMode: 'pendolo' }))).toBe(true);
     });
 
     it('for a mode that draws beat FX, whatever the background', () => {
@@ -179,7 +237,7 @@ describe('when the beat clock runs', () => {
     });
 
     it('not for an effect switched off, and at each effect\'s own strength', () => {
-        const smartBeat = { enabled: true, effects: { 'pendolo.drumhead': { on: false, strength: 1 }, 'diorama.ripple': { on: true, strength: 0.4 } } };
+        const smartBeat: SmartBeatSettings = { mode: 'on', effects: { 'pendolo.drumhead': { on: false, strength: 1 }, 'diorama.ripple': { on: true, strength: 0.4 } } };
         expect(visualizerWantsBeatClock(settings({ smartBeat, visualizerMode: 'pendolo' }))).toBe(false);
         expect(liveBeatEffectStrength(settings({ smartBeat, visualizerMode: 'diorama' }), 'beats')).toBeCloseTo(0.4);
         expect(liveBeatEffectStrength(settings({ smartBeat, visualizerMode: 'sonnet' }), 'beats')).toBe(1);

@@ -212,7 +212,8 @@ drums 0.0008 / bass 0.0071 / other 0.0005 / vocals 0.0000 dB，都在 0.01 dB �
 | 外置权重 | `folia_htdemucs.cpp` 建图后写临时文件（原先是 `make_model.py` 的 `--saveExternalData`） | MNN 不再在内存里多留一份权重 |
 | `Memory_Low` + 释放时把空闲内存还给系统 | `native/folia-mnn/folia_mnn.cpp` | 中间缓冲用完即还；`release()` 后物理占用回到几十 MB |
 | automix 开着时常驻、关掉时在进程内释放 | `host.cjs` / `worker.cjs` | 换歌之间不重新建图；关掉功能即还内存，不杀进程 |
-| htdemucs 4 线程 | `worker.cjs` `HTDEMUCS_THREADS` | 与上一版 Python 运行器相同，留出核给播放和渲染 |
+| 更正（PR #750 复审，2026-10-19）：上一行的常驻不再成立。htdemucs 每次分完闲置 1 分钟就在进程内释放，没有 GPU 的机器也一样；automix 开着时闲置的 worker 也会退出 | `worker.cjs` `STEMS_IDLE_MS` / `host.cjs` | 释放让 worker 的 rss 从 487 MB 降到 137 MB，代价是重新加载约 0.5 秒（实测 2 线程 516 ms、3 线程 500 ms）；关掉功能照旧立即在进程内释放 |
+| htdemucs 4 线程 | `threads.cjs` `HTDEMUCS_THREADS` | 与上一版 Python 运行器相同，留出核给播放和渲染 |
 | `folia_mnn_prefer_fast_cores()` | `folia_mnn.cpp`，worker 启动时调用 | 上一版 `prefer_fast_cores()` 的移植：Windows 最小化后不被挪到能效核（12.7s → 28.1s 那条） |
 | beat_this 走 GPU，CPU 只给 automix | `../analysis/beatThis.ts` `cpuFallback` | CPU 每块 0.4–0.7 s，GPU 约 0.06 s；只有提前几分钟分析的 automix 等得起 |
 

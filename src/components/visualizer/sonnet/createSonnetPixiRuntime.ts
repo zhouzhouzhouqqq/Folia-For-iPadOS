@@ -73,7 +73,7 @@ export interface SonnetRuntimeOptions {
     program: SonnetProgram;
     theme: Theme;
     tuning: SonnetTuning;
-    /** 智能动感模式 (SmartBeatSettings.enabled); its strengths reach the frame through the beat clock. */
+    /** 智能动感模式 (`smartBeatActive`: on or cached); its strengths reach the frame through the beat clock. */
     smartBeatEnabled: boolean;
     currentTime: MotionValue<number>;
     audioPower?: MotionValue<number>;

@@ -2,7 +2,7 @@ import type React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import type { SearchReturnView, SearchSource } from '../../stores/useSearchNavigationStore';
 import type { LocalLibraryDisplayCatalog } from '../../services/playbackAdapters';
-import type { HomeViewTab, LatentBackgroundTuning, LocalSong, LyricData, PlayerState, ReplayGainMode, SongResult, StatusMessage, SubtitleContentMode, VisualizerMode, VisualizerBackgroundMode, MonetBackgroundTuning } from '../../types';
+import type { HomeViewTab, LatentBackgroundTuning, LocalSong, LyricData, PlayerState, ReplayGainMode, SongResult, StatusMessage, SubtitleContentMode, VisualizerMode, VisualizerBackgroundMode, MonetBackgroundTuning, SmartBeatMode } from '../../types';
 import type { LyricSegmentationRecord, LyricSegmentationSource } from '../../types/lyricSegmentation';
 import type { AppLanguagePreference } from '../../i18n/config';
 import type { PanelTab } from '../UnifiedPanel';
@@ -17,15 +17,18 @@ import type { LyricStaffAbsorbMode, LyricStaffPolicy } from '../../utils/lyrics/
 import type { AudioEqualizerModeId } from '../../utils/audioEqualizer';
 import type { ThemeGenerationSource } from '../../services/themePreferences';
 import type { TransitionMode } from '../../services/automix/transitionStrategy';
+import type { PersonalFmCatalog } from '../../types/personalFm';
 import type { PersonalFmSelection } from '../../services/onlineMusic/fmModes';
 import type { QueueBatchAction, QueueFacetKind } from './queueQuery';
 import type { CommandPlatform } from './availability';
 import type { CommandPaletteSurface } from './surfaces/types';
 import type { CommandSyntaxSpec } from './syntax/types';
 import type { PlaybackEntryView } from '../../stores/usePlaybackEntryViewStore';
+import type { GpuPreference } from '../../stores/useDesktopSettingsStore';
 import type { PonderHintVisibility } from '../../types/ponder';
 import type { LibraryWallLook } from '../../utils/libraryWallLook';
 import type { LibraryWallSeamStyle } from '../../utils/libraryWallSeamStyle';
+import type { LibraryWallSeamDirection } from '../../utils/libraryWallSeamDirection';
 
 // src/components/command-palette/types.ts
 // Shared command palette contracts used by the registry, hook, and UI shell.
@@ -146,6 +149,8 @@ export type CommandPalettePlaybackContext = {
     volume: number;
     isMuted: boolean;
     setVolume: (volume: number) => void;
+    /** Moves the volume by `delta` from its value at the moment of the call, clamped to 0–1. */
+    stepVolume: (delta: number) => void;
     previewVolume: (volume: number) => void;
     togglePlay: () => void;
     toggleLoop: () => void;
@@ -165,6 +170,7 @@ export type CommandPalettePlaybackContext = {
     /** Personal FM owns the queue while it is on air; queue commands stand down. */
     isFmMode: boolean;
     personalFmSelection: PersonalFmSelection;
+    personalFmCatalog?: PersonalFmCatalog;
     /** Only the providers that actually implement FM modes offer the picker. */
     isPersonalFmModeSupported: boolean;
     setPersonalFmSelection: (selection: PersonalFmSelection) => Promise<void> | void;
@@ -184,6 +190,17 @@ export type CommandPalettePlaybackContext = {
     canAddCurrentSongToPlaylist: boolean;
     openAudioEqualizer: () => void;
     applyAudioSoundPreset: (modeId: AudioEqualizerModeId) => void;
+    /**
+     * Whether a mod's equalizer curve is kept, playing or on hold (Folium 1.7 `folium.equalizer`).
+     *
+     * A function rather than a value because a mod puts a curve in place or takes it off with nothing
+     * re-rendering the app to say so: this context is memoised on the values it subscribes to, and the
+     * audio ones are only volume and mute. `isAvailable` is asked each time the palette opens, so a getter
+     * is read fresh.
+     */
+    hasModEqualizerCurve: () => boolean;
+    /** Takes a mod's equalizer curve off (or discards one on hold), back to the listener's own sound. */
+    releaseModEqualizerCurve: () => void;
     runAutoMatchBestLyric: () => Promise<boolean>;
     /** Marks or unmarks the current local song as instrumental (no automatic lyric matching). */
     toggleCurrentSongPureMusicMark: () => Promise<boolean>;
@@ -217,6 +234,7 @@ export type CommandPaletteNavigationContext = {
 export type CommandPalettePanelContext = {
     setPanelTab: (tab: PanelTab) => void;
     setIsPanelOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    setPlayerBarPresentation: (presentation: 'expanded' | 'collapsed' | 'hidden') => void;
 };
 
 export type CommandPaletteSettingsContext = {
@@ -267,6 +285,9 @@ export type CommandPaletteSettingsContext = {
     /** Lyrics / blur on the visualizer that shows through the bravais wall: flip the stored values. */
     toggleLibraryWallBackdropLyrics: () => void;
     toggleLibraryWallBackdropBlur: () => void;
+    /** Which way the bravais info strip opens (useLibraryWallLookStore.seamDirection: auto / vertical / horizontal); read live. */
+    libraryWallSeamDirection: () => LibraryWallSeamDirection;
+    setLibraryWallSeamDirection: (direction: LibraryWallSeamDirection) => void;
     ponderHintVisibility: PonderHintVisibility;
     setPonderHintVisibility: (visibility: PonderHintVisibility) => void;
     /** 触屏上那颗思索按钮显不显示。它是触屏唯一的入口，所以关掉是一个明确的选择。 */
@@ -325,6 +346,8 @@ export type CommandPaletteSettingsContext = {
     modSystemEnabled: boolean;
     toggleVoiceInputPause: () => void;
     togglePreventDisplaySleepDuringPlayback: () => void;
+    /** 后台节流: throttle the window and hold the lyric animation while it is minimised or hidden (main process applies it). */
+    toggleBackgroundThrottling: () => void;
     toggleWallpaperMode: () => void;
     /** Close button hides the main window to the tray instead of quitting (main process owns it). */
     toggleCloseToTray: () => void;
@@ -338,6 +361,10 @@ export type CommandPaletteSettingsContext = {
     toggleObsKeepMainWindowAnimation: () => void;
     /** macOS-only: the wallpaper-mode Dock auto-hide override (on by default). */
     toggleWallpaperMacAutohideDock: () => void;
+    /** Windows-only: the saved render GPU choice, read when asked (it can change while the palette is open). */
+    gpuPreference: () => GpuPreference;
+    /** Saves the render GPU choice; the main process applies it on the next launch. */
+    setGpuPreference: (preference: GpuPreference) => void;
     sleepTimerEnabled: boolean;
     setSleepTimerEnabled: (enabled: boolean) => void;
     sleepTimerHours: number;
@@ -403,7 +430,9 @@ export type CommandPaletteVisualizerContext = {
     setLatentBackgroundTuning: (patch: Partial<LatentBackgroundTuning>) => void;
     /** The built-in video layer behind the lyrics. */
     toggleVideoLayer: () => void;
-    /** 智能动感模式 (beat_this-driven FX in every mode and background that draws them) on/off. */
+    /** 智能动感模式 (the beat FX in every mode and background that draws them): off, stored results only, or on. */
+    setSmartBeatMode: (mode: SmartBeatMode) => void;
+    /** 智能动感模式 on / off, as v0.7.21 shipped it: any mode that plays goes off, off goes fully on. */
     toggleSmartBeat: () => void;
     /** Opens the file picker for the video layer; resolves to the picked name, or null when cancelled. */
     pickVideoLayerFile: () => Promise<string | null>;

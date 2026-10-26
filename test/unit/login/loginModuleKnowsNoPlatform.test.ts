@@ -41,6 +41,7 @@ describe('what each platform declares for the sign-in window', () => {
             bodian: { letter: '波', color: '#0d9488' },
             ytm: { letter: 'Y', color: '#e11d48' },
             spotify: { letter: 'S', color: '#22c55e' },
+            qishui: { letter: '汽', color: '#19a58c' },
         });
     });
 
@@ -58,6 +59,7 @@ describe('what each platform declares for the sign-in window', () => {
             // The test runs where no browser tells the system: the note is the one for Windows and Linux.
             ytm: { title: 'home.loginTitleYtm', note: 'home.loginNoteYtmBrowser' },
             spotify: { title: 'home.loginTitleSpotify', note: 'home.loginNoteSpotify' },
+            qishui: { title: 'home.loginTitleQishui', note: 'home.loginNoteQishui' },
         });
     });
 

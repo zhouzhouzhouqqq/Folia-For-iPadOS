@@ -39,6 +39,8 @@ export const BEAT_EFFECT_IDS = {
     pendoloDrumhead: 'pendolo.drumhead',
     pendoloGearBeats: 'pendolo.gearBeats',
     latentPulse: 'latent.pulse',
+    hanabiBeatBursts: 'hanabi.beatBursts',
+    hanabiBeatPulse: 'hanabi.beatPulse',
 } as const;
 
 /**
@@ -51,9 +53,18 @@ export const LEGACY_BEAT_LIST_EFFECT_IDS: readonly string[] = [BEAT_EFFECT_IDS.s
 export const resolveBeatEffectSetting = (settings: SmartBeatSettings, id: string): BeatEffectSetting =>
     settings.effects[id] ?? BEAT_EFFECT_DEFAULT;
 
-/** Whether the effect plays: the switch on, the effect not retired and switched on itself. */
+/** Whether the effects play at all: 智能动感模式 on, or on what is already stored (`cached`). */
+export const smartBeatActive = (settings: SmartBeatSettings): boolean => settings.mode !== 'off';
+
+/**
+ * Whether a track with nothing stored is analysed now (`on`). Under `cached` no run is ever started
+ * for the beat FX - see SmartBeatMode.
+ */
+export const smartBeatMayAnalyse = (settings: SmartBeatSettings): boolean => settings.mode === 'on';
+
+/** Whether the effect plays: 智能动感模式 active, the effect not retired and switched on itself. */
 export const isBeatEffectLive = (settings: SmartBeatSettings, effect: BeatEffectDef): boolean =>
-    settings.enabled && !effect.retired && resolveBeatEffectSetting(settings, effect.id).on;
+    smartBeatActive(settings) && !effect.retired && resolveBeatEffectSetting(settings, effect.id).on;
 
 /** The effects a registry entry offers in its settings: every one not retired. */
 export const offeredBeatEffects = (effects: readonly BeatEffectDef[] | undefined): readonly BeatEffectDef[] =>

@@ -120,7 +120,7 @@ describe('QR login diagnostic report', () => {
 
         // Every platform that declares diagnostics has a row here: its builder is fed the text above
         // in the fields that come from the main process. A new platform's diagnostics fail the first
-        // assertion until it has a row.
+            // assertion until it has a row. Compact stage/code diagnostics have their own adapter tests.
         it('keeps what the main process handed over, for every platform that adds lines of its own', () => {
             const builders: Record<string, () => LoginDiagnosticLine[]> = {
                 netease: () => formatNeteaseLoginDiagnostics({
@@ -155,7 +155,8 @@ describe('QR login diagnostic report', () => {
                 }),
             };
             const declaring = listOnlineMusicProviders().filter(provider => provider.auth?.getLoginDiagnostics).map(provider => provider.id);
-            expect(Object.keys(builders).sort()).toEqual(declaring.sort());
+            // The car adapter reports only safe stage/code fields, exercised in qishui/adapter.test.ts.
+            expect([...Object.keys(builders), 'qishui'].sort()).toEqual(declaring.sort());
             for (const [providerId, build] of Object.entries(builders)) {
                 const report = reportOf(build());
                 expect(report, providerId).toContain('2873651094');

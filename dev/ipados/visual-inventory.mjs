@@ -18,7 +18,7 @@ async function walk(directory) {
 const declaredSource = await readFile(resolve(root, 'src/types/visualizerModes.ts'), 'utf8');
 const getDeclared = name => [...declaredSource.match(new RegExp(`${name} = \\[([\\s\\S]*?)\\] as const`))[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
 const groups = [['lyrics', visualRoot, getDeclared('BUILTIN_VISUALIZER_MODES')], ['backgrounds', resolve(visualRoot, 'backgrounds'), getDeclared('BUILTIN_VISUALIZER_BACKGROUND_MODES')]];
-const inventory = { baseline: '33b25ff75252435a78006af45114fdf10e64727a', modes: [] };
+const inventory = { baseline: '1f6d0f468f5bc81b23a8b40ad7ca96ccd4b1ecbe', modes: [] };
 for (const [kind, directory, declared] of groups) {
     const actual = [];
     for (const entry of await readdir(directory, { withFileTypes: true })) {

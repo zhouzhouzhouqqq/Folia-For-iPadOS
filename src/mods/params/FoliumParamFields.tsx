@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Theme } from '@/types';
 import { ColorField } from '@/components/modal/settings/kit/ColorField';
 import type { FoliumSetting } from '../folium/contract';
-import { formatFoliumParamNumber, resolveFoliumLabel, resolveFoliumParamDefault, resolveFoliumParamStep, sanitizeFoliumParams } from './params';
+import { formatFoliumParamNumber, isFoliumSecretParam, resolveFoliumLabel, resolveFoliumParamDefault, resolveFoliumParamStep, sanitizeFoliumParams } from './params';
 import { FoliumSelectField } from './FoliumSelectField';
 
 // src/mods/params/FoliumParamFields.tsx
@@ -53,6 +53,12 @@ interface FoliumParamFieldsProps {
     theme?: Theme;
     isDaylight?: boolean;
     onChange: (param: FoliumSetting, value: unknown) => void;
+    /**
+     * Folium 1.7: draws a `secret` field (only settings sections have one). Its value is not in `values`
+     * and never reaches `onChange`: the row talks to the main process itself (FoliumSecretField). Without
+     * it a `secret` field is left out.
+     */
+    renderSecretField?: (param: FoliumSetting) => React.ReactNode;
 }
 
 /*
@@ -191,13 +197,15 @@ export const FoliumParamFields: React.FC<FoliumParamFieldsProps> = ({
     theme,
     isDaylight,
     onChange,
+    renderSecretField,
 }) => {
     const { t, i18n } = useTranslation();
     // 走 t：以前这里直接把 i18n key 当文案，于是所有布尔开关在任何语言下都显示 "mods.enabled"。
     const onLabel = booleanLabels?.on ?? t('mods.enabled');
     const offLabel = booleanLabels?.off ?? t('mods.disabled');
     const groups = React.useMemo(
-        () => groupParams(sanitizeFoliumParams(params), i18n.language),
+        // The registries already dropped a `secret` field wherever one is not allowed.
+        () => groupParams(sanitizeFoliumParams(params, undefined, { allowSecret: true }), i18n.language),
         [params, i18n.language],
     );
 
@@ -210,7 +218,9 @@ export const FoliumParamFields: React.FC<FoliumParamFieldsProps> = ({
                             {group.title}
                         </div>
                     ) : null}
-                    {group.params.map((param) => (
+                    {group.params.map((param) => (isFoliumSecretParam(param) ? (
+                        <React.Fragment key={param.key}>{renderSecretField?.(param) ?? null}</React.Fragment>
+                    ) : (
                         <FoliumParamField
                             key={param.key}
                             param={param}
@@ -224,7 +234,7 @@ export const FoliumParamFields: React.FC<FoliumParamFieldsProps> = ({
                             isDaylight={isDaylight}
                             onChange={onChange}
                         />
-                    ))}
+                    )))}
                 </React.Fragment>
             ))}
         </>

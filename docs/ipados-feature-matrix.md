@@ -6,7 +6,7 @@
 
 “适配类别”严格使用原样复用 / 需要适配 / 需要原生替代 / 平台不支持；“交付状态”描述当前完成度。**已实现并验证仅指注明的检查层级**；编译通过不能证明 WebKit 运行、后台连续播放、功耗或视觉等价。各项真机结果与失败反馈单独记录；“待真机”表示该项最新实现尚未通过设备验收。
 
-2026-10-23 已合入官方 0.7.21（`33b25ff75252435a78006af45114fdf10e64727a`），当前分支 `codex/upstream-0.7.21`。本次增量和验证范围见 [0.7.21 合入记录](ipados-upstream-0.7.21.md)；旧版本真机/测试结果不得视为新版本验收。
+2026-10-26 当前工作树对齐官方 0.7.22（`1f6d0f468f5bc81b23a8b40ad7ca96ccd4b1ecbe`），分支 `codex/upstream-0.7.22`，App 0.7.22 / build 6。新增能力见下方增量矩阵和 [0.7.22 适配记录](ipados-upstream-0.7.22.md)；旧结果不视为新版真机验收。
 
 详见 [验证报告](ipados-test-report.md)、[全部视觉验收](ipados-visual-checklist.md)、[在线能力与部署](ipados-api-deployment.md)、[模型/导出/模组差异](ipados-advanced-features.md)。
 
@@ -95,3 +95,22 @@
 | Spotify 登录及音频 | `electron/spotify/`、`src/services/onlineMusic/spotify/` | PKCE loopback、Node librespot、媒体解密 scheme | 保留源码，iOS 无对应桥 | 需要原生替代 | 已审计具体依赖；未实现 iOS 播放 | iOS 不可用 | 原生库/授权/会员/统一 DSP 兼容评估 | 尚未实现 |
 | YouTube Music 匿名和登录播放 | `electron/ytm/`、`src/services/onlineMusic/ytm/` | Chromium profile 登录、Node youtubei.js/token/流 | 匿名解析与 iOS Web 登录分别待适配 | 需要原生替代 | 已审计；未实现 iOS transport | iOS 无权读取别的浏览器 App profile；匿名不据此判死 | 设备内请求、登录仓储及媒体 URL验证 | 尚未实现 |
 | 桌面托盘、壁纸、多显示器定位、鼠标穿透 | `electron/main.cjs`、各平台窗口模块 | 桌面窗口系统 | 原平台源码保留，iOS 按能力隐藏窗口动作 | 平台不支持 | 平台 API/入口审计 | iPadOS 公开 API 不提供同等任意桌面壁纸窗口管理 | 保持系统媒体/外部显示替代的可用能力 | 平台不支持及理由 |
+
+## 0.7.22 增量矩阵（当前工作树）
+
+| 原功能 | 对应代码位置 | 现有依赖 | iPadOS 实现 | 适配类别 | 实际验证 | 体验差异 | 后续工作 | 交付状态 |
+|---|---|---|---|---|---|---|---|---|
+| 底部播放控制栏收起 / 隐藏 / 恢复 | `src/components/FloatingPlayerControls.tsx`、`floating-player/PlayerBarDisclosure.tsx`、`src/stores/usePlayerBarPresentationStore.ts` | 原 Motion 胶囊、Zustand、播放回调 | 增加显式触控按钮与命令；收起后保留可拖动音乐进度条、时间与展开箭头；隐藏后保留安全区内恢复入口 | 需要适配 | 93 项定向单测；Mac WebKit 5 个尺寸点击/命中/恢复通过；构建结果见测试报告 | 收起/隐藏为本次会话状态，重启恢复默认；不更改音频或特效设置 | 实体 iPhone/iPad 触控、键盘焦点、旋转和 Stage Manager 验收 | 已实现待真机验证 |
+| 花火 Hanabi 全场景与调参 | `src/components/visualizer/hanabi/entry.tsx`、同目录 `tuning.ts`/场景/文字/烟火模块 | Pixi、粒子、纹理、bloom、节拍 | 同一 registry/原动态实现，全部本地打包 | 原样复用 | 清单与 bundle；动态烟测见最新版报告 | 尚无实体设备视觉与性能结论 | 全预设/字色/字体/转场/旋转/纹理释放验收 | 已实现待真机验证 |
+| 随机歌词池、避免连续重复、reroll、配置同步 | `visualizer/random/`、`utils/randomVisualizerModes.ts`、`useLyricsSettingsStore` | 原 registry/设置/同步 | 保留上游全流程 | 原样复用 | 对应逻辑测试；详情见报告 | 需验收旧配置迁移和触控选择 | 多选、切歌、重启、导入导出、同步 | 已实现待真机验证 |
+| AI 服务商、模型列表、推理策略、Anthropic 与主题竞争修复 | `shared/ai/`、`services/nativeAi/`、`settings/NativeAISettings.tsx`、`ios/App/App/AI/` | HTTPS provider、协议/schema、密钥 | 同一协议打包 ESM；Keychain 鉴权；保存后同端点 GET models，手动模型仍可用 | 需要适配 | 原生桥主题/模型/Anthropic mock、Swift URL/鉴权/存储测试 | 真实模型格式和额度由服务商决定；SSE 仍按原生响应整体返回 | 配置真实 API；长回复/失败/取消/分词与主题竞争 | 等待用户配置 |
+| QQ 多次获取再试听、数字详情、匿名搜索与登录保持 | `onlineMusic/qq/`、`mobileDirect/qq.ts` | QQ API 3.3.3、Omni、会话 | 原生公开 musicu + 原设备内登录；HTTP 429/Retry-After 保留 | 需要适配 | QQ transport/provider 与 iOS musicu mock | 会员/地区/版权限制保留，无保证完整音源 | 真机完整/试听/失效账号/重启 | 已实现待真机验证 |
+| 试听片段歌词原曲偏移 | `utils/lyrics/lyricSeekTime.ts`、`useLyricReadHead.ts`、`LatticePlaybackProvider.tsx` | clipStartMs、统一音频时钟 | 复用上游，不运行第二播放器 | 原样复用 | 试听时钟与 seek 单测，见报告 | 需实际试听片段核对 | 播放/seek/歌词点击/Lattice/API | 已实现待真机验证 |
+| 汽水搜索、扫码/退出/续期、曲库/推荐/电台、喜欢/歌单操作、歌词、标准流 | `onlineMusic/qishui/`、`MusicProviders/ProviderSecurity.swift` | qishui-music-api 0.2.2、P-256 CSR/ticket、HTTPS | 最小 browser crypto + 原生 URLSession + Keychain；场景图 native 读取，原 Omni 能力 | 需要适配 | P-256 OpenSSL 互验；完整模拟 QR/ticket/account；不访问真实账号 | 仅官方协议可给的未加密流，不承诺受保护/高品质；真实服务待验 | 抖音扫码、重启/续期/播放/CDN、全部读写操作 | 已实现待真机验证 |
+| 分析共享 bytes/decode/beat grid、stem segment、暂停 deadline、本地/Navidrome AutoMix | `services/analysis/`、`automix/`、`beatFx/` | WGSL/MNN、模型、解码、统一双 deck | 共享适用前端缓存/调度，原生 stemInference 保留；三源 ORT 不冒充四源 WGSL | 需要原生替代 | 分析与 AutoMix 单测；原生编译层见报告 | 四源 GPU stem segment 缓存不由现有 ORT 三源结果填充；性能未测 | 真机分析一致性/取消/连续混音/内存 | 已实现待真机验证 |
+| Folium 1.7 Omni/EQ/replaceQueue/account/网易 raw | `mods/folium/`、`mods/runtime/`、`mods/ios/manifest.mjs` | 原权限/实验白名单、宿主桥 | 复用前端执行，native manifest 对齐 1.7 | 需要适配 | 对应契约与逻辑测试；见报告 | Node main/RPC server 未在 iOS 实现 | 前端 mod 包安装和真实回归 | 已实现待真机验证 |
+| Folium secrets | `mods/ios/secrets.ts`、`platform/ios/musicProviders.ts` | Keychain、原 Folium 契约 | 独立 mod-secrets namespace，串行/隔离/声明/限额/仅 key 通知 | 需要原生替代 | 模拟 Keychain 隔离、额度、禁用竞态和错误测试 | 同 renderer 不是恶意 JS 强隔离；卸载 secret 清理待做 | 真机持久化、删除清理和权限 UI | 已实现待真机验证 |
+| Folium Node-main RPC、全局 OS 快捷键 | `electron/modSystem/`、`electron/globalShortcuts*` | Node main、Electron globalShortcut | 桌面代码保留，iOS 安装器明确拒绝 main 包；app 内按键可用 | 需要原生替代 | 源码依赖核查 | 当前未实现 desktop RPC；公开 SDK 无任意跨 App globalShortcut 等价 | 可行的 app 内 RPC seam、逐 mod 评估 | 尚未实现 |
+| Bravais seam、探索墙最近播放/再听一次/空状态 | `library/suites/bravais/`、`app/lattice/` | 原虚拟布局、Omni/历史 | 原 UI 与触控适配保留 | 原样复用 | 对应逻辑测试；设备交互待验 | 无设备窗口/FPS 保证 | 横竖屏/分屏/大曲库 | 已实现待真机验证 |
+| DSD 扫描识别 | `utils/metadataParserTypeHint.ts`、扫描/导入扩展表 | music-metadata、桌面 FFmpeg | 保留扩展识别；尚无 iOS DSD 解码/转码 | 需要原生替代 | 解析逻辑单测不代表可播放 | 识别不等于解码，不能复制 macOS FFmpeg | 审计 AVFoundation/可编译库和授权后可选服务 | 尚未实现 |
+| Windows/Linux GPU/MNN、macOS 壁纸与桌面后台调度 | `electron/main.cjs`、`native/folia-mnn/`、`electron/wallpaper/` | Electron、操作系统桌面和本地库 | 桌面实现保留，iOS 不显示无宿主能力按钮 | 平台不支持 | 平台 API 与运行时依赖核查 | 公开 iPadOS SDK 无桌面壁纸层、托盘、桌面鼠标穿透；非性能降级 | 真机确认能力门控，保留 app 内对应操作 | 平台不支持及理由 |

@@ -9,9 +9,9 @@ import type { PlaybackRecoveryTarget } from '../../types/playbackRecovery';
 import { getPlaybackSongKey, isNavidromePlaybackSong, resolveNavidromePlaybackCarrier } from '../../utils/appPlaybackGuards';
 import { nextTransitionSong } from '../../utils/playbackNeighbors';
 import { getPrefetchedData } from '../prefetchService';
-import { ensureTrackProfile, getTrackProfile, recordPlayedTail } from './profileService';
+import { ensureTrackProfile, describeProfileState, getTrackProfile, recordPlayedTail } from './profileService';
 import { refreshModelAvailability } from '../analysis/modelAvailability';
-import { canSeparateStems, ensureStems, getStemsByKey, setWantedStems, stemWindowKey } from './stems';
+import { canSeparateStems, clearStemDeadlines, ensureStems, getStemsByKey, setWantedStems, stemWindowKey } from './stems';
 import { connectAutomixDeck, type AutomixDeckChain } from './crossfadeGraph';
 import {
     createAutomixSession,
@@ -19,7 +19,8 @@ import {
     type AutomixDeckId,
     type AutomixSession,
 } from './automixSession';
-import { AUTOMIX_MAX_OVERLAP_SEC } from './transitionPlanner';
+import { AUTOMIX_MAX_OVERLAP_SEC, linesOnClipClock } from './transitionPlanner';
+import { omni } from '../onlineMusic/omni';
 import type { TransitionSettings } from './transitionStrategy';
 import { usePlaybackStore, type TransitionDisplay } from '../../stores/usePlaybackStore';
 import { useAudioSettingsStore } from '../../stores/useAudioSettingsStore';
@@ -63,6 +64,14 @@ export const isPausedByListener = (state: PlayerState): boolean => state === Pla
 export const shouldAbortTransitionOnPause = (state: PlayerState, pauseFadePending: boolean): boolean => (
     isPausedByListener(state) && !pauseFadePending
 );
+
+/** A position in a track as a log line wants it: `3:12.40 (192.40s)`. */
+const trackClock = (seconds: number): string => {
+    // Rounded first, so 59.999 reads 1:00.00 rather than 0:60.00.
+    const centis = Math.round(seconds * 100);
+    const minutes = Math.floor(centis / 6000);
+    return `${minutes}:${((centis - minutes * 6000) / 100).toFixed(2).padStart(5, '0')} (${(centis / 100).toFixed(2)}s)`;
+};
 
 /**
  * How often both decks are measured.
@@ -520,6 +529,8 @@ export function useAutomixDecks({
      * feature that is broken - which is exactly how the first build of this read.
      */
     const lastReportRef = useRef<string | null>(null);
+    /** Arms reported so far, to key each one's line apart - see the armed report below. */
+    const armsReportedRef = useRef(0);
     const report = useCallback((signature: string, message: string) => {
         if (lastReportRef.current === signature) return;
         lastReportRef.current = signature;
@@ -597,7 +608,13 @@ export function useAutomixDecks({
         const plan = session.requestTransition({
             time,
             audioSrc,
-            from: { duration, lines: lyrics?.lines ?? null, profile: getTrackProfile(currentSong) },
+            // `duration` is the clip's own for a preview clip, and its lyric file is timed on the whole
+            // song: the lines are moved onto the clip's clock to be read against it.
+            from: {
+                duration,
+                lines: linesOnClipClock(lyrics?.lines ?? null, omni.previewClipStartMsOfAudioSource(audioSrc) / 1000),
+                profile: getTrackProfile(currentSong),
+            },
             to: {
                 duration: nextSong.durationMs / 1000,
                 // Already in memory for online tracks: the queue prefetcher fetches the next few
@@ -613,7 +630,23 @@ export function useAutomixDecks({
         if (!plan) return;
 
         if (session.getPhase() === 'armed') {
-            report(`${audioSrc}:${modeTag}armed`, `blending ${plan.overlap}s - ${plan.reason}`);
+            // Once per arm, at the moment the blend is ready: when it will start, and
+            // what each end was planned with. The analysis state is the half the plan cannot say - a plan
+            // made blind reads the same whether the track was never asked for or is still in the queue.
+            //
+            // Keyed by the arm, not the track: this branch runs once per arm already, and the same song
+            // queued twice in a row - one stream URL for both - would otherwise have its second arm
+            // swallowed as a repeat of the first.
+            const startIn = plan.outStart - time;
+            armsReportedRef.current += 1;
+            report(
+                `${audioSrc}:${modeTag}armed:${armsReportedRef.current}`,
+                `automix armed: "${currentSong.name}" -> "${nextSong.name}",`
+                // A cut has no blend to start: its `overlap` is the room it stands in, not a length.
+                + ` ${plan.style === 'beatCut' ? 'the cut is placed from' : 'the blend starts at'} ${trackClock(plan.outStart)} of this track`
+                + ` (${startIn > 0.05 ? `in ${startIn.toFixed(1)}s` : 'now'}), ${plan.overlap}s - ${plan.reason}`
+                + `; analysis: this track ${describeProfileState(currentSong)}, the next ${describeProfileState(nextSong)}`,
+            );
         } else if (plan.kind !== 'fade') {
             report(`${audioSrc}:${modeTag}cut`, `plain cut - ${plan.reason}`);
         } else if (time >= plan.outStart) {
@@ -734,7 +767,13 @@ export function useAutomixDecks({
          * timer above uses. A transition in flight drops the player to IDLE for the whole lead while
          * the outgoing deck plays on, and that is exactly when the pair AFTER it should be starting.
          */
-        if (playerState !== PlayerState.PLAYING && tailSrc === null) return;
+        if (playerState !== PlayerState.PLAYING && tailSrc === null) {
+            // Paused: no transition is coming, so no window is due (found by review: a deadline kept
+            // across a long pause came due and hurried the CPU, and its GPU units skipped yielding
+            // to the picture). Playing again runs this effect, and sets them anew.
+            clearStemDeadlines();
+            return;
+        }
         if (hasNativeAutomix()) {
             const enableMediaCache = useAudioSettingsStore.getState().enableMediaCache;
             void ensureTrackProfile({ song: currentSong, audioUrl: audioSrc, enableMediaCache, wantGrid: true });
@@ -751,6 +790,17 @@ export function useAutomixDecks({
             const held = stemSongsRef.current[end];
             return Boolean(held && getPlaybackSongKey(held) === getPlaybackSongKey(song));
         };
+        // When the transition arms at the latest (the planner's longest overlap before the end, less
+        // the arm lead): the deadline both windows are separated against (analysis/scheduler.ts), so
+        // a GPU that would be late hands them to the CPU. Media seconds as wall seconds - a slower
+        // or faster playback rate only moves it a little. None while the duration is unknown; a
+        // window already under way takes it when this runs again with the duration (stems.ts
+        // `deadlines`). A seek does not run this: the deadline stays where it was until the next run.
+        const element = audioRef.current;
+        const leftSec = element && Number.isFinite(duration) && duration > 0
+            ? duration - element.currentTime - AUTOMIX_MAX_OVERLAP_SEC - AUTOMIX_ARM_LEAD_SEC
+            : null;
+        const deadline = leftSec === null ? undefined : performance.now() + Math.max(0, leftSec) * 1000;
         // The outgoing end first: it carries the vocal exit, which is the half of the gesture the
         // listening tests actually isolated. If only one window is ever ready this should be it -
         // though the session needs both before it will use either.
@@ -758,6 +808,7 @@ export function useAutomixDecks({
             song: currentSong,
             role: 'tail',
             audioUrl: audioSrc,
+            deadline,
             stillWanted: stillPaired(currentSong, 'from'),
             readBytes: () => localBytesRef.current?.(currentSong) ?? Promise.resolve(null),
         });
@@ -770,12 +821,15 @@ export function useAutomixDecks({
                     ? prefetched.audioUrl
                     : null,
                 stillWanted: stillPaired(next, 'to'),
+                deadline,
                 // A local next-up song has no prefetch URL and never enters the media cache, so this is
                 // the only way its head is ever separated. See readLocalBytes.
                 readBytes: () => localBytesRef.current?.(next) ?? Promise.resolve(null),
             });
         }
-    }, [audioQuality, audioSrc, currentSong, isEnabled, isFmMode, loopMode, playQueue, playerState, tailSrc, transition.mode, nativeAnalysisRevision]);
+    // `duration`: the deadline above needs it, and it arrives after the track does; a second pass is
+    // one more `ensureStems` that finds its window in flight or cached.
+    }, [audioQuality, audioRef, audioSrc, currentSong, duration, isEnabled, isFmMode, loopMode, playQueue, playerState, tailSrc, transition.mode, nativeAnalysisRevision]);
 
     // Any pause, from the UI, a media key or the OS, ends a transition. Watching player state
     // rather than the element's pause event matters: while armed the active deck is the silent

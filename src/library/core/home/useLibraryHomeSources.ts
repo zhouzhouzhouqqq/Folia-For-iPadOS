@@ -10,7 +10,8 @@ import { resolveActiveProviderSummary } from '../account/accountRules';
 import { readOnlineProviderCapabilities, readOnlineProviderLabel } from './online/onlineHomeProvider.service';
 import { useSearchNavigationStore } from '../../../stores/useSearchNavigationStore';
 import { useHomeLayoutSettingsStore } from '../../../stores/useHomeLayoutSettingsStore';
-import { usePersonalFmModeStore } from '../../../stores/usePersonalFmModeStore';
+import { usePersonalFmCatalog } from '../../../hooks/usePersonalFmCatalog';
+import { selectProviderPersonalFm, usePersonalFmModeStore } from '../../../stores/usePersonalFmModeStore';
 import { getLocalLibraryAvailability } from '../../../services/localLibraryAvailability';
 import { getPersonalFmSelectionLabel } from '../../../services/onlineMusic/fmModes';
 import { useLibraryAccountProviders } from '../account/useLibraryAccount';
@@ -59,9 +60,9 @@ export const useLibraryHomeSources = ({
     })));
     // The FM card doubles as the mode readout: the card is the only place the current mode shows
     // up outside the player, and the picker can change it while this grid stays mounted.
-    const personalFmSelection = usePersonalFmModeStore(state => state.selection);
-
     const { providers, activeProviderId: providerId } = useLibraryAccountProviders(account);
+    const catalog = usePersonalFmCatalog(providerId);
+    const personalFmSelection = usePersonalFmModeStore(state => selectProviderPersonalFm(state, providerId));
     const provider = useMemo(() => resolveActiveProviderSummary(providers, providerId), [providerId, providers]);
     const capabilities = readOnlineProviderCapabilities(providerId);
     const { userLibrary, playlists: canListPlaylists, userAlbums, recommendations, personalFmModes, explore } = capabilities;
@@ -95,7 +96,7 @@ export const useLibraryHomeSources = ({
     }), t), [localAvailability.reason, localAvailability.supported, navidromeEnabled, online, t, visibility]);
 
     const personalFmModeLabel = online.hasPersonalFmModes
-        ? getPersonalFmSelectionLabel(personalFmSelection, (key, fallback) => t(key, fallback ?? ''))
+        ? getPersonalFmSelectionLabel(personalFmSelection, (key, fallback) => t(key, fallback ?? ''), catalog)
         : '';
 
     return {

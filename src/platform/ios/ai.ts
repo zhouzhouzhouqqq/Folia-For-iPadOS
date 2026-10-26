@@ -15,7 +15,7 @@ interface NativeAIPlugin {
     getSettings(): Promise<NativeAISettings>;
     saveSettings(settings: NativeAIDraft): Promise<NativeAISettings>;
     clearSettings(): Promise<void>;
-    request(options: { id: string; revision: string; url: string; body: string; timeoutMs: number }): Promise<{ status: number; contentType: string; body: string }>;
+    request(options: { id: string; revision: string; url: string; body: string; method?: 'GET' | 'POST'; timeoutMs: number }): Promise<{ status: number; contentType: string; body: string }>;
     cancel(options: { id: string }): Promise<void>;
 }
 export const FoliaAI = registerPlugin<NativeAIPlugin>('FoliaAI');

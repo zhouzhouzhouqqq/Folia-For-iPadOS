@@ -133,6 +133,8 @@ const readUses = (text) => {
     const registries = [];
     const experimental = [];
     const events = [];
+    // The platform ids passed to a `.request('<id>', …)`: platform.raw's, when the mod opts into it.
+    const platformRequests = [];
     for (const match of code.matchAll(/\bregistries\s*(?:\?\.|\.)\s*([A-Za-z_$][\w$]*)\s*(?:\?\.|\.)\s*register\b/g)) {
         registries.push(match[1]);
     }
@@ -149,7 +151,11 @@ const readUses = (text) => {
         // A name built at run time (`${...}`) cannot be known here.
         if (literal && !literal.text.includes('${')) events.push(literal.text);
     }
-    return { code, registries, experimental, events };
+    for (const match of code.matchAll(/(?:\?\.|\.)\s*request\s*\(\s*(?=['"`])/g)) {
+        const literal = strings.get(match.index + match[0].length);
+        if (literal && /^[a-z][a-z0-9-]*$/.test(literal.text)) platformRequests.push(literal.text);
+    }
+    return { code, registries, experimental, events, platformRequests };
 };
 
 /** Matches a use of `member` (e.g. `api.runtime.getPlaybackSnapshot`), each dot also written `?.`. */
@@ -270,11 +276,12 @@ export const checkFoliumMod = (directory) => {
                 problems.push(`${manifest.client} has no default export: the app calls its default export as activate(folium)`);
             }
         }
-        const used = { registries: new Set(), experimental: new Set(), events: new Set() };
+        const used = { registries: new Set(), experimental: new Set(), events: new Set(), platformRequests: new Set() };
         for (const use of uses.values()) {
             use.registries.forEach((name) => used.registries.add(name));
             use.experimental.forEach((name) => used.experimental.add(name));
             use.events.forEach((name) => used.events.add(name));
+            use.platformRequests.forEach((id) => used.platformRequests.add(id));
         }
         for (const usedName of used.registries) {
             // Folium 1.6 only: an old registry name means the registry it is now (the warning is below).
@@ -292,6 +299,26 @@ export const checkFoliumMod = (directory) => {
                 problems.push(`folium.experimental has no "${name}" (it has: ${experimentalNames.join(', ')})`);
             } else if (!manifest.experimental.includes(name)) {
                 problems.push(`folium.experimental['${name}'] needs "${name}" under "experimental" in mod.json`);
+            }
+        }
+        /*
+         * Folium 1.7 platform.raw: its permissions guard a member a mod can only reach with brackets
+         * (`experimental['platform.raw'].request`), which the guards table's dotted names never match.
+         * Here the platform ids the code passes to `request` are held to `platform.<id>.read`. Whether an
+         * endpoint writes is not told by the code, so `.write` is left to the app.
+         */
+        if (used.experimental.has(shared.experimental.platformRaw)) {
+            const declaredRead = manifest.permissions.filter((id) => /^platform\.[^.]+\.read$/.test(id));
+            for (const platformId of used.platformRequests) {
+                const permission = `platform.${platformId}.read`;
+                if (!Object.hasOwn(shared.permissions, permission)) {
+                    problems.push(`folium.experimental['platform.raw'] cannot call "${platformId}": no platform of that id has raw endpoints`);
+                } else if (!manifest.permissions.includes(permission)) {
+                    problems.push(`folium.experimental['platform.raw'].request('${platformId}', …) needs the permission "${permission}" in mod.json`);
+                }
+            }
+            if (used.platformRequests.size === 0 && declaredRead.length === 0) {
+                notes.push("uses folium.experimental['platform.raw'] and declares no platform.<platform>.read permission: describe needs none, every request is refused with permission-denied");
             }
         }
         for (const name of used.events) {

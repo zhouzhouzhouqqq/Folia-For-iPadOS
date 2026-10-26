@@ -28,7 +28,7 @@ export const useAiConnectionTest = (payload: AiConnectionTestPayload, keySaved?:
         requestSeqRef.current += 1;
         setRunning(false);
         setResult(null);
-    }, [payload.provider, payload.apiKey, payload.apiUrl, payload.model, payload.stream, payload.useSystemProxy, keySaved]);
+    }, [payload.provider, payload.presetId, payload.apiKey, payload.apiUrl, payload.model, payload.stream, payload.useSystemProxy, keySaved]);
 
     const run = async () => {
         if (running || !canRunAiConnectionTest()) {
@@ -59,9 +59,20 @@ export const useAiConnectionTest = (payload: AiConnectionTestPayload, keySaved?:
     return { running, result, run };
 };
 
-export const AiConnectionTestReply: React.FC<{ result: AiConnectionTestResult }> = ({ result }) => {
+export const AiConnectionTestStatus: React.FC<{ result: AiConnectionTestResult }> = ({ result }) => {
     const { t } = useTranslation();
     const { isDaylight } = useSettingsKitTheme();
+    const statusColor = result.ok ? (isDaylight ? '#15803d' : '#4ade80') : (isDaylight ? '#b91c1c' : '#f87171');
+
+    return (
+        <span className="whitespace-nowrap text-[13px] font-semibold" style={{ color: statusColor }} role="status" aria-live="polite">
+            {result.ok ? t('options.aiTestSuccess') : t('options.aiTestFailed')}
+        </span>
+    );
+};
+
+export const AiConnectionTestReply: React.FC<{ result: AiConnectionTestResult }> = ({ result }) => {
+    const { t } = useTranslation();
 
     const metaParts = [`${t('options.aiTestDuration')}: ${result.durationMs} ms`];
     if (typeof result.status === 'number') {
@@ -74,14 +85,10 @@ export const AiConnectionTestReply: React.FC<{ result: AiConnectionTestResult }>
     const emptyMessage = result.ok && !result.text
         ? t(result.emptyReason === 'reasoning' ? 'options.aiTestEmptyReasoning' : 'options.aiTestEmpty')
         : null;
-    const statusColor = result.ok ? (isDaylight ? '#15803d' : '#4ade80') : (isDaylight ? '#b91c1c' : '#f87171');
     const body = result.ok ? result.text : result.error;
 
     return (
-        <div className="space-y-1.5" role="status" aria-live="polite">
-            <div className="text-[13px] font-semibold" style={{ color: statusColor }}>
-                {result.ok ? t('options.aiTestSuccess') : t('options.aiTestFailed')}
-            </div>
+        <div className="space-y-1.5">
             <div className="text-xs leading-[18px] text-[color:var(--st-t2)]">{metaParts.join(' · ')}</div>
             {emptyMessage && <div className="text-xs leading-[18px] text-[color:var(--st-t2)]">{emptyMessage}</div>}
             {body ? (

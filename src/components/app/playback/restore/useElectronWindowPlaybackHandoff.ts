@@ -23,6 +23,7 @@ import { useAudioSettingsStore } from '../../../../stores/useAudioSettingsStore'
 import { usePlayerChromeSettingsStore } from '../../../../stores/usePlayerChromeSettingsStore';
 import { currentTime } from '../../../../stores/motionSignals';
 import { untransformedLyrics } from '../../../../services/hostExtensionHooks';
+import { reportYieldedQueue, wholeQueueWritesSoFar } from '../../../../services/wholeQueueWrites';
 
 // src/components/app/playback/restore/useElectronWindowPlaybackHandoff.ts
 // Captures and restores renderer playback state across Electron BrowserWindow rebuilds.
@@ -156,6 +157,9 @@ export function useElectronWindowPlaybackHandoff({
     const hasCompletedRestoreCheckRef = useRef(false);
     const isRestoringHandoffRef = useRef(false);
     const restoreWindowPlaybackHandoffRef = useRef<((handoff: WindowPlaybackHandoff) => Promise<boolean>) | null>(null);
+    // The whole-queue writes when the handoff began to be read. A mod that replaced the queue in this new
+    // window meanwhile (from its `activate`) keeps its queue, and the FM it ended, over the late handoff's.
+    const handoffQueueWritesRef = useRef<number | null>(null);
 
     const captureWindowPlaybackHandoff = useCallback((): WindowPlaybackHandoff => {
         const activePlayback = withUntransformedLyrics(buildPlaybackSnapshot({
@@ -235,6 +239,8 @@ export function useElectronWindowPlaybackHandoff({
         mainPlaybackSnapshotRef.current = snapshot;
         // A song asked for in the new window while the handoff was being read stands.
         if (askedSongKeyRef.current !== null) return;
+        const queueWritesAtStart = handoffQueueWritesRef.current ?? undefined;
+        const queueRewritten = queueWritesAtStart !== undefined && wholeQueueWritesSoFar() !== queueWritesAtStart;
         if (!snapshot?.currentSong) {
             pendingResumeTimeRef.current = null;
             shouldAutoPlayRef.current = false;
@@ -244,8 +250,13 @@ export function useElectronWindowPlaybackHandoff({
             setLyrics(null);
             setCachedCoverUrl(null);
             setAudioSrc(null);
-            setPlayQueue([]);
-            setIsFmMode(false);
+            if (!queueRewritten) {
+                setPlayQueue([]);
+                setIsFmMode(false);
+            } else {
+                // The old window's empty queue is the listener's: the replacement's undo puts it back.
+                reportYieldedQueue({ queue: [], isFmMode: false, song: null });
+            }
             setIsLyricsLoading(false);
             setPlayerState(PlayerState.IDLE);
             setCurrentLineIndex(-1);
@@ -264,8 +275,16 @@ export function useElectronWindowPlaybackHandoff({
         setLyrics(snapshot.lyrics);
         setCachedCoverUrl(snapshot.cachedCoverUrl);
         setAudioSrc(null);
-        setPlayQueue(restoredQueue);
-        setIsFmMode(snapshot.isFmMode);
+        if (!queueRewritten) {
+            setPlayQueue(restoredQueue);
+            setIsFmMode(snapshot.isFmMode);
+        } else {
+            // Saved again now that a song is current, as the session restore does: the replacement's own save
+            // found none, so it kept nothing, and the source's restore saves only on some of its paths.
+            void persistLastPlaybackCache(snapshot.currentSong, usePlaybackStore.getState().playQueue);
+            // The handed-over queue and FM are the listener's: the replacement's undo puts them back.
+            reportYieldedQueue({ queue: restoredQueue, isFmMode: snapshot.isFmMode, song: snapshot.currentSong });
+        }
         setIsLyricsLoading(false);
         setPlayerState(snapshot.playerState);
         setCurrentLineIndex(snapshot.currentLineIndex);
@@ -293,6 +312,7 @@ export function useElectronWindowPlaybackHandoff({
             queue: restoredQueue,
             stillWanted,
             hasFallbackSource: fallbackAudioSrc !== null,
+            queueWritesAtStart,
         }).catch((error): RestorePlaybackSourceOutcome => {
             console.warn('[Electron] Failed to restore window playback handoff source', error);
             return 'failed';
@@ -396,6 +416,7 @@ export function useElectronWindowPlaybackHandoff({
         isRestoringHandoffRef.current = true;
 
         if (!consumeHandoffPromiseRef.current) {
+            handoffQueueWritesRef.current = wholeQueueWritesSoFar();
             consumeHandoffPromiseRef.current = window.electron.consumeWindowPlaybackHandoff();
         }
 

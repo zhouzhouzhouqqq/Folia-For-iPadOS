@@ -2,7 +2,7 @@
 
 发布目标：https://github.com/zhouzhouzhouqqq/Folia-For-iPadOS
 
-这是基于上游 Folia 0.7.19 的 iPadOS 开发快照，非官方稳定发行版。上游源码、AGPL-3.0 许可证、贡献者与署名均保留；原 README 保存为根目录 `README-upstream.md`。GitHub 首页沿用仓库所有者已编写的 `README.md`。iPad 使用入口为 [README-ipadOS.md](../README-ipadOS.md)，构建步骤见 [自构建指南](ipados-self-build.md)。
+当前为基于上游 Folia 0.7.22 的 iPadOS 开发预览，非官方稳定发行版。上游源码、AGPL-3.0 许可证、贡献者与署名均保留；原 README 保存为根目录 `README-upstream.md`。GitHub 首页沿用仓库所有者已编写的 `README.md`。iPad 使用入口为 [README-ipadOS.md](../README-ipadOS.md)，构建步骤见 [自构建指南](ipados-self-build.md)。
 
 此副本通过源码导出器生成，不包含本机 Git 历史、依赖、模型权重、构建产物或私人签名。Team ID 已移除，Bundle Identifier 恢复为 `org.folia.personal`，安装者需配置自己的标识与签名。本机原工程未更改。原作者的桌面发布、定时任务与自动分诊工作流保存在 `.github/upstream-workflows/`，供参考而不自动执行；没有新增在线部署或后台服务。
 
@@ -15,3 +15,6 @@
 无需上传本地音频或账号来安装；网易云默认设备直连。AI 使用用户自行配置的端点，会向该端点发送选定歌词等分析输入，详见 [AI 指南](ipados-ai.md)。AutoMix 模型需安装者自行获取并核对许可，详见 [AutoMix 指南](ipados-automix.md)。
 
 公开源码仍沿用上游 AGPL-3.0，不承诺所有桌面模组、桌面导出或最高画质性能；不提供绕过会员、版权或地区限制的能力。
+
+
+2026-10-26 发布：`ipados-0.7.22-preview.4` / App 0.7.22 / build 7。发布范围包含尚未发布的官方 0.7.22 迁移与底栏进度条收起/隐藏，详见 [Preview 4](ipados-preview4.md)。旧标签与附件保留；新源码提交去除个人签名，原工作目录继续保留个人 Team/Bundle 配置。

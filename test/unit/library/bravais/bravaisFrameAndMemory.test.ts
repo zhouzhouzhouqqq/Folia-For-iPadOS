@@ -24,7 +24,7 @@ describe('computeBravaisFrame', () => {
         const offsets = getSeamSplitOffsets(300, view.scale, metrics);
         expect(frame.left).toEqual({ x: 600 + offsets.left, y: 400 });
         expect(frame.right).toEqual({ x: 600 + offsets.right, y: 400 });
-        expect(frame.seam).toEqual({ x: 600, width: 300, visible: true });
+        expect(frame.seam).toEqual({ axis: 'x', x: 600, y: 400, width: 300, visible: true });
         expect(frame.contentOpacity).toBe(1);
         expect(frame.tab.visible).toBe(false);
     });

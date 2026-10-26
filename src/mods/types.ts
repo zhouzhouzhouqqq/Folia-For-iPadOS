@@ -146,6 +146,35 @@ export interface ModLogEntry {
     details?: string;
 }
 
+/**
+ * A main entry's `api.rpc.send(name, payload)` on its way to that mod's client in the main window.
+ * `json` is the payload as JSON text, checked (serializable, at most 64 KB) in the main process.
+ */
+export interface ModRpcMessage {
+    modId: string;
+    name: string;
+    json: string;
+}
+
+/**
+ * Folium 1.7: a mod's `secret` settings value was saved or cleared (`folia-mods:secret-changed`). The key
+ * only: a value never travels with the notice.
+ */
+export interface ModSecretChange {
+    modId: string;
+    key: string;
+}
+
+/**
+ * Folium 1.7: what the settings form knows about a mod's `secret` values (`state` on
+ * `folia-mods:secrets`). `persistent` is false when the system has no credential encryption and values
+ * last for this run only; `stored` lists the keys that hold a value, never the values.
+ */
+export interface ModSecretsState {
+    persistent: boolean;
+    stored: string[];
+}
+
 export interface ModFfmpegStatus {
     available: boolean;
     path: string | null;

@@ -7,6 +7,7 @@ import { BEAT_ACCENTS_VERSION } from '@/services/analysis/beatAccents';
 // remembered, so the next play of the track tries again. A list stored with accents carries them; one
 // stored before them answers at once without, and brings them later. An online track not cached yet
 // is read from the stream URL its playback resolved, and one with none yet says to ask again.
+// Under 智能动感模式's `cached` nothing is read or run: a stored list plays as it is, accents or not.
 
 const { getTrackBeatGrid, getTrackBeatAccents } = vi.hoisted(() => ({
     getTrackBeatGrid: vi.fn(),
@@ -28,12 +29,14 @@ vi.mock('@/services/prefetchService', () => ({ getPrefetchedData, isUrlValid: ()
 vi.mock('@/services/playbackRecovery/mediaCacheGuard', () => ({ isCacheableAudioResponse: () => true }));
 
 const { loadBeatFxTrackBeats } = await import('@/services/beatFx/beatFxSource');
+const { resetTrackBytesForTests } = await import('@/services/analysis/trackBytes');
 
 const makeSong = (id: string) => ({ id, sourceRef: { kind: 'online', providerId: 'kugou', mediaId: id } }) as unknown as SongResult;
 const song = makeSong('throws');
 
 describe('loadBeatFxTrackBeats', () => {
     beforeEach(() => {
+        resetTrackBytesForTests();
         getTrackBeatGrid.mockReset();
         getTrackBeatAccents.mockReset();
         getTrackBeatAccents.mockResolvedValue(null);
@@ -54,7 +57,7 @@ describe('loadBeatFxTrackBeats', () => {
         expect(second.events.length).toBeGreaterThan(0);
         expect(getTrackBeatGrid).toHaveBeenCalledTimes(2);
         // final0's shared list, on the GPU only: the beat FX never ask for the CPU fallback.
-        for (const call of getTrackBeatGrid.mock.calls) expect(call[2]).toBeUndefined();
+        for (const call of getTrackBeatGrid.mock.calls) expect(call[2]).toEqual({ storedOnly: false, urgency: 'onScreen' });
     });
 
     const ACCENTS = { v: BEAT_ACCENTS_VERSION, impact: [0.2, 1], low: [0.8, 0.2], mid: [0.1, 0.4], high: [0.1, 0.4], rhythmic: [1, 1], pulse: [1, 1], trackScale: 0.7 };
@@ -77,6 +80,39 @@ describe('loadBeatFxTrackBeats', () => {
         const accented = await answer.accented;
         expect(accented?.trackScale).toBe(0.7);
         expect(accented?.events.map(event => event.tone?.low)).toEqual([0.8, 0.2]);
+    });
+
+    describe('stored results only (智能动感模式 cached)', () => {
+        it('asks the store only, and plays a list without accents as it is', async () => {
+            getTrackBeatGrid.mockResolvedValueOnce({ beats: [0.5, 1], downbeats: [0.5] });
+            const answer = await loadBeatFxTrackBeats(makeSong('cached-plain'), { storedOnly: true }).beats;
+            expect(getTrackBeatGrid.mock.calls[0][2]).toEqual({ storedOnly: true, urgency: 'onScreen' });
+            expect(answer.source).toBe('beat_this');
+            expect(answer.trackScale).toBe(1);
+            expect(answer.accented).toBeUndefined();
+            expect(getTrackBeatAccents).not.toHaveBeenCalled();
+        });
+
+        it('answers none for a track with nothing stored, reading no bytes and asking no retry', async () => {
+            readLocalTrackBytes.mockClear();
+            getTrackBeatGrid.mockImplementationOnce(async (_key: string, readMid: () => Promise<unknown>, options: { storedOnly?: boolean }) => (
+                options.storedOnly ? null : (await readMid(), null)
+            ));
+            const answer = await loadBeatFxTrackBeats(makeSong('cached-none'), { storedOnly: true }).beats;
+            expect(answer.source).toBe('none');
+            expect(answer.retry).toBeUndefined();
+            expect(readLocalTrackBytes).not.toHaveBeenCalled();
+        });
+
+        it('is remembered apart, so switching to on looks the track up again for its accents', async () => {
+            getTrackBeatGrid.mockResolvedValue({ beats: [0.5, 1], downbeats: [0.5] });
+            const songOnce = makeSong('cached-then-on');
+            const cachedAnswer = await loadBeatFxTrackBeats(songOnce, { storedOnly: true }).beats;
+            const onAnswer = await loadBeatFxTrackBeats(songOnce).beats;
+            expect(cachedAnswer.accented).toBeUndefined();
+            expect(onAnswer.accented).toBeDefined();
+            expect(getTrackBeatGrid).toHaveBeenCalledTimes(2);
+        });
     });
 
     describe('an online track not cached yet', () => {

@@ -25,7 +25,7 @@ exports[`the stand-ins as recorded before the size table was split > every kind 
   "local-track-list": "5092 fc150ffa0705d1cf",
   "lyric-export": "16852 f05853a9cc70336a",
   "lyric-match": "30697 9b80daf4374ec5b2",
-  "lyric-style": "118736 a3fe1dfa813ff964",
+  "lyric-style": "120266 161cca892bb960be",
   "lyrics-animation-settings": "5909 3f6c67f62463f916",
   "lyrics-source-settings": "2867 65ee2022870b90ef",
   "online-collection-actions": "4036 8d3b15edf43a9381",
@@ -46,7 +46,7 @@ exports[`the stand-ins as recorded before the size table was split > every kind 
   "theme-park": "13229 0a1fdbf63120ea5f",
   "theme-settings": "9859 f51bd64ed1e0376b",
   "transition-settings": "4197 e655edbddfd7b332",
-  "vis-playground": "37544 0d1b02d5b5155a55",
+  "vis-playground": "38564 40c146d00eb53dca",
   "volume": "2182 c61cc26c03074c72",
 }
 `;
@@ -1972,7 +1972,7 @@ exports[`the stand-ins as recorded before the size table was split > every size 
     },
     "toolsLattice": {
       "height": 0.14,
-      "left": 0.652,
+      "left": 0.49899999999999994,
       "top": 0.07,
       "width": 0.135,
     },
@@ -6320,6 +6320,12 @@ exports[`the stand-ins as recorded before the size table was split > every size 
     "tabCommon": {
       "height": 0.05,
       "left": 0.35,
+      "top": 0.012,
+      "width": 0.09,
+    },
+    "tabGlobal": {
+      "height": 0.05,
+      "left": 0.6,
       "top": 0.012,
       "width": 0.09,
     },

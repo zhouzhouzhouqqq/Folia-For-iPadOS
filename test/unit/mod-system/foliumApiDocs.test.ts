@@ -22,7 +22,7 @@ interface ParsedItem {
     doc: string;
     header?: string;
     source?: string;
-    members?: { name: string; doc: string; type: string }[];
+    members?: { name: string; doc: string; type: string; children?: { name: string; doc: string }[] }[];
 }
 const parseContract = (text: string) => parseContractJs(text) as unknown as { title: string; items: ParsedItem[] }[];
 
@@ -54,6 +54,10 @@ describe('Folium API reference', () => {
                 if (!item.doc) missing.push(item.name);
                 for (const member of item.members ?? []) {
                     if (!member.doc) missing.push(`${item.name}.${member.name}`);
+                    // The members of an inline object type (FoliumOmniProviderInfo's `supports`) too.
+                    for (const child of member.children ?? []) {
+                        if (!child.doc) missing.push(`${item.name}.${member.name}.${child.name}`);
+                    }
                 }
             }
         }

@@ -9,7 +9,7 @@
 // that goes: FoliumLegacyLyricsResult, which getLyrics may still answer.
 
 /** The Folium version this host implements; mods read it at runtime as `folium.host.folium`. */
-export const FOLIUM_VERSION = Object.freeze({ major: 1, minor: 6 });
+export const FOLIUM_VERSION = Object.freeze({ major: 1, minor: 7 });
 
 /** `modid:name`, like a Forge ResourceLocation. The mod id part is added by the host. */
 export type FoliumId = string;
@@ -234,7 +234,7 @@ export type FoliumLoopMode = 'off' | 'all' | 'one';
 export interface FoliumQueueItem {
     /** The song; its `ref` works with playSong, enqueue and playQueueItem. */
     readonly song: FoliumSong;
-    /** Its position in the host queue; stale as soon as the queue changes (`playback.queueChanged`). */
+    /** Its position in the host queue; stale as soon as the queue's `version` changes (`playback.queueChanged`). */
     readonly index: number;
 }
 
@@ -254,7 +254,92 @@ export interface FoliumQueueSnapshot {
      * Stage playback; the queue has nothing to do with what is playing, and playQueueItem refuses.
      */
     readonly kind: 'queue' | 'fm' | 'stage';
+    /**
+     * Folium 1.7: the queue's version. Equal strings mean the same songs in the same order and the same
+     * `kind`; it does not change when only the displayed song moves. Opaque and valid for this session:
+     * pass it to `replaceQueue`, never store it. Pages read with the same version belong to the same queue.
+     */
+    readonly version: string;
 }
+
+/**
+ * Folium 1.7: what a `playback.queueChanged` event carries. Frozen. Only the outline: read the songs with
+ * `playback.getQueue()`.
+ */
+export interface FoliumQueueChange {
+    /** Songs in the whole queue. */
+    readonly length: number;
+    /** Position of the displayed song in the queue (its first position); -1 when it is not in it. */
+    readonly currentIndex: number;
+    /**
+     * Folium 1.7: the queue's version now, as `FoliumQueueSnapshot.version` gives it. The same as in the
+     * event before when only the displayed song moved.
+     */
+    readonly version: string;
+    /**
+     * Folium 1.7: true only in the event the host fires for this mod's own `replaceQueue`, when nothing
+     * else changed the queue in the same task; false for every other mod, for a change anyone else made
+     * (the user's undo of it included), and when only the displayed song moved. A replacement made while
+     * this mod was not listening is never reported as its own later.
+     */
+    readonly byThisMod: boolean;
+}
+
+/**
+ * Folium 1.7: why `replaceQueue` left the queue as it was.
+ * `stage`: external Stage playback holds the player; try again after a `playback.queueChanged` whose
+ * snapshot `kind` is no longer `stage`.
+ * `transition`: an automix blend is under way (a few seconds, rarely more than half a minute); try again
+ * after a `playback.queueChanged`. One is also fired when the blend ends, and one that comes during the
+ * blend (the arriving song landing in the queue, say) may be refused `transition` again: keep waiting.
+ * `stale-version`: the queue is no longer the one `expectedVersion` names (the user, the host or a mod
+ * changed it); read it again and decide anew rather than replacing blindly.
+ * `stale-ref`: the song DTO at `index` has a `ref` that no longer resolves; read that song again.
+ * `not-queueable`: the song at `index` cannot be in the play queue (a song of external Stage playback).
+ * `rate-limited`: this mod replaced the queue a moment ago; try again after `retryAfterMs`.
+ * Checked in this order: stage, transition, stale-version, then the songs from first to last (stale-ref or
+ * not-queueable for the first song that fails, with its index), then rate-limited. Later minors may add
+ * reasons: treat one you do not know like `transition`.
+ */
+export type FoliumQueueReplaceRefusal =
+    | 'stage'
+    | 'transition'
+    | 'stale-version'
+    | 'stale-ref'
+    | 'not-queueable'
+    | 'rate-limited';
+
+/** Folium 1.7: `replaceQueue` replaced the queue, or found it already as asked. Frozen. */
+export interface FoliumQueueReplaced {
+    /** `replaced`. */
+    readonly status: 'replaced';
+    /** The queue's version now; the one you passed when nothing had to change. */
+    readonly version: string;
+    /** Songs in the queue now. */
+    readonly length: number;
+    /** Position of the displayed song in the new queue (its first position); -1 when it is not in it. */
+    readonly currentIndex: number;
+}
+
+/** Folium 1.7: `replaceQueue` left the queue as it was. Frozen. */
+export interface FoliumQueueReplaceRefused {
+    /** `refused`. */
+    readonly status: 'refused';
+    /** Why. */
+    readonly reason: FoliumQueueReplaceRefusal;
+    /** The queue's version now, which this call did not change. */
+    readonly version: string;
+    /** For `stale-ref` and `not-queueable`, the position in `songs` of the first song refused; null otherwise. */
+    readonly index: number | null;
+    /** For `rate-limited`, milliseconds until this mod may replace the queue again; null otherwise. */
+    readonly retryAfterMs: number | null;
+}
+
+/**
+ * Folium 1.7: what `replaceQueue` resolves. `status` is `replaced` or `refused`; later minors may add
+ * fields, not statuses.
+ */
+export type FoliumQueueReplaceResult = FoliumQueueReplaced | FoliumQueueReplaceRefused;
 
 /** The whole playback picture, as main entries read it with `api.runtime.getPlaybackSnapshot()`. */
 export interface FoliumPlaybackSnapshot {
@@ -355,8 +440,19 @@ export interface FoliumParsedLyrics {
  * Field kinds: a slider (a number), a text box (a string), a switch (a boolean), a choice among `options`
  * (the chosen option's `value`), or a colour, shown as the app's own colour picker (a `#rrggbb` string,
  * in lower case).
+ *
+ * Folium 1.7: `secret`, a key or token the user types in (an API key). Settings sections only. The form shows
+ * a masked input that never shows a saved value, only whether one is set, and a button to clear it. The
+ * value is not one of the section's values (`settings.get()` leaves it out, `settings.set` ignores it, a
+ * `defaultValue` is ignored): the host keeps it in the main process, encrypted, and the mod reads it through
+ * `folium.secrets` / `api.secrets` (FoliumSecretAccess). It never enters the stored
+ * settings values (`folia_folium_params_v1`), the visual config export and import, the export window or the
+ * logs. Anywhere else (visualizer and background settings, tunings, command params) a `secret` field is
+ * dropped like a field of an unknown type, and the mod's row says so. A Folium 1.6 host drops it in
+ * settings sections too (a section left with no field then fails to register), so check
+ * `folium.host.folium.minor >= 7` before declaring one.
  */
-export type FoliumSettingType = 'number' | 'text' | 'boolean' | 'select' | 'color';
+export type FoliumSettingType = 'number' | 'text' | 'boolean' | 'select' | 'color' | 'secret';
 
 /** One choice of a `select` field. */
 export interface FoliumSettingOption {
@@ -402,7 +498,7 @@ export interface FoliumSetting {
     max?: number;
     /** `number`: slider step. Default 1 when both bounds are integers, else 0.01. */
     step?: number;
-    /** `text`: placeholder. */
+    /** `text` and `secret`: placeholder. */
     placeholder?: string;
     /** `select`: the choices; values outside them are rejected. */
     options?: FoliumSettingOption[];
@@ -413,13 +509,16 @@ export type FoliumSettingValues = Readonly<Record<string, unknown>>;
 
 /** Read/write access to one schema's persisted values (defaults already merged). */
 export interface FoliumSettingAccess {
-    /** The fields, as registered (invalid declarations dropped). */
+    /** The fields, as registered (invalid declarations dropped), `secret` fields included. */
     readonly schema: readonly FoliumSetting[];
-    /** Current values, defaults merged. The same object until a value changes. */
+    /**
+     * Current values, defaults merged. The same object until a value changes. `secret` fields are not in
+     * it; read them through `folium.secrets`.
+     */
     get(): FoliumSettingValues;
     /** Validated against the schema: unknown keys are dropped, numbers clamped, selects checked. */
     set(patch: Record<string, unknown>): void;
-    /** Restores every default. */
+    /** Restores every default. Stored `secret` values stay; clear them with `folium.secrets.set(key, null)`. */
     reset(): void;
     /** Calls `listener` after any value changes, whoever changed it (the user, `set`, `reset`, an import). */
     onChange(listener: () => void): FoliumDisposer;
@@ -627,7 +726,11 @@ export interface FoliumStageContext extends FoliumMountHelpers {
     getDuration(): number;
     /** Index into `lines` of the active line; -1 between lines. */
     getLineIndex(): number;
-    /** Playback is paused. */
+    /**
+     * Playback is paused, or the host holds the picture still while it plays (the background throttling
+     * setting, while the window is minimised or hidden; the lyric clock and the line stand still too).
+     * Either way, settle and stop animating.
+     */
     isPaused(): boolean;
     /** The current theme. */
     getTheme(): FoliumTheme;
@@ -716,6 +819,18 @@ export interface FoliumCommandDef {
      * palette, which opens the form for a command that has any).
      */
     params?: FoliumSetting[];
+    /**
+     * Folium 1.7: offer this command in Settings → Global shortcuts (desktop app), listed after the host's
+     * playback commands under the mod's name. The user picks the key there (the host's fixed modifiers plus
+     * a letter or digit); the mod never sees or chooses one. Only for commands without `params`, since a key
+     * press cannot fill a form: the host ignores the flag on a command that has any. A press runs `run` with
+     * an empty `values` object and shows no result, so use `folium.ui.toast` when the press needs feedback;
+     * a throw is recorded against the mod like any failed command. While the mod is stopped or disabled the
+     * binding is kept but its key is not registered, and it comes back when the command is registered
+     * again. Not offered on native Wayland, where the desktop's shortcut portal takes a fixed list of the
+     * host's playback commands. Needs no permission: binding a key in Settings is the user's consent.
+     */
+    globalShortcut?: boolean;
     /** Runs the command; the result is shown as a summary (a string, `{ outputPath }` or `{ message }`). */
     run(ctx: FoliumCommandContext): unknown | Promise<unknown>;
 }
@@ -727,7 +842,10 @@ export interface FoliumCommandDef {
 export interface FoliumBackgroundContext extends FoliumMountHelpers {
     /** A still preview: draw one frame, do not animate. */
     readonly staticMode: boolean;
-    /** Playback is paused. */
+    /**
+     * Playback is paused, or the host holds the picture still while it plays (the background throttling
+     * setting, while the window is minimised or hidden). Either way, settle and stop animating.
+     */
     isPaused(): boolean;
     /** The current theme. */
     getTheme(): FoliumTheme;
@@ -795,7 +913,7 @@ export interface FoliumSettingsSectionDef {
     label: FoliumLabel;
     /** Shown under the title. */
     description?: FoliumLabel;
-    /** The fields. */
+    /** The fields. Folium 1.7: only here may a field be a `secret`. */
     settings: FoliumSetting[];
     /** Replaces the host-rendered form; values still follow `settings`. */
     settingsPanel?: FoliumMount<FoliumSettingsPanelContext>;
@@ -985,8 +1103,9 @@ export interface FoliumNotificationEvents {
     /**
      * The queue changed, or the displayed song moved within it. Only the outline: call
      * `playback.getQueue()` for the songs. Changes made in one task arrive as one event.
+     * Folium 1.7: also fired when an automix blend ends, so a replaceQueue refused `transition` can try again.
      */
-    'playback.queueChanged': { readonly length: number; readonly currentIndex: number };
+    'playback.queueChanged': FoliumQueueChange;
     /**
      * A song failed to play; reported once, after the host's own retries. `phase` says
      * where it failed: `play`, the host got no playable source for the song just picked (sign-in,
@@ -1003,6 +1122,23 @@ export interface FoliumNotificationEvents {
         readonly phase: 'play' | 'restore' | 'mid-playback';
         readonly willAutoSkip: boolean;
     };
+    /**
+     * Folium 1.7: someone signed in to an online source, signed out, or another account took the place of
+     * the one there (`accountKey` changed); the payload is the source's new state, as
+     * `folium.account.getState(providerId)` reads it. One event per source for all the changes of one
+     * task; a source whose status and key end where they began fires none, and a new nickname or avatar
+     * alone fires none either. A status that settles from `unknown` (the host finished asking the
+     * platform, usually soon after start) fires too, for the same account as before: compare
+     * `accountKey` before dropping data. Not emitted in the export window.
+     */
+    'account.changed': FoliumAccountState;
+    /**
+     * Folium 1.7: the equalizer changed: anything `folium.equalizer.getState()` reports (the switch, the
+     * mode, the gains, `hostPlaysAudio`, `writable`). One event for all the changes of one task; its origin is
+     * the last of them that was not `host`, or `host` when all of them were. Changes that end where they began
+     * fire none. Not emitted in the export window.
+     */
+    'equalizer.changed': { readonly state: FoliumEqualizerState; readonly origin: FoliumEqualizerChangeOrigin };
 }
 
 /**
@@ -1106,8 +1242,8 @@ export interface FoliumEvents {
 
 /**
  * `folium.playback`. The readers (`getState`, `getVolume`, `getLoopMode` and `getQueue`)
- * need no permission; every other method needs the `playback.control` permission. All of it is unavailable
- * in the export window.
+ * need no permission; every other method needs the `playback.control` permission, except `replaceQueue`,
+ * which needs `playback.queue`. All of it is unavailable in the export window.
  */
 export interface FoliumPlaybackService {
     /**
@@ -1145,7 +1281,12 @@ export interface FoliumPlaybackService {
     previous(): void;
     /** Plays a song by its host `ref`. Resolves false when the ref is unknown. Needs `playback.control`. */
     playSong(song: FoliumSong): Promise<boolean>;
-    /** Appends a song (by `ref`) to the queue. Needs `playback.control`. */
+    /**
+     * Adds a song (by `ref`) to the queue the way the user's queue-add setting says (next or last), as the
+     * host's own add does: a song already queued moves there; the song playing now, and a song its source
+     * marks unavailable, are not added; the host shows its own notice. False when the ref is unknown; true
+     * otherwise, also when the queue did not change. Needs `playback.control`.
+     */
     enqueue(song: FoliumSong): boolean;
     /**
      * Shuffles the play queue, keeping the current song first.
@@ -1181,9 +1322,10 @@ export interface FoliumPlaybackService {
     setLoopMode(mode: FoliumLoopMode): void;
     /**
      * A page of the play queue. `limit` defaults to 500, the most one call returns; without
-     * `offset` the page is centred on the displayed song. Song refs come from a pool of 2,000 shared with
+     * `offset` the page is centred on the displayed song. Song refs come from a pool of 5,000 shared with
      * every other song DTO, the least recently handed out dropped first: every ref of the page you just read
-     * resolves, so read the pages you show rather than the whole queue.
+     * resolves, so read the pages you show rather than the whole queue. To read a long queue whole, page it
+     * while `version` stays the same; a page with another version means the queue changed: start again.
      */
     getQueue(options?: { offset?: number; limit?: number }): FoliumQueueSnapshot;
     /**
@@ -1195,6 +1337,34 @@ export interface FoliumPlaybackService {
      * Needs `playback.control`.
      */
     playQueueItem(index: number, expectedRef?: string): Promise<boolean>;
+    /**
+     * Folium 1.7: replaces the whole play queue with `songs` (by `ref`) in one step, if the queue is still the
+     * one you read: `expectedVersion` is the `version` of your last `getQueue` page or `playback.queueChanged`
+     * event. Either the whole queue is replaced or nothing changes (see FoliumQueueReplaceRefusal).
+     *
+     * Nothing starts playing and the song playing now plays on; when it is not in `songs`, `currentIndex`
+     * becomes -1 and the next track is the first of `songs`. Should that song be played again while it is
+     * not in the queue (the user retries it after a failure, or the host reloads it), the host may put it
+     * back at the front, which reaches you as a `playback.queueChanged` with `byThisMod` false. Songs stay
+     * exactly as given, in order: a song listed twice stays twice (the host finds the current song at its
+     * first position), and songs their source marks unavailable stay too (the host deals with those when it
+     * comes to them, as in any queue). The user's queue-add setting plays no part. Personal FM ends, as when
+     * a list is played: the queue becomes `kind: 'queue'`. An empty array empties the queue. A list with the
+     * same songs in the same order, outside Personal FM, changes nothing and resolves `replaced` with the
+     * same version.
+     *
+     * At most 5,000 songs, the size of the shared ref pool (see `getQueue`): every ref must still resolve,
+     * so collect the songs just before you replace, and mirror a window around the current song rather than a
+     * very long queue. A replacement is saved like the host's own edits. The host tells the user which mod
+     * replaced the queue and lets them undo it until the queue changes again; an undo reaches you as a
+     * `playback.queueChanged` with `byThisMod` false. Your own replacement reaches you once, with `byThisMod`
+     * true, if you listen at the time.
+     *
+     * Rejects with a TypeError (`invalid-arguments: …`) for malformed arguments: `songs` not an array or longer
+     * than 5,000, an entry that is not a song DTO from the host (no `ref`, or a DTO that is not a song's, such
+     * as a `folium.omni` album), or no `expectedVersion` string. Needs `playback.queue`.
+     */
+    replaceQueue(songs: readonly FoliumSong[], options: { expectedVersion: string }): Promise<FoliumQueueReplaceResult>;
 }
 
 /** A local file the user picked for this mod. */
@@ -1317,6 +1487,464 @@ export interface FoliumLyricsService extends FoliumLyricsHelpers {
 export interface FoliumNetService {
     /** Fetch through the host (no CORS limits); needs the `net.fetch` permission. */
     fetch(url: string, init?: FoliumFetchInit): Promise<FoliumFetchResponse>;
+}
+
+/**
+ * Folium 1.7: who is signed in to one online source, as `folium.account.getState()` and the
+ * `account.changed` event give it. Frozen.
+ */
+export interface FoliumAccountState {
+    /** The source: an Omni provider id, as `FoliumSong.source` names it. */
+    readonly providerId: string;
+    /**
+     * `signed-in`: an account is signed in. `signed-out`: nobody is, or the source has no accounts at all
+     * (a mod's own source). `unknown`: the host has not found out yet, e.g. at start while it asks the
+     * platform, or the platform could not be asked.
+     */
+    readonly status: 'signed-in' | 'signed-out' | 'unknown';
+    /** What the host shows of the account: its nickname and avatar, nothing else. Null unless signed in. */
+    readonly user: { readonly nickname: string; readonly avatarUrl?: string } | null;
+    /**
+     * An opaque key of the signed-in account, null unless signed in. The same account always has the same
+     * key on this installation, across restarts; another account has another key. Key data of your own on
+     * it, and drop what was kept under another key. It is no user id: it cannot be turned back into one.
+     */
+    readonly accountKey: string | null;
+}
+
+/**
+ * Folium 1.7: `folium.account`, the sign-in state of the online sources. Needs no permission; it carries
+ * no user id, cookie or token. Unavailable in the export window: `getState` throws
+ * `account-unavailable-in-export-context`. An older host has no `folium.account`: check
+ * `folium.host.folium.minor >= 7` first.
+ */
+export interface FoliumAccountService {
+    /**
+     * The state of one source; without `providerId`, of the source the host has selected now. Null for a
+     * provider id the host does not know. Follow changes with the `account.changed` event.
+     */
+    getState(providerId?: string): FoliumAccountState | null;
+}
+
+/** Folium 1.7: a song's portable identity, as `FoliumSong.source` and `FoliumSong.id` give it. */
+export interface FoliumSongKey {
+    /** An Omni provider id (`FoliumSong.source`). */
+    readonly source: string;
+    /** The song id within that source (`FoliumSong.id`), as a string. */
+    readonly id: string;
+}
+
+/**
+ * Folium 1.7: one online source of the host, as `folium.omni.listProviders()` lists it. Frozen.
+ * More `supports` flags may come in later minors; a flag that is absent reads as false.
+ */
+export interface FoliumOmniProviderInfo {
+    /** The Omni provider id, as `FoliumSong.source` and `FoliumAccountState.providerId` name it. */
+    readonly providerId: string;
+    /** Full name, as the host's source switcher shows it. */
+    readonly displayName: string;
+    /** Short name, as the search overlay's source chip shows it. */
+    readonly shortName: string;
+    /** `host`: built into Folia. `mod`: registered by a mod (`omni.providers`); gone while that mod is off. */
+    readonly origin: 'host' | 'mod';
+    /** Whether this is the source the host has selected now (what `searchSongs` uses without `providerId`). */
+    readonly selected: boolean;
+    /** False when the source is not set up in this host. True does not promise that a request succeeds. */
+    readonly configured: boolean;
+    /** What of `folium.omni` this source answers; a method on a source without its flag rejects `unsupported`. */
+    readonly supports: {
+        /** `searchSongs` can search it. */
+        readonly search: boolean;
+        /** `resolveSongs` can look its songs up by id. */
+        readonly resolve: boolean;
+        /** `getLyrics` can read its songs' lyrics. */
+        readonly lyrics: boolean;
+        /** `getAlbum`, and albums in `resolveCollection` / `getTracks`. */
+        readonly albums: boolean;
+        /** `getArtists`, and artists in `resolveCollection` / `getTracks` / `getArtistAlbums`. */
+        readonly artists: boolean;
+    };
+}
+
+/**
+ * Folium 1.7: one page of a list `folium.omni` reads. Frozen. Ask for the next page with `nextCursor`;
+ * sources page differently, so there is no offset to compute.
+ */
+export interface FoliumOmniPage<T> {
+    /** The page, in the source's order; never more items than the `limit` asked for. */
+    readonly items: readonly T[];
+    /**
+     * Pass it as `cursor` for the next page of the same list; null when the source has no more. Opaque, valid
+     * for this session only, and a cursor not used for a while stops resolving (`stale-ref`): start again
+     * without one. An album or an artist is the same list by its `source`, `kind` and `id`, whichever DTO of
+     * it comes with the cursor (one read again by its key, say).
+     */
+    readonly nextCursor: string | null;
+    /** The whole list's length when the source says it; null otherwise. */
+    readonly total: number | null;
+}
+
+/**
+ * Folium 1.7: what `resolveSongs` found for one key, in the order of the keys.
+ * `found`: the song, with a `ref` for playSong and enqueue.
+ * `not-found`: the source answered and has no such song.
+ * `unsupported`: this host cannot look it up now: no source by that id (a mod's source while that mod is
+ * off, a source of another Folia build), a source that is not online (`local`, `navidrome`, `stage`), or one
+ * that cannot look songs up by id. This may change as sources come and go: keep the key.
+ * `failed`: the lookup did not get an answer; `code` says why (never `unsupported`), and a later try may work.
+ * Later minors may add statuses: treat one you do not know as `failed`.
+ */
+export type FoliumSongResolution =
+    | { readonly status: 'found'; readonly song: FoliumSong }
+    | { readonly status: 'not-found' }
+    | { readonly status: 'unsupported' }
+    | { readonly status: 'failed'; readonly code: FoliumOmniErrorCode };
+
+/** Folium 1.7: what `describeSong` knows of an online song without asking its source. Frozen. */
+export interface FoliumSongDetails {
+    /** Duration in milliseconds; null when the source did not give it. */
+    readonly durationMs: number | null;
+    /** Cover image URL; null when there is none. */
+    readonly coverUrl: string | null;
+    /**
+     * `playable`: the source marks nothing against it. `taken-down`: the source took it down. `restricted`:
+     * the source marks it as limited (paying accounts, regions); whether it plays is found out when it is
+     * played. `unknown`: the source says nothing either way. It is what the source told the account signed
+     * in to it, so it may change with that account. Later minors may add values: treat one you do not know
+     * as `unknown`.
+     */
+    readonly availability: 'playable' | 'taken-down' | 'restricted' | 'unknown';
+    /** The song's public web page at its source; null when the source has none. */
+    readonly pageUrl: string | null;
+}
+
+/**
+ * Folium 1.7: an online song's lyrics, as `folium.omni.getLyrics` reads them. Frozen. `lines` and
+ * `isWordByWord` mean what they mean for `folium.lyrics.parse`; a line's `isChorus` is the source's marking
+ * or the host's detection from repeated lines.
+ */
+export interface FoliumOmniLyrics extends FoliumParsedLyrics {
+    /** The source marks the song as instrumental. */
+    readonly isPureMusic: boolean;
+}
+
+/** Folium 1.7: a portable key of an album or an artist, as `FoliumCollection` carries it. */
+export interface FoliumCollectionKey {
+    /** An Omni provider id (`FoliumCollection.source`). */
+    readonly source: string;
+    /** `album` or `artist`. */
+    readonly kind: 'album' | 'artist';
+    /** The id within that source and kind (`FoliumCollection.id`). */
+    readonly id: string;
+}
+
+/**
+ * Folium 1.7: an album or an artist at an online source. Frozen. Key data of your own on `source`, `kind`
+ * and `id` together; `ref` is valid for this session only. Later minors may add kinds: treat a kind you do
+ * not know as one you cannot read.
+ */
+export interface FoliumCollection {
+    /** `album` or `artist`. */
+    readonly kind: 'album' | 'artist';
+    /** The Omni provider id. */
+    readonly source: string;
+    /** The id within the source and kind; `resolveCollection` takes it back. */
+    readonly id: string;
+    /** Its name. */
+    readonly name: string;
+    /** For an album, its artists joined with ` / `; '' for an artist or when unknown. */
+    readonly artist: string;
+    /** Cover or portrait URL; null when there is none. */
+    readonly coverUrl: string | null;
+    /** The source's description; null when it gives none. */
+    readonly description: string | null;
+    /** Songs on an album; null when unknown (a summary from a song or a list carries less). */
+    readonly trackCount: number | null;
+    /** An artist's albums; null when unknown. */
+    readonly albumCount: number | null;
+    /** An album's release time, milliseconds since the epoch; null when unknown. */
+    readonly publishedAt: number | null;
+    /** Opaque handle for getTracks / getArtistAlbums; valid for the session. */
+    readonly ref: string;
+}
+
+/**
+ * Folium 1.7: why a `folium.omni` call failed, as the rejection's `code` (and its message), or as a
+ * `failed` resolution's `code`.
+ * `unsupported`: the source does not answer this (its `supports` flag is false), or there is no such source.
+ * `unavailable`: the source cannot take requests now (not set up, its service not running, or it refused).
+ * `region-restricted`: the source does not answer from this region.
+ * `not-signed-in` / `session-expired`: the source needs a signed-in account for this.
+ * `vip-required`: only paying accounts may.
+ * `rate-limited`: too many requests (see FoliumOmniService), or the source says so.
+ * `network`: no answer in time, or a failure the source did not explain.
+ * `account-changed`: the selected source or its account changed while the call was under way, so the
+ * answer was dropped.
+ * `stale-ref`: the DTO's `ref`, or the `cursor`, no longer resolves; read it again.
+ * `aborted`: the call's `signal` aborted, or the mod stopped.
+ * Later minors may add codes: treat one you do not know as `network`.
+ */
+export type FoliumOmniErrorCode =
+    | 'unsupported'
+    | 'unavailable'
+    | 'region-restricted'
+    | 'not-signed-in'
+    | 'session-expired'
+    | 'vip-required'
+    | 'rate-limited'
+    | 'network'
+    | 'account-changed'
+    | 'stale-ref'
+    | 'aborted';
+
+/**
+ * Folium 1.7: `folium.omni`, the host's online music sources (Omni), read only: search, songs by id,
+ * lyrics, albums and artists. Needs no permission. Requests are made as the account signed in to that
+ * source in Folia. Songs come with a `ref`, so `folium.playback.playSong` and `enqueue` take them as they
+ * are. Nothing here reads the signed-in account's own library, hands out audio URLs or changes anything at
+ * a source.
+ *
+ * A song's `ref` is not its identity: the same song read twice (from the queue and from `resolveSongs`, say)
+ * may come with different refs. Compare `source` and `id`.
+ *
+ * Each time the host has to ask a source for you counts once against this mod's allowance, shared with
+ * `platform.raw`: currently 120 a minute (past it a call rejects `rate-limited`) and 8 at a time (past it a
+ * call waits its turn). Looking up many songs may ask more than once; the host may answer from what it read
+ * recently. The host may also limit requests per source across all mods, which rejects `rate-limited` too.
+ * Requests to a source a mod provides (origin `mod`) count against the minute but never wait. A call that
+ * gets no answer in a while rejects `network`. `aborted` (the call's `signal`, or the mod stopping) only
+ * drops the answer: the request at the source may still run, and counts as under way until it ends.
+ *
+ * Main window only: in the export window the synchronous methods throw, and the others reject, an Error
+ * whose message is `omni-unavailable-in-export-context` (it has no `code`). The main entry has no `omni`; ask
+ * the client over `rpc`. An older host has no `folium.omni`: check `folium.host.folium.minor >= 7` first.
+ * Async methods reject with an Error whose `code` is a FoliumOmniErrorCode, and with a TypeError
+ * (`invalid-arguments: …`, no `code`) for malformed arguments, a song DTO without a `ref` included.
+ */
+export interface FoliumOmniService {
+    /** The host's online sources, in the host's order. Synchronous; asks no source. */
+    listProviders(): readonly FoliumOmniProviderInfo[];
+    /**
+     * Searches songs at `providerId`, or at the source the host has selected now. `query` is 1–200
+     * characters after trimming. Without `cursor` it reads the first page; `limit` (default 30, at most 50)
+     * is read only then, and later pages keep it. Song refs come from the host's shared pool (see
+     * `playback.getQueue`): read the pages you show.
+     */
+    searchSongs(
+        query: string,
+        options?: { providerId?: string; cursor?: string; limit?: number; signal?: AbortSignal },
+    ): Promise<FoliumOmniPage<FoliumSong>>;
+    /**
+     * Looks songs up by their portable identity (`FoliumSong.source` + `FoliumSong.id`), 1–50 keys a call;
+     * resolves one FoliumSongResolution per key, in order. A key that fails does not fail the call; the
+     * call rejects only for malformed arguments, the export window and `aborted`. A source without a way to
+     * look many songs up at once is asked once per key: resolve the keys you are about to show. A song that
+     * only existed on another device (a local file, a cloud upload, a source not installed here) may not
+     * resolve, or may resolve to that source's public version. `not-found` comes only from the source's own
+     * answer: a key whose request the source refused, or that this host cannot look up by that id yet, comes
+     * back `failed`, so keep it. Nothing is played, and no audio address is fetched.
+     */
+    resolveSongs(keys: readonly FoliumSongKey[], options?: { signal?: AbortSignal }): Promise<readonly FoliumSongResolution[]>;
+    /**
+     * What the host knows of a song (by `ref`) without asking its source. Null for a song that is not
+     * online, or whose `ref` no longer resolves. Synchronous.
+     */
+    describeSong(song: FoliumSong): FoliumSongDetails | null;
+    /**
+     * The lyrics of an online song (by `ref`), as its source gives them, parsed by the host. Mods'
+     * `omni.lyricsResolved` hooks do not run for this read. Rejects `unsupported` for a song that is not
+     * online or whose source has no lyrics.
+     */
+    getLyrics(song: FoliumSong, options?: { signal?: AbortSignal }): Promise<FoliumOmniLyrics>;
+    /**
+     * The album of an online song (by `ref`); null when its source has no album for it. May ask the source.
+     * Rejects `unsupported` for a song that is not online or whose source has no albums.
+     */
+    getAlbum(song: FoliumSong, options?: { signal?: AbortSignal }): Promise<FoliumCollection | null>;
+    /**
+     * The artists of an online song (by `ref`) its source can open; empty when none. May ask the source.
+     * Rejects `unsupported` for a song that is not online or whose source has no artists.
+     */
+    getArtists(song: FoliumSong, options?: { signal?: AbortSignal }): Promise<readonly FoliumCollection[]>;
+    /**
+     * An album or artist by its key, with the details its source gives; null when the source has none. A
+     * source may also reject `unavailable` or `network` for an id it does not know.
+     */
+    resolveCollection(key: FoliumCollectionKey, options?: { signal?: AbortSignal }): Promise<FoliumCollection | null>;
+    /**
+     * A page of an album's songs, or of an artist's songs (in the source's order, most popular first for
+     * most sources). Without `cursor` the first page; `limit` (default 50, at most 100) is read only then.
+     */
+    getTracks(
+        collection: FoliumCollection,
+        options?: { cursor?: string; limit?: number; signal?: AbortSignal },
+    ): Promise<FoliumOmniPage<FoliumSong>>;
+    /** A page of an artist's albums; paged as `getTracks`. */
+    getArtistAlbums(
+        artist: FoliumCollection,
+        options?: { cursor?: string; limit?: number; signal?: AbortSignal },
+    ): Promise<FoliumOmniPage<FoliumCollection>>;
+}
+
+/** Folium 1.7: one band of the host's graphic equalizer, as `FoliumEqualizerState.bands` lists it. Frozen. */
+export interface FoliumEqualizerBand {
+    /** The band's frequency in Hz: the centre of a peaking band, the corner of a shelf. */
+    readonly frequency: number;
+    /**
+     * `lowshelf` (the first band) lifts or cuts everything below its frequency, `highshelf` (the last band)
+     * everything above it, `peaking` (the others) the frequencies around it. Later minors may add shapes:
+     * read one you do not know as `peaking`.
+     */
+    readonly shape: 'lowshelf' | 'peaking' | 'highshelf';
+}
+
+/**
+ * Folium 1.7: a built-in sound of the host, as the audio effects window lists it: `flat` (Level), `lofi`,
+ * `radio`, `hall`, `vocal` and `bass` (Bass boost). Each is an equalizer curve together with a set of effects.
+ * `setMode` takes each of these ids for all of Folium 1.x; later minors may add more.
+ */
+export type FoliumEqualizerPresetId = 'flat' | 'lofi' | 'radio' | 'hall' | 'vocal' | 'bass';
+
+/**
+ * Folium 1.7: one of the user's own saved sounds in the audio effects window (Custom 1 and Custom 2), each a
+ * curve and a set of effects. `setMode` takes each of these ids for all of Folium 1.x; later minors may add more.
+ */
+export type FoliumEqualizerCustomId = 'custom1' | 'custom2';
+
+/** Folium 1.7: a sound `folium.equalizer.setMode` can switch to: a built-in one, or one of the user's own. */
+export type FoliumEqualizerUserMode =
+    | { readonly kind: 'preset'; readonly id: FoliumEqualizerPresetId }
+    | { readonly kind: 'custom'; readonly id: FoliumEqualizerCustomId };
+
+/**
+ * Folium 1.7: what the equalizer plays now. `preset` / `custom`: a sound the user chose (or a mod switched
+ * to with `setMode`). `mod`: a curve a mod put in place with `applyCurve`, over the user's own effects;
+ * `modId` names the mod. While that mod is disabled or removed the user's own sound plays, and the state
+ * shows it; the curve comes back when the mod is enabled again. Later minors may add kinds: a mode you do
+ * not know is one the user chose, so leave it be.
+ */
+export type FoliumEqualizerMode =
+    | FoliumEqualizerUserMode
+    | { readonly kind: 'mod'; readonly modId: string };
+
+/**
+ * Folium 1.7: the host's graphic equalizer as it is heard, as `folium.equalizer.getState()` and
+ * `equalizer.changed` give it. Frozen. The user's custom sounds are not part of it, except the curve of the
+ * one playing.
+ */
+export interface FoliumEqualizerState {
+    /**
+     * The processing switch of the audio effects window. While false the gains are kept but not heard, and
+     * the effects are off too; the switch is the user's, and no `folium.equalizer` write turns it on.
+     */
+    readonly enabled: boolean;
+    /** What plays now. */
+    readonly mode: FoliumEqualizerMode;
+    /** The gain of each band in dB, in the order of `bands`, from `minGain` to `maxGain`. Heard only while `enabled`. */
+    readonly gains: readonly number[];
+    /** The bands, lowest first: ten in Folium 1.7. The same frozen array on every read. */
+    readonly bands: readonly FoliumEqualizerBand[];
+    /** The lowest gain of a band in dB: -12 in Folium 1.7. */
+    readonly minGain: number;
+    /** The highest gain of a band in dB: 12 in Folium 1.7. */
+    readonly maxGain: number;
+    /**
+     * Whether what plays goes through the host's own audio, where the equalizer sits. False during external
+     * Stage playback (another player's now-playing, a Stage source with lyrics and no audio): the equalizer
+     * has nothing to act on then. Its settings still apply once the host plays again.
+     */
+    readonly hostPlaysAudio: boolean;
+    /**
+     * False while the audio effects window is open: a write that would change something is refused
+     * `panel-open` then, and `equalizer.changed` fires when the window closes. Later minors may add other
+     * times it is false. The permission and the rate limit are not part of it.
+     */
+    readonly writable: boolean;
+}
+
+/**
+ * Folium 1.7: who changed the equalizer, as `equalizer.changed` reports it. `user`: the user, in the audio
+ * effects window. `command`: a host command (the command palette's sound commands). `mod`: a mod, through
+ * `folium.equalizer`; compare `modId` with your own `folium.modId`. `host`: the host itself, with nobody
+ * changing the sound (the sound left the host's own audio or came back to it, the audio effects window opened
+ * or closed, the mod of the curve in place was disabled, removed or enabled again). Later minors may add
+ * kinds: read one you do not know as `user`.
+ */
+export interface FoliumEqualizerChangeOrigin {
+    /** Who it was. */
+    readonly kind: 'user' | 'command' | 'host' | 'mod';
+    /** The mod, for `mod`; null for the others. */
+    readonly modId: string | null;
+}
+
+/**
+ * Folium 1.7: why the host did not take a `folium.equalizer` write. `stopped`: this mod has stopped.
+ * `unknown-mode`: this host has no such sound (one a later minor added). `panel-open`: the audio effects
+ * window is open, so the user is at it; wait for `equalizer.changed` with `state.writable` true.
+ * `rate-limited`: too many writes (see FoliumEqualizerService). When several apply, the first of these in
+ * this order is given. A write that would change nothing is never refused for `panel-open` or `rate-limited`.
+ * Later minors may add reasons: treat one you do not know as `rate-limited`, and try again later rather than
+ * in a loop.
+ */
+export type FoliumEqualizerRefusal = 'stopped' | 'unknown-mode' | 'panel-open' | 'rate-limited';
+
+/** Folium 1.7: the outcome of a `folium.equalizer` write; `state` is the equalizer after it. */
+export type FoliumEqualizerWriteResult =
+    | { readonly ok: true; readonly state: FoliumEqualizerState }
+    | { readonly ok: false; readonly reason: FoliumEqualizerRefusal };
+
+/**
+ * Folium 1.7: `folium.equalizer`, the host's graphic equalizer (the bands of the audio effects window).
+ * Reading needs no permission; `setMode`, `applyCurve` and `releaseCurve` need `equalizer.control`. A mod
+ * gets the equalizer's settings, never its audio nodes. A write lands where the user's own choices do, so the
+ * audio effects window and the sound follow it, and it is kept across restarts.
+ *
+ * No write changes the user's custom sounds or turns the processing switch on: while `enabled` is false a
+ * write is kept but not heard. The user comes first: any choice the user makes in the audio effects window
+ * (a sound, keeping a mod's curve as one of their own, going back to their own) ends a mod's curve, and
+ * while that window is open writes are refused `panel-open`. Follow `equalizer.changed`: once its `origin`
+ * is the user, a host command or another mod (not `host`, and not your own mod), step back: putting your
+ * curve back after that overrides the user. The host tells the user which mod changed the sound.
+ *
+ * Every write that changes something is saved: write what you settled on rather than animating through it.
+ * Currently a mod may make one such write a second and 20 a minute; past that a write is refused
+ * `rate-limited`. A write changes nothing when the user's settings it would leave and the curve in place
+ * are the same as now; such a write is accepted, does not count, and is never refused `panel-open` or
+ * `rate-limited`. During an automix blend the host holds a mod's change back from the sound until the blend
+ * has ended (`getState` reports it at once), and it glides a mod's gains in rather than switching them.
+ *
+ * Main window only: in the export window every method throws an Error whose message is
+ * `equalizer-unavailable-in-export-context`. The main entry has no `equalizer`; ask the client over `rpc`.
+ * An older host has no `folium.equalizer`: check `folium.host.folium.minor >= 7` first. Malformed arguments
+ * throw a TypeError (`invalid-arguments: …`); a write without the permission throws
+ * `permission-denied:equalizer.control`.
+ */
+export interface FoliumEqualizerService {
+    /** The equalizer now, as it is heard. Synchronous; follow changes with `equalizer.changed`. */
+    getState(): FoliumEqualizerState;
+    /**
+     * Switches to a built-in sound or to one of the user's own, as the command palette's sound commands do:
+     * its curve and its effects together, and a mod's curve in place ends. Writes no custom sound and leaves
+     * the processing switch as it is. Refused `unknown-mode` for a sound this host does not have. Needs
+     * `equalizer.control`.
+     */
+    setMode(mode: FoliumEqualizerUserMode): FoliumEqualizerWriteResult;
+    /**
+     * Puts this mod's own curve in place, as mode `{ kind: 'mod' }`: 1 to `bands.length` finite gains in dB,
+     * one per band from the lowest. Bands left out read 0; each gain is clamped to `minGain`–`maxGain` and
+     * rounded to 0.1 dB, as `state.gains` then shows. The effects and the switch stay as the user had them.
+     * The curve stays, across restarts and while this mod reloads, until the user or a mod changes the sound;
+     * while this mod is disabled or removed the user's own sound plays, and the curve comes back when it is
+     * enabled again. The user can go back to their own sound, or keep the curve as one of their own, from the
+     * audio effects window. Needs `equalizer.control`.
+     */
+    applyCurve(gains: readonly number[]): FoliumEqualizerWriteResult;
+    /**
+     * Takes this mod's curve off and goes back to the user's own sound. True when this mod's curve was in
+     * place; false otherwise, and nothing changes. Never refused for the rate or the open window.
+     * Needs `equalizer.control`.
+     */
+    releaseCurve(): boolean;
 }
 
 // ---------------------------------------------------------------- Experimental
@@ -1446,6 +2074,95 @@ export interface FoliumOmniProviderDef {
     getLyrics?(song: FoliumProviderSong): Promise<FoliumLyricsResult | FoliumLegacyLyricsResult | null>;
 }
 
+/** Folium 1.7: a JSON value, as `platform.raw` request parameters take them. */
+export type FoliumJsonValue = string | number | boolean | null | FoliumJsonValue[] | { [key: string]: FoliumJsonValue };
+
+/** Folium 1.7: EXPERIMENTAL (`platform.raw`): the backend library the host pins for a platform. */
+export interface FoliumPlatformBackend {
+    /** The library's package name. */
+    readonly name: string;
+    /** Its version, as the host pins it; raw answers follow it. */
+    readonly version: string;
+}
+
+/** Folium 1.7: EXPERIMENTAL (`platform.raw`): what `describe` says of one platform. */
+export interface FoliumPlatformDescription {
+    /** Whether the platform's endpoints can be called through `request`. */
+    readonly supported: boolean;
+    /** The pinned backend library; only when supported. */
+    readonly backend?: FoliumPlatformBackend;
+}
+
+/** Folium 1.7: EXPERIMENTAL (`platform.raw`): what `request` resolves to. */
+export interface FoliumPlatformResponse {
+    /** The platform's own JSON answer, credential fields (cookies, tokens) taken out at any depth. */
+    readonly body: unknown;
+    /** The `accountKey` of the account the request was made as (`folium.account`); null when nobody is signed in. */
+    readonly accountKey: string | null;
+}
+
+/**
+ * Folium 1.7: EXPERIMENTAL (`platform.raw`): why a `request` failed, as the rejection's `code` (and its
+ * message). `permission-denied:<permission>`: mod.json lacks `platform.<id>.read` (or, for an endpoint
+ * that changes the account, `platform.<id>.write`). `endpoint-denied`: the platform's table of endpoints
+ * does not open this one (sign-in, session and credential endpoints never are, and neither is any endpoint
+ * the table does not list). `unsupported`: the platform has no raw endpoints in this host.
+ * `not-signed-in` / `session-expired`: the endpoint needs a signed-in account and there is none, or its
+ * session ran out. `vip-required`: the platform answers that only paying accounts may. `rate-limited`:
+ * too many requests, from this mod (currently 120 a minute per mod, shared with `folium.omni`; past 8 at a
+ * time a request waits for one of them to finish instead of failing) or as the platform says.
+ * `network`: the platform could not be reached or did not answer in time. `account-changed`: the account
+ * signed out or changed while the request was under way, so the answer was dropped. `aborted`: the
+ * request's `signal` aborted, or the mod stopped (a request still under way then is aborted by the host).
+ */
+export type FoliumPlatformErrorCode =
+    | `permission-denied:${string}`
+    | 'endpoint-denied'
+    | 'unsupported'
+    | 'not-signed-in'
+    | 'session-expired'
+    | 'vip-required'
+    | 'rate-limited'
+    | 'network'
+    | 'account-changed'
+    | 'aborted';
+
+/**
+ * Folium 1.7: EXPERIMENTAL (manifest `experimental: ["platform.raw"]`), as
+ * `folium.experimental['platform.raw']`; main window only. A fallback for what Omni does not offer yet:
+ * it calls a platform's own backend endpoints as the account signed in to Folia, for capabilities only
+ * that platform has (listening records, say). Where Omni offers the same, use Omni: the host says so in
+ * the developer log, and where `folium.omni` offers the same, use it. Answers are the platform's raw JSON
+ * and follow the backend library the host pins (`describe`), so they can change with any Folia release;
+ * nothing about them is promised.
+ *
+ * The host never hands out the session: the request goes through Omni and the platform's adapter, which
+ * add it, and credential fields are taken out of the answer. Parameters the backend reads as options of the
+ * request (the session, a proxy, the source IP and the like) are set by the host alone. Platform ids are
+ * Omni provider ids; only a platform `describe` supports takes `platform.<id>.*` permissions.
+ */
+export interface FoliumPlatformService {
+    /** Whether a platform can be called through `request`, with its backend library's name and version. */
+    describe(providerId: string): FoliumPlatformDescription;
+    /**
+     * Calls one endpoint of the platform: `endpoint` is the pinned backend's own name for it (a module
+     * name such as `user_record`). `params` are the endpoint's parameters; an endpoint
+     * about the signed-in user gets that user's id when `params` leaves it out, so a mod never needs it.
+     * Reading endpoints need the `platform.<id>.read` permission; endpoints that change the account need
+     * `platform.<id>.write` as well. Rejects with an Error whose `code` is a FoliumPlatformErrorCode, and
+     * with a TypeError for malformed arguments (`params` must be a plain object of JSON values, its names
+     * letters, digits and `_`, at most 16 KB as JSON; a parameter the platform's backend writes into the
+     * path of its own request, such as an id, takes only the format the platform's table gives it, digits
+     * for ids).
+     */
+    request(
+        providerId: string,
+        endpoint: string,
+        params?: Record<string, FoliumJsonValue>,
+        options?: { signal?: AbortSignal },
+    ): Promise<FoliumPlatformResponse>;
+}
+
 // ---------------------------------------------------------------- Shared helpers
 
 /** One word from `folium.lyrics.segmentWords`. */
@@ -1518,7 +2235,7 @@ export type FoliumContextKind = 'main' | 'export';
 
 /**
  * The host's versions (`folium.host`), for display and logs. Every member of this contract is there from
- * Folium 1.6 on; an older 1.x host lacks some of them.
+ * Folium 1.7 on; an older 1.x host lacks some of them.
  */
 export interface FoliumHostInfo {
     /** The Folium version (`major`, `minor`). */
@@ -1544,13 +2261,57 @@ export interface FoliumStorage {
     keys(): Promise<string[]>;
 }
 
-/** `folium.rpc`: calls into this mod's main entry. */
+/**
+ * Folium 1.7: `folium.secrets` (client) and `api.secrets` (main entry), the values of this mod's `secret`
+ * settings fields. One store per mod, shared by both entries and the settings form, keyed by the field's
+ * `key`; a mod reaches only its own. A key that no settings section of this mod declares as `secret` is
+ * refused with `secret-undeclared:<key>`. The host learns the keys when the client registers the section,
+ * and on every start of Folia the main entry runs before that: until the client has registered, `get` and
+ * `has` of a key with no value give null and false (a key that holds a value works as usual), and `set` of
+ * a key with no value is refused with `secret-undeclared:<key>`. Reloading the mod keeps what the host
+ * learned in this run. A value is a string of at most 8 KB (UTF-8); a longer one is refused with
+ * `secret-too-large:8192`.
+ *
+ * The host keeps the values in the main process, encrypted with the system's credential store (DPAPI on
+ * Windows, Keychain on macOS, libsecret or kwallet on Linux), in a file of its own beside the mod's data
+ * file, and never logs them. Where the system has no such store (Linux falling back to `basic_text`), it
+ * keeps them in memory only, for this run, and the settings form says so. No permission is needed.
+ *
+ * In the export window `get`, `has` and `set` reject with `secrets-unavailable-in-export-context`, and
+ * `subscribe` never fires.
+ */
+export interface FoliumSecretAccess {
+    /** The stored value, or null when none is set (or the credential store cannot decrypt it right now). */
+    get(key: string): Promise<string | null>;
+    /** Whether a value is stored, without handing it over. */
+    has(key: string): Promise<boolean>;
+    /** Stores `value`; null or an empty string clears it. */
+    set(key: string, value: string | null): Promise<void>;
+    /**
+     * Calls `listener` with the key, never the value, after a value is saved or cleared, whoever did it (the
+     * settings form, the client or the main entry). The host stops it when the mod stops.
+     */
+    subscribe(listener: (key: string) => void): FoliumDisposer;
+}
+
+/** `folium.rpc`: calls into this mod's main entry, and (Folium 1.7) hears the messages it sends. */
 export interface FoliumRpc {
     /**
      * Calls the function the main entry registered with `api.rpc.handle(name, fn)`; arguments and result must
      * be JSON-serializable.
      */
     call<T = unknown>(name: string, ...args: unknown[]): Promise<T>;
+    /**
+     * Folium 1.7: receives the main entry's `api.rpc.send(name, payload)`. Several listeners per name are fine;
+     * each gets its own copy of the payload (`null` when the main entry sent none), and one that throws is
+     * logged under the mod without stopping the others. Only messages from this mod's own main entry arrive,
+     * and nothing sent before the listener was added is replayed: fetch the current state once with
+     * `rpc.call` after adding it. `name` must match `/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/`, and `listener` must be
+     * a function, or this throws. The listener is removed when the mod stops. In the export window nothing
+     * is ever sent: the listener is accepted and never called. Older 1.x hosts lack it: check
+     * `folium.host.folium.minor >= 7`.
+     */
+    on(name: string, listener: (payload: unknown) => void): FoliumDisposer;
 }
 
 /** `folium.log`. `error` entries show in the mods panel under the mod. */
@@ -1585,12 +2346,20 @@ export interface FoliumClientApi {
     readonly net: FoliumNetService;
     /** This mod's data file. */
     readonly storage: FoliumStorage;
+    /** Folium 1.7: the values of this mod's `secret` settings fields. */
+    readonly secrets: FoliumSecretAccess;
     /** Calls into this mod's main entry. */
     readonly rpc: FoliumRpc;
     /** The lyric helpers builtin modes use, and the displayed song's lyrics. */
     readonly lyrics: FoliumLyricsService;
     /** The theme helpers builtin modes use. */
     readonly theme: FoliumThemeHelpers;
+    /** Folium 1.7: who is signed in to the online sources. */
+    readonly account: FoliumAccountService;
+    /** Folium 1.7: the host's online music sources, read only: search, songs by id, lyrics, albums, artists. */
+    readonly omni: FoliumOmniService;
+    /** Folium 1.7: the host's graphic equalizer: read it, switch the user's sound, put a curve of your own in place. */
+    readonly equalizer: FoliumEqualizerService;
     /**
      * Calls `listener` every `ms` milliseconds (at least 16) until the mod stops; the host stops
      * it then.

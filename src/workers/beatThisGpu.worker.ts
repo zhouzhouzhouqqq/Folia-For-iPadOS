@@ -14,7 +14,8 @@ import { HtdemucsWgsl, type HtdemucsWgslManifest } from '../services/analysis/ht
 // beatThisWgsl/percussive.ts, for the beat accents - comes back with them), 'percussive' (that alone, for
 // a track whose beats are already known) and 'dispose' (destroy the device before the page terminates
 // this thread, so the GPU memory goes back at once rather than whenever the dead thread's objects are
-// collected). Each
+// collected), and 'unload' (one model's GPU memory back, the device kept: phase 4's residency, decided
+// in beatThisGpu.ts). Each
 // chunk is run with 'auto' slicing - one stage on the GPU at a time, cut finer wherever a stage
 // outlasts a 120 Hz frame - because the GPU only switches between command buffers, and one
 // 45-80 ms submit is enough to cost a busy visualizer several frames (measured with
@@ -31,12 +32,15 @@ type Request =
     | { id: number; kind: 'separate'; left: Float32Array<ArrayBuffer>; right: Float32Array<ArrayBuffer> }
     | { id: number; kind: 'run'; model: ModelName; chunks: Float32Array<ArrayBuffer>[]; percussive?: { mel: Float32Array<ArrayBuffer>; frames: number } }
     | { id: number; kind: 'percussive'; mel: Float32Array<ArrayBuffer>; frames: number }
+    | { id: number; kind: 'unload'; model: ModelName | 'htdemucs' }
     | { id: number; kind: 'dispose' };
 
 const models = new Map<ModelName, BeatThisWgsl>();
 let htdemucs: HtdemucsWgsl | null = null;
 let device: GPUDevice | null = null;
 let deviceLabel = '';
+/** The adapter's vendor and architecture alone, without deviceLabel's precision suffix. */
+let deviceName = '';
 let f16 = false;
 /** Why the device went away, once it has; every later request is answered with it. */
 let lost: string | null = null;
@@ -56,7 +60,8 @@ const openDevice = async (): Promise<GPUDevice> => {
         models.clear();
         htdemucs = null;
     });
-    deviceLabel = `${adapter.info.vendor} ${adapter.info.architecture}${f16 ? ' f16' : ''}`;
+    deviceName = `${adapter.info.vendor} ${adapter.info.architecture}`;
+    deviceLabel = `${deviceName}${f16 ? ' f16' : ''}`;
     device = opened;
     return opened;
 };
@@ -76,13 +81,20 @@ self.onmessage = async (event: MessageEvent<Request>) => {
                 if (!htdemucs) {
                     try {
                         // f16 GEMMs where the device has shader-f16: ~10% faster, the same drum hits (kernels.ts GemmMode).
-                        htdemucs = await HtdemucsWgsl.create(opened, request.weights, request.manifest, { f16 });
+                        // @note Since the analysis service's phase 3: f32, and all four sources. automix
+                        // takes its stems from here too, and in f16 the bass missed the 0.01 dB red line
+                        // on one reference segment (0.029 dB; f32: 0.0066 at worst over all four). The
+                        // user chose f32 for both (2026-10-17), so the two share one set of segments:
+                        // about 9% slower a segment on an M4, the same weights.
+                        htdemucs = await HtdemucsWgsl.create(opened, request.weights, request.manifest, { sources: [0, 1, 2, 3] });
                     } catch (error) {
                         self.postMessage({ id: request.id, error: String((error as Error)?.message ?? error), scope: 'model' });
                         return;
                     }
                 }
-                self.postMessage({ id: request.id, result: deviceLabel });
+                // deviceLabel's ' f16' is beat_this's 'storage' mode; htdemucs is built in f32 (above), so its load log says f32.
+                // (From the PR #750 re-review, 2026-10-19: the log said f16 for the f32 htdemucs.)
+                self.postMessage({ id: request.id, result: `${deviceName} f32`, bytes: htdemucs?.bytes });
                 return;
             }
             if (!models.has(request.model)) {
@@ -93,7 +105,7 @@ self.onmessage = async (event: MessageEvent<Request>) => {
                     return;
                 }
             }
-            self.postMessage({ id: request.id, result: deviceLabel });
+            self.postMessage({ id: request.id, result: deviceLabel, bytes: models.get(request.model)?.bytes });
             return;
         }
         if (request.kind === 'percussive') {
@@ -115,9 +127,22 @@ self.onmessage = async (event: MessageEvent<Request>) => {
             // 'auto' as for a beat_this chunk: one stage on the GPU at a time, finer where a stage
             // outlasts a 120 Hz frame, so a segment never holds the visualizer's frames.
             const result = await htdemucs.run(request.left, request.right, { slice: 'auto' });
-            const left = result.left.slice();
-            const right = result.right.slice();
-            self.postMessage({ id: request.id, result: { left, right } }, { transfer: [left.buffer, right.buffer] });
+            // htdemucs' four sources in its order (drums, bass, other, vocals): views of the one readback,
+            // which is transferred once, uncopied (review: eight copies were 5.5 MB more per segment).
+            const { stems } = result;
+            self.postMessage({ id: request.id, result: { stems } }, { transfer: [stems[0].left.buffer] });
+            return;
+        }
+        if (request.kind === 'unload') {
+            // Between runs only (the page never asks for one under a run of the model): its buffers go back now.
+            if (request.model === 'htdemucs') {
+                htdemucs?.destroy();
+                htdemucs = null;
+            } else {
+                models.get(request.model)?.destroy();
+                models.delete(request.model);
+            }
+            self.postMessage({ id: request.id, result: true });
             return;
         }
         if (request.kind === 'dispose') {

@@ -17,7 +17,7 @@ export const visStyleTileRect = (index: number): PonderRelativeRect => ({
     height: 0.27,
 });
 
-/** 右栏一页里第 index 行的位置，坐标系是右栏。四页共用这九个槽位，各自往里填自己的行。 */
+/** 右栏一页里第 index 行的位置，坐标系是右栏。五页共用这九个槽位，各自往里填自己的行。 */
 export const visPanelRowRect = (index: number): PonderRelativeRect => ({
     left: 0.03,
     right: 0.02,
@@ -44,12 +44,13 @@ export const VIS_PLAYGROUND_GEOMETRY = {
     /** 预览下面那一架样式图：歌词样式在这里选。 */
     shelf: { left: 0.02, right: 0.357, top: 0.685, bottom: 0.03 },
     panel: { left: 0.672, right: 0.01, top: 0.085, bottom: 0.02 },
-    /** 以下相对 panel。标签是一行文字：歌词动画、背景、通用、字幕；右端是只退当前这一页的「默认」。 */
+    /** 以下相对 panel。标签是一行文字：歌词动画、背景、通用、字幕、全局；右端是只退当前这一页的「默认」。 */
     tabs: { left: 0.03, right: 0.02, top: 0.012, height: 0.05 },
     tabAnimation: { left: 0.03, top: 0.012, width: 0.16, height: 0.05 },
     tabBackground: { left: 0.225, top: 0.012, width: 0.09, height: 0.05 },
     tabCommon: { left: 0.35, top: 0.012, width: 0.09, height: 0.05 },
     tabSubtitle: { left: 0.475, top: 0.012, width: 0.09, height: 0.05 },
+    tabGlobal: { left: 0.6, top: 0.012, width: 0.09, height: 0.05 },
     panelReset: { right: 0.02, top: 0.012, width: 0.09, height: 0.05 },
     rows: { left: 0.03, right: 0.02, top: 0.095, bottom: 0.03 },
     rowOne: visPanelRowRect(0),

@@ -107,6 +107,133 @@ describe('kugouProvider', () => {
         expect(page.items[0]?.id).toBe('AUTHENTICATED-HASH');
     });
 
+    it('falls back to anonymous search when an authenticated first page is empty', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        requestMock.mockResolvedValue({ data: { lists: [] } });
+        anonymousSearchMock.mockResolvedValue({
+            data: {
+                lists: [{
+                    FileHash: 'fallback-hash',
+                    SongName: '爱河',
+                    Singers: [{ id: 7, name: '神马乐团' }],
+                    Duration: 226,
+                }],
+            },
+        });
+
+        const page = await kugouProvider.search!.searchSongs('爱河', 50, 0);
+
+        expect(warn).toHaveBeenCalledWith('[KugouProvider] authenticated search returned no items, retrying anonymously');
+        expect(anonymousSearchMock).toHaveBeenCalledWith('爱河', 1, 50);
+        expect(page.items[0]?.id).toBe('FALLBACK-HASH');
+    });
+
+    it('keeps the authenticated empty page when the anonymous retry is also empty', async () => {
+        requestMock.mockResolvedValue({ data: { lists: [] } });
+        anonymousSearchMock.mockResolvedValue({ data: { lists: [] } });
+
+        const page = await kugouProvider.search!.searchSongs('爱河', 50, 0);
+
+        expect(anonymousSearchMock).toHaveBeenCalledTimes(1);
+        expect(page.items).toEqual([]);
+    });
+
+    it('keeps the authenticated empty page when the anonymous retry throws', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        requestMock.mockResolvedValue({ data: { lists: [] } });
+        anonymousSearchMock.mockRejectedValue(new Error('KuGou anonymous search failed'));
+
+        const page = await kugouProvider.search!.searchSongs('匿名失败', 50, 0);
+
+        expect(page.items).toEqual([]);
+        expect(warn).toHaveBeenCalledWith('[KugouProvider] anonymous search retry failed', expect.any(Error));
+    });
+
+    it('does not retry anonymously on later pages', async () => {
+        requestMock.mockResolvedValue({ data: { lists: [] } });
+
+        await kugouProvider.search!.searchSongs('爱河', 50, 50);
+
+        expect(anonymousSearchMock).not.toHaveBeenCalled();
+    });
+
+    it('uses anonymous search on later pages after a first-page fallback', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        requestMock.mockResolvedValue({ data: { lists: [] } });
+        anonymousSearchMock.mockResolvedValue({
+            data: {
+                lists: [{
+                    FileHash: 'page-one-hash',
+                    SongName: '翻页回退',
+                    Singers: [{ id: 7, name: '神马乐团' }],
+                    Duration: 226,
+                }],
+            },
+        });
+        await kugouProvider.search!.searchSongs('翻页回退', 50, 0);
+
+        requestMock.mockClear();
+        anonymousSearchMock.mockClear();
+        anonymousSearchMock.mockResolvedValue({
+            data: {
+                lists: [{
+                    FileHash: 'page-two-hash',
+                    SongName: '翻页回退',
+                    Singers: [{ id: 7, name: '神马乐团' }],
+                    Duration: 226,
+                }],
+            },
+        });
+        const page = await kugouProvider.search!.searchSongs('翻页回退', 50, 50);
+
+        expect(requestMock).not.toHaveBeenCalled();
+        expect(anonymousSearchMock).toHaveBeenCalledWith('翻页回退', 2, 50);
+        expect(page.items[0]?.id).toBe('PAGE-TWO-HASH');
+    });
+
+    it('returns to the authenticated search when a marked keyword works again', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        requestMock.mockResolvedValue({ data: { lists: [] } });
+        anonymousSearchMock.mockResolvedValue({
+            data: {
+                lists: [{
+                    FileHash: 'fallback-hash',
+                    SongName: '恢复会话',
+                    Singers: [{ id: 7, name: '神马乐团' }],
+                    Duration: 226,
+                }],
+            },
+        });
+        await kugouProvider.search!.searchSongs('恢复会话', 50, 0);
+
+        requestMock.mockReset();
+        requestMock.mockResolvedValue({
+            data: {
+                lists: [{
+                    FileHash: 'session-hash',
+                    SongName: '恢复会话',
+                    Singers: [{ id: 7, name: '神马乐团' }],
+                    Duration: 226,
+                }],
+            },
+        });
+        anonymousSearchMock.mockClear();
+        await kugouProvider.search!.searchSongs('恢复会话', 50, 0);
+
+        requestMock.mockClear();
+        const page = await kugouProvider.search!.searchSongs('恢复会话', 50, 50);
+
+        expect(requestMock).toHaveBeenCalledWith('search', {
+            keywords: '恢复会话',
+            keyword: '恢复会话',
+            type: 'song',
+            page: 2,
+            pagesize: 50,
+        });
+        expect(anonymousSearchMock).not.toHaveBeenCalled();
+        expect(page.items[0]?.id).toBe('SESSION-HASH');
+    });
+
     it('normalizes Hash identity and keeps only stable provider data', () => {
         const song = normalizeKugouSong({
             FileHash: 'ab12cd',

@@ -10,6 +10,7 @@ const transportState = vi.hoisted(() => ({ hasSession: true }));
 vi.mock('@/services/onlineMusic/qq/qqTransport', async importOriginal => ({
     ...await importOriginal<typeof import('@/services/onlineMusic/qq/qqTransport')>(),
     hasQqSession: () => transportState.hasSession,
+    hasUsableQqSession: () => transportState.hasSession,
     requestQq: requestMock,
 }));
 

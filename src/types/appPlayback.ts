@@ -23,6 +23,12 @@ export type PlaybackNavigationOptions = {
      * advance has already moved playback to that track.
      */
     isAutomixAdvance?: boolean;
+    /**
+     * Set only by playSong when it hands a local or Navidrome song to the library controller (playSong
+     * itself never reads it): true once a whole-queue write (a mod's replaceQueue, its undo) came while
+     * the play waited and the play's queue was the store's, so the landing leaves the new queue standing.
+     */
+    queueRewritten?: () => boolean;
 };
 
 export type NextTrackOptions = PlaybackNavigationOptions & {
@@ -46,6 +52,12 @@ export type UnavailableReplacementRequest = {
     queue: SongResult[];
     isFmCall: boolean;
     options: PlaybackNavigationOptions;
+    /**
+     * The queue and Personal FM of the moment the dialog is confirmed, when a whole-queue write came
+     * since the play that opened it and that play's queue was the store's; null otherwise, and then
+     * `queue` and `isFmCall` stand.
+     */
+    liveQueue?: () => { queue: SongResult[]; isFmCall: boolean } | null;
 };
 
 export type PlaybackSnapshot = {

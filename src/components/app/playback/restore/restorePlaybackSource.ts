@@ -7,6 +7,7 @@ import { getLocalLibraryCatalogSnapshot } from '../../../../services/localLibrar
 import { getNavidromeConfig } from '../../../../services/navidromeService';
 import { applyOnlineAudioSourceMetadata } from '../../../../services/onlinePlayback';
 import { notifyPlaybackFailed } from '../../../../services/hostExtensionHooks';
+import { wholeQueueWritesSoFar } from '../../../../services/wholeQueueWrites';
 import type { ThemeCacheSongKey } from '../../../../services/themeCache';
 import type { LyricData, LocalSong, SongResult, StatusMessage } from '../../../../types';
 import type { NavidromeSong } from '../../../../types/navidrome';
@@ -19,6 +20,7 @@ import {
     isNavidromePlaybackSong,
     isSamePlaybackSong,
     replacePlaybackSongInQueue,
+    replacePlaybackSongWhereQueued,
 } from '../../../../utils/appPlaybackGuards';
 import { getLocalCoverAssetUrl } from '../../../../services/localCoverAssetUrl';
 import { isPureMusicLyricText } from '../../../../utils/lyrics/pureMusic';
@@ -32,7 +34,7 @@ import { getCachedSongCoverUrl, getSongCacheWithLegacyMigration } from '../../..
 import { getSongCoverUrl } from '../../../../services/onlineMusic/songMetadata';
 import { useOnlineProviderAccountStore } from '../../../../stores/useOnlineProviderAccountStore';
 import { setStatusMessage as setStatusMsg, useStatusMessageStore } from '../../../../stores/useStatusMessageStore';
-import { setActiveLocalLyricsSource, setAudioSrc, setCachedCoverUrl, setCurrentSong } from '../../../../stores/usePlaybackStore';
+import { setActiveLocalLyricsSource, setAudioSrc, setCachedCoverUrl, setCurrentSong, usePlaybackStore } from '../../../../stores/usePlaybackStore';
 import { askedSongKeyRef, replaceShownSong } from '../currentSong';
 import { onlineFailureToast } from '../source/onlineFailureToast';
 import { loadLocalSongAudio, loadNavidromeSongAudio, loadOnlineSongAudio } from '../source/songAudioSource';
@@ -76,6 +78,12 @@ type RestorePlaybackSourceParams = {
      * too, its media error is told like any other.
      */
     hasFallbackSource?: boolean;
+    /**
+     * The caller's `wholeQueueWritesSoFar()` when it started the restore. Given, and a whole-queue write
+     * (a mod's replaceQueue, its undo) came since, the queue written and saved is the store's as it is
+     * now with the restored song swapped in where it holds it, never put in front, instead of `queue`.
+     */
+    queueWritesAtStart?: number;
 };
 
 const replaceBlobUrl = (
@@ -112,10 +120,22 @@ export const restorePlaybackSourceForSong = async (
         queue,
         stillWanted,
         hasFallbackSource = false,
+        queueWritesAtStart,
     }: RestorePlaybackSourceParams,
 ): Promise<RestorePlaybackSourceOutcome> => {
     let restoredSongKey = getPlaybackSongKey(song);
     const overtaken = () => !stillWanted() || askedSongKeyRef.current !== restoredSongKey;
+    // The queue to write (`write`, null for nothing) and to save once the restored song is in it: `own`,
+    // or after a whole-queue write since the caller started, the store's queue of now (see queueWritesAtStart).
+    const queueAfterRestore = (restoredSong: SongResult, own: () => SongResult[]): { write: SongResult[] | null; save: SongResult[] } => {
+        if (queueWritesAtStart === undefined || wholeQueueWritesSoFar() === queueWritesAtStart) {
+            const given = own();
+            return { write: given, save: given };
+        }
+        const live = usePlaybackStore.getState().playQueue;
+        const swapped = replacePlaybackSongWhereQueued(live, restoredSong);
+        return { write: swapped, save: swapped ?? live };
+    };
 
     await restoreCachedThemeForSong?.(song, {
         allowLastUsedFallback: true,
@@ -166,7 +186,7 @@ export const restorePlaybackSourceForSong = async (
             playbackSourceRevision: audio.revisionOf(restoredCarrier),
         } as SongResult;
         replaceShownSong(song, restoredSong);
-        void persistLastPlaybackCache?.(restoredSong, queue && queue.length > 0 ? queue : [restoredSong]);
+        void persistLastPlaybackCache?.(restoredSong, queueAfterRestore(restoredSong, () => (queue && queue.length > 0 ? queue : [restoredSong])).save);
         return 'restored';
     }
 
@@ -259,8 +279,8 @@ export const restorePlaybackSourceForSong = async (
         } else {
             setCachedCoverUrl(null);
         }
-        const restoredQueue = replacePlaybackSongInQueue(queue || [restoredSong], restoredSong);
-        void persistLastPlaybackCache?.(restoredSong, restoredQueue);
+        const restoredQueue = queueAfterRestore(restoredSong, () => replacePlaybackSongInQueue(queue || [restoredSong], restoredSong));
+        void persistLastPlaybackCache?.(restoredSong, restoredQueue.save);
         return 'restored';
     }
 
@@ -316,9 +336,9 @@ export const restorePlaybackSourceForSong = async (
             if (!prev || !isSamePlaybackSong(prev, song)) return prev;
             return { ...prev, replayGain: restoredSong.replayGain };
         });
-        const restoredQueue = replacePlaybackSongInQueue(queue || [restoredSong], restoredSong);
-        setPlayQueue?.(restoredQueue);
-        void persistLastPlaybackCache?.(restoredSong, restoredQueue);
+        const restoredQueue = queueAfterRestore(restoredSong, () => replacePlaybackSongInQueue(queue || [restoredSong], restoredSong));
+        if (restoredQueue.write) setPlayQueue?.(restoredQueue.write);
+        void persistLastPlaybackCache?.(restoredSong, restoredQueue.save);
     }
 
     // The source has landed, so lyrics that fail from here on are not a failed restore: told as one,

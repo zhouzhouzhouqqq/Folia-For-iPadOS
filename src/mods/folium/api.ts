@@ -3,6 +3,7 @@ import { invokeModRpc, invokeModStorage } from '../ipc';
 import {
     type FoliumClientApi,
     type FoliumContextKind,
+    type FoliumDisposer,
     type FoliumEvents,
     type FoliumSettingAccess,
     type FoliumRegistries,
@@ -13,7 +14,7 @@ import {
 } from './contract';
 import { FOLIUM_KIND_NAMES, FOLIUM_KINDS, type FoliumKindName } from './kinds';
 import type { FoliumHostRegistry } from '../runtime/registry';
-import { gateFoliumSettingAccess } from '../runtime/guard';
+import { createFoliumGatedChannel, gateFoliumSettingAccess, type FoliumGatedChannel } from '../runtime/guard';
 import { createFoliumScope } from './helpers';
 import { reportFoliumIssue } from '../runtime/status';
 import { visualizersRegistry } from './registries/visualizers';
@@ -29,9 +30,14 @@ import { stylesRegistry } from './registries/styles';
 import { addFoliumEventHandler } from './events';
 import { bindFoliumStageRegistry } from './registries/stageRegistry';
 import { createFoliumLyricsService, createFoliumNetService, createFoliumPlaybackService, createFoliumUiService } from './services';
+import { createFoliumSecrets, declareFoliumSecretKeys } from './secrets';
 import { FOLIUM_THEME_HELPERS } from './sharedHelpers';
 import { FOLIUM_HOST_VERSION } from './shared';
 import { FOLIUM_EVENT_TYPES } from './eventTypes';
+import { addFoliumRpcListener, FOLIUM_RPC_NAME_PATTERN } from './rpcMessages';
+import { createFoliumAccountService } from './account';
+import { createFoliumOmniService } from './omni/service';
+import { createFoliumEqualizerService } from './equalizer/service';
 
 // src/mods/folium/api.ts
 // Builds the `folium` object one mod's client entry receives. Everything is
@@ -183,12 +189,14 @@ export const createFoliumClientApi = (mod: ModRuntimeInfo, options: FoliumClient
 
     // What a kind's `register` returns beyond the plain handle. Only a settings section adds
     // to it: the handle carries the section's values so the mod can read what the user set.
+    // Its `secret` keys go to the main process from the main window (folium/secrets.ts).
     const completeHandle: Partial<Record<FoliumKindName, (handle: FoliumRegistryHandle, registered: boolean) => FoliumRegistryHandle>> = {
         settingsSections: (handle, registered): FoliumSettingsSectionHandle => {
             if (!registered) {
                 return Object.freeze({ ...handle, settings: NO_SETTINGS });
             }
             const stored = settingsSectionsRegistry.get(handle.id);
+            if (context === 'main') declareFoliumSecretKeys(modId, stored!.def.secretKeys);
             // A view for this activation: the store outlives the mod, so its listeners
             // run through the gate and are dropped when the client is torn down.
             const settings = gateFoliumSettingAccess(stored!.def.access, modId, `settings section ${handle.id}`);
@@ -231,10 +239,38 @@ export const createFoliumClientApi = (mod: ModRuntimeInfo, options: FoliumClient
         error: (message: string, details?: unknown) => reportFoliumIssue(modId, 'log', details ?? message),
     });
 
+    /*
+     * rpc.on (Folium 1.7): one gated channel per message name, so a listener that throws is reported
+     * under that name; all of them end with this activation. Outside the main window nothing is ever
+     * sent, so a listener is checked and not kept, and the mod's code runs the same in both contexts.
+     */
+    const rpcChannels = new Map<string, FoliumGatedChannel>();
+    onRelease(() => {
+        rpcChannels.forEach((channel) => channel.release());
+        rpcChannels.clear();
+    });
     const rpc = Object.freeze({
         call: <T>(name: string, ...args: unknown[]): Promise<T> => (
             context === 'main' ? unwrap<T>(invokeModRpc(modId, name, args)) : unavailable('rpc', context)
         ),
+        on: (name: string, listener: (payload: unknown) => void): FoliumDisposer => {
+            if (typeof name !== 'string' || !FOLIUM_RPC_NAME_PATTERN.test(name)) {
+                throw new Error('rpc.on requires a name matching /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/');
+            }
+            if (typeof listener !== 'function') {
+                throw new TypeError('rpc.on requires a listener function');
+            }
+            if (context !== 'main' || stopped('rpc.on')) return () => {};
+            let channel = rpcChannels.get(name);
+            if (!channel) {
+                channel = createFoliumGatedChannel(modId, `rpc.on ${name}`, false);
+                rpcChannels.set(name, channel);
+            }
+            const off = channel.subscribe(listener, (gated) => addFoliumRpcListener(modId, name, gated));
+            return () => {
+                off();
+            };
+        },
     });
 
     const experimental = gatedNamespace(
@@ -272,9 +308,18 @@ export const createFoliumClientApi = (mod: ModRuntimeInfo, options: FoliumClient
         ui: createFoliumUiService(mod, context),
         net: createFoliumNetService(mod, context),
         storage: createStorage(modId, context),
+        // Folium 1.7: only this mod's own `secret` values, like storage only its own data file.
+        secrets: createFoliumSecrets(modId, context, onRelease),
         rpc,
         lyrics: createFoliumLyricsService(context),
         theme: FOLIUM_THEME_HELPERS,
+        account: createFoliumAccountService(context),
+        // Folium 1.7: the host's online sources through Omni, read only (omni/service.ts; the main window
+        // installs the source, runtime/omni/hostOmni.ts).
+        omni: createFoliumOmniService(mod, context, stopped, onRelease),
+        // Folium 1.7: the host's equalizer (equalizer/service.ts; the main window installs the source,
+        // runtime/equalizer/hostEqualizer.ts).
+        equalizer: createFoliumEqualizerService(mod, context, stopped),
         every: scope.every,
         onDispose: scope.onDispose,
         experimental,

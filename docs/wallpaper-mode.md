@@ -137,6 +137,7 @@ Electron 主进程 (main.cjs)，下面三个文件在 electron/wallpaper/
 - **启动与切换**：启动先读壁纸模式与会话类型再决定是否起包装进程；跳板进程只在包装进程成功创建后才退出。包装缺失或启动失败时清除壁纸模式、以普通窗口启动。运行中切换写入持久化配置、短暂合并连续操作，等渲染端返回播放快照后 relaunch（环境标记 + 清理一次性 Wayland socket 与包装标记）；快照以短 TTL 临时持久化，重启后恢复歌曲、队列、进度与播放状态。
 - **故障恢复**（`electron/wallpaper/wallpaperWatchdog.cjs`）：包装状态下监视父进程存活，同时处理窗口创建失败与 renderer 崩溃；以固定父进程身份 + 存在性检查识别包装退出，恢复幂等、避免多故障事件重复拉起。连续启动失败达阈值自动关闭壁纸模式；正常启动或稳定运行后清计数。Wayland 进程模型：跳板 spawn `windowtolayer`（wtl），wtl 再 spawn 真正的包装 Folia（`WAYLAND_SOCKET=<fd>`）；包装子进程的父进程是 wtl，wtl 一死 socketpair EOF、Chromium 通常毫秒级崩溃、watchdog 来不及响应——watchdog 的价值在于 wtl 非致命退出时的恢复与崩溃循环 breaker。计数键 `wallpaper_wrapped_crash_count`。
 - **X11 特殊处理**：桌面窗口取目标显示器（设置里选的，否则主显示器）完整 bounds 且在首次映射前完成尺寸设置（防显示缩放导致的工作区裁剪）；设置里换了选择，或者选的那块屏被拔掉、接回来时，走和开关壁纸模式一样的 relaunch；没有选屏时显示器变化不处理（和原来一样）；不参与普通窗口尺寸记忆（防止退出壁纸模式后把全屏桌面尺寸带回普通窗口）；无背景合成层、透明区域显示为黑；不用 watchdog，异常靠下次启动自愈。
+- **KDE 面板**：Plasma 的「避让窗口」只看任务列表里的窗口，layer-shell 壁纸和 X11 桌面窗口都不在其中，所以避让面板会照常显示在壁纸上，和系统壁纸一样。Folia 不改用户的面板设置（#802 的方案未合入：要改全局 Plasma 配置，崩溃后还得自己恢复）。不想让面板挡住歌词，请把面板设为「自动隐藏」。
 - **打包**：`windowtolayer` 用固定上游提交 + 仓库补丁构建（`packaging/linux/build-windowtolayer.mjs` + `packaging/linux/patches/`），补丁无法应用直接失败；产物及许可证随 Linux 包放 `resources`。联调：`npm run build:windowtolayer` → `build/windowtolayer`（或 `npm run dev:electron:wallpaper`，`dev:electron*` 注入 `FOLIA_WINDOWTOLAYER_PATH=build/windowtolayer`）；二进制缺失时开关自动回退关闭。
 
 ## 四、macOS 壁纸模式
@@ -178,6 +179,14 @@ Electron 主进程 (main.cjs)，下面三个文件在 electron/wallpaper/
 - **转发 `forwardMacWallpaperMouse(evt)`**：仅转发 `isDesktopPoint` 判定的裸桌面事件（点在 App/Dock/小组件上不转发）；down 记忆起点、期间 drag 持续、up 结束（含右键）；`mouseMoved` 时间节流 ~40ms；scroll 读 `ScrollWheelEventDeltaAxis1/2`。
 - **注入 `sendMacWallpaperMouseEvent(evt)`**：屏幕点换算为窗口内容点后 `webContents.sendInputEvent`；down/up → `mouseDown/mouseUp`（clickCount 500ms/8px 双击合成），drag/move → `mouseMove`（拖拽时带 `leftbuttondown` modifier 维持 buttons=1），scroll → `mouseWheel`（增量 ×16，轴向/倍率需真机校准）。drag 事件合并到最新位置后 ~16ms flush。
 - **tap 生命周期**：进壁纸默认开（`wallpaper_forward_mouse !== false`），`start/stop` 即开关；tap 启动失败计数达到阈值 → 降级为非交互壁纸并提示。
+- **台前调度与接点面板（#698）**：listen-only tap 只是旁听，点击照样落到 Finder 的桌面窗口；开着台前调度时，系统把这当成「点了桌面」，把别的程序窗口弹到前面。所以控件显示在屏幕上时，主进程在每个控件上方各放一个**完全透明、无边框、不激活应用的 NSPanel**（`electron/wallpaper/macWallpaperHitPanels.cjs`，koffi 直接建 AppKit 窗口，不开渲染进程）。它的层级比 Finder 图标高一层、低于所有普通窗口。点击落在 Folia 自己的面板上，不会激活 Folia，Finder 收不到，台前调度也就不会反应（macOS 15.3 开着台前调度实测）；tap 照样看到这次点击，`isDesktopPoint` 把 Folia 自己在负层级的窗口当桌面放行，所以转发不变。不吞点击，也不需要辅助功能权限（对比 PR #709）。
+  - 盖哪里：渲染端 `src/hooks/useMacWallpaperHitRegions.ts` 订阅现成的播放页浮层布局（`services/playerOverlayLayout.ts`，控件自己登记、80ms 去抖），取 `kind === 'control'` 的矩形，有变化才经 `wallpaper-hit-regions` 发给主进程；主进程按窗口原点与页面缩放换成屏幕点（`toScreenHitRects`），最多 `MAX_HIT_PANELS` 个。
+  - 盖得到的：底部胶囊、右下角面板开关和展开的面板、播放提示卡片。盖不到的：只有播放页登记了这份布局，主页没有；左上角返回按钮；monet / pendolo 点歌词行跳转。点这些地方仍然转发，只是台前调度照常反应。
+  - 台前调度开着时，只盖控件不够：歌词、空白处、控件设成始终隐藏时的整张壁纸，点下去都还是点在 Finder 桌面上。按台前调度的设置（`com.apple.WindowManager` 的 `GloballyEnabled` / `HideDesktop`，`readStageManagerDesktop` 经 CFPreferences 读，不起子进程）分两种：
+    - **台前调度中隐藏桌面项目**：桌面上没有图标可点，一个面板盖住整张壁纸，不需要任何权限。代价：点壁纸不再是「显示桌面」，右键也不再出 Finder 的桌面菜单。
+    - **显示桌面图标**：加载 `libfolia_click_guard.dylib`（`packaging/macos/desktop-click-guard/ClickGuard.swift`，由 `electron/wallpaper/macDesktopClickGuard.cjs` 通过 koffi 载入 Folia 主进程）。它在自己的原生线程上挂一个排在会话最后的 active tap：左键手势（按下、拖动、抬起一起）从壁纸范围内的裸桌面开始时吞掉，Finder 收不到，台前调度不反应（macOS 15.3 实测：吞掉的点击不收走窗口，没吞的照常收走）。点在桌面图标或图标名字上（访达辅助功能树里的 `AXImage`，后台每 12 秒刷新，按下时缓存没命中再即时问一次）、任何窗口上、壁纸外、右键和 Ctrl+点击（触控板的辅助点按，桌面菜单照常弹出），都放行。程序坞在窗口列表里任何状态下都是一整块铺满屏幕的层，分不出图标栏在哪，所以判成裸桌面后再问一次程序坞自己的辅助功能树，点在程序坞上就放行（实测：不问时点程序坞图标会被吞）；Folia 自己全屏展示时的壁纸窗口不算遮挡（与控制器的 `isDesktopPoint` 同一规则）。Folia 自己的 listen-only tap 排在它前面，照样看到并转发这次点击。判断全在原生代码里，点击路径上没有 JavaScript；查不到或超时一律放行；读访达数据只做检查过的类型转换，不会在 Folia 进程里崩溃。为什么不用单独进程：macOS 按子进程自己的身份判断辅助功能权限，Folia 已授权、它派生的 helper 仍然不被信任（实测）；载入主进程后用的就是 Folia 自己那一项。需要「辅助功能」权限；没有时只盖控件，提示一次并弹系统授权框（问过一次就记进设置，之后不再弹），不关壁纸模式；运行中刚授权时 macOS 可能要等 Folia 重启才放行 tap，提示里写了重启。已知：拖桌面图标时，Folia 的 listen-only tap 仍会把这次拖动转发进壁纸（新版 macOS 的图标不是独立窗口，转发判断分不出图标和空白），与本修复无关，暂不处理。代价：在裸桌面上拉框多选会被吞掉。对比 PR #709：那版在 koffi worker 里挂 tap 并回调 JavaScript 判断，所有 Mac 用户都要授权，只吞按下抬起不吞拖动，退出不关 tap。
+    - 设置和权限在壁纸接收输入期间每 3 秒重读一次，改了不用重启。桌面小组件没有实测。
+  - 什么时候在：只在 tap 运行时存在（面板把点击从 Finder 那里拿走，只有 tap 会把它交给壁纸；没有 tap 时面板会让控件点不动）。控件自动隐藏后面板跟着撤掉，下面的桌面图标照常能点；控件显示期间，被盖住的图标点不到。退出壁纸模式时收起，退出应用时释放。
 - **键盘不转发**：与 Windows 交互边界一致，壁纸模式下键盘不可达；退出/控制走托盘等入口。
 - **Dock**：`wallpaper_mac_autohide_dock`（mac 专属，**默认开**）。位置感知：仅在 Dock 位于屏幕底部时，壁纸会话期间自动隐藏 Dock、置 `autohide-delay=0`（贴边立即唤出）；左/右侧 Dock 不动。开关是显式覆盖：关闭后即使 Dock 在底部也不隐藏。退出壁纸/退出应用恢复用户原值；marker 防崩溃残留，下次启动对账恢复。
 

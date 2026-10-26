@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { assertEncryptionAvailable, encryptionAvailable } = require('../osEncryption.cjs');
 
 // electron/kugou/kugouApiBridge.cjs
 
@@ -49,25 +50,6 @@ const randomUpperHex = (bytes) => crypto.randomBytes(bytes).toString('hex').toUp
 const isRecord = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 /**
- * Electron may expose Linux's `basic_text` password backend as available even though it only
- * obfuscates data. Refusing it keeps KuGou account tokens out of Folia's plaintext config file.
- */
-function assertEncryptionAvailable(safeStorage, platform) {
-  if (!safeStorage || typeof safeStorage.isEncryptionAvailable !== 'function') {
-    throw new Error('Electron safeStorage is unavailable');
-  }
-  if (!safeStorage.isEncryptionAvailable()) {
-    throw new Error('Electron safeStorage encryption is unavailable');
-  }
-  const backend = platform === 'linux' && typeof safeStorage.getSelectedStorageBackend === 'function'
-    ? safeStorage.getSelectedStorageBackend()
-    : null;
-  if (backend === 'basic_text') {
-    throw new Error('Electron safeStorage selected the unencrypted basic_text backend');
-  }
-}
-
-/**
  * Stores one encrypted cookie map. Failures deliberately degrade to the bridge's in-memory copy:
  * login keeps working for the current run, but no credential is written without OS encryption.
  */
@@ -79,9 +61,33 @@ function createSessionPersistence({ store, safeStorage, platform, warn }) {
   const report = (event, error) => warn(`[KuGouSession] ${event}`, {
     name: error instanceof Error ? error.name : 'Error',
   });
+  const userIdOf = cookies => cookies?.userid || cookies?.user_id || null;
+  // The account of the cookies that are on disk as far as this run knows (loaded, or last saved); null for none.
+  let storedUserId = null;
+  // What is stored was removed in this run for want of OS encryption: nothing can be written in its place until the
+  // next start, so a save that fails again does not remove it again (each removal rewrites the whole store file).
+  let removedUnsealed = false;
+  // Removes both stored sessions after a save that failed. A store that cannot be written now either is told of and
+  // left as it is: the save itself had already failed, and the request it came with goes on.
+  const removeStored = () => {
+    try {
+      remove(SESSION_KEY);
+      remove(LEGACY_SESSION_KEY);
+      storedUserId = null;
+      return true;
+    } catch (error) {
+      report('remove-failed', error);
+      return false;
+    }
+  };
 
   return {
+    // Answers the stored cookies (null for none), and whether a V2 session is stored that this run
+    // could not load for want of OS encryption: the bridge leaves such a session for a run that has
+    // it. One that does not load while encryption works (a keychain that refused it, damaged, an
+    // envelope of another version) is nothing stored.
     load() {
+      let unreadable = false;
       const encoded = store.get(SESSION_KEY);
       if (typeof encoded === 'string' && encoded.length > 0) {
         try {
@@ -95,18 +101,23 @@ function createSessionPersistence({ store, safeStorage, platform, warn }) {
           ) {
             throw new Error('Stored KuGou session envelope is invalid');
           }
-          return { ...envelope.cookies };
+          storedUserId = userIdOf(envelope.cookies);
+          return { cookies: { ...envelope.cookies }, unreadable };
         } catch (error) {
           report('load-failed', error);
+          unreadable = !encryptionAvailable(safeStorage, platform);
         }
       }
 
       const legacy = store.get(LEGACY_SESSION_KEY);
-      if (!isRecord(legacy)) return null;
-      // Load the old value into memory once, then remove the plaintext immediately. `save` below
-      // either upgrades it to V2 or leaves it process-local when secure encryption is unavailable.
-      remove(LEGACY_SESSION_KEY);
-      return { ...legacy };
+      if (!isRecord(legacy)) return { cookies: null, unreadable };
+      // The old plaintext value stays until `save` below has written it as V2, which removes it:
+      // removed sooner, a write that fails for a moment would lose the sign-in for good. A run that
+      // cannot seal at all removes it here, also beside a V2 session it keeps: the value lives on
+      // in memory for this run only, and no credential stays on disk unencrypted.
+      if (!encryptionAvailable(safeStorage, platform)) remove(LEGACY_SESSION_KEY);
+      else storedUserId = userIdOf(legacy);
+      return { cookies: { ...legacy }, unreadable };
     },
     save(cookies) {
       try {
@@ -117,10 +128,29 @@ function createSessionPersistence({ store, safeStorage, platform, warn }) {
         });
         const encrypted = safeStorage.encryptString(plaintext);
         store.set(SESSION_KEY, encrypted.toString('base64'));
+        storedUserId = userIdOf(cookies);
         remove(LEGACY_SESSION_KEY);
       } catch (error) {
         report('save-failed', error);
+        // Where nothing can be sealed in this run, the cookies of this run live in memory only, and
+        // they replace what is stored (a save is never asked for while a stored session is kept):
+        // the V2 session of an earlier sign-in is removed, so that account cannot come back at a
+        // later start. Where only the write failed (a file locked for a moment), what is stored
+        // stays for the next save, unless it is another account's (a sign-in of another account
+        // in this run): that one goes as well.
+        if (!encryptionAvailable(safeStorage, platform)) {
+          if (!removedUnsealed) removedUnsealed = removeStored();
+        } else if (storedUserId && userIdOf(cookies) !== storedUserId) {
+          removeStored();
+        }
       }
+    },
+    // A sign-out: neither the V2 session nor the old plaintext one is left for a later start to
+    // sign in with, also where nothing can be sealed in this run.
+    clear() {
+      remove(SESSION_KEY);
+      remove(LEGACY_SESSION_KEY);
+      storedUserId = null;
     },
   };
 }
@@ -175,6 +205,8 @@ const describeErrorDetail = (value) => {
  * transport parses. The original answer is deliberately not attached: it carries cookies.
  * `unloaded`: KuGouMusicApi itself could not be loaded, written as `api=unloaded`, so the renderer can
  * tell the local service being down from a request that failed.
+ * An error marked `sessionUnreadable` (a stored session this run cannot load, see `keepStored`) is
+ * written as `session=unreadable`: the renderer answers it as unavailable, not as a signed-out account.
  */
 function normalizeBridgeError(operation, error, unloaded = false) {
   const answer = isRecord(error) && !(error instanceof Error) ? error : null;
@@ -195,6 +227,7 @@ function normalizeBridgeError(operation, error, unloaded = false) {
   if (status !== undefined) fields.push(`status=${status}`);
   if (errorCode !== undefined) fields.push(`error_code=${errorCode}`);
   if (unloaded) fields.push('api=unloaded');
+  if (error instanceof Error && error.sessionUnreadable) fields.push('session=unreadable');
   const normalized = new Error(`KuGouApi[${fields.join(' ')}]${detail ? `: ${detail}` : ''}`);
   normalized.name = 'KuGouApiError';
   normalized.operation = operation;
@@ -214,18 +247,24 @@ function createKugouApiBridge({
   let loadError = null;
   let registrationPromise = null;
   let cookies = null;
+  // A stored session this run could not load is not written over: the cookies of this run stay in
+  // memory until a sign-in of this run brings a token of its own (mergeResponseSession).
+  let keepStored = false;
   const persistence = createSessionPersistence({ store, safeStorage, platform, warn });
 
   // The bridge is constructed before Electron's ready event, while safeStorage cannot be used yet.
   // Loading lazily on the first IPC call guarantees OS encryption is initialized before migration.
   const ensureCookies = () => {
     if (cookies) return cookies;
-    cookies = persistence.load() ?? createDeviceCookies();
-    persistence.save(cookies);
+    const loaded = persistence.load();
+    cookies = loaded.cookies ?? createDeviceCookies();
+    keepStored = loaded.unreadable;
+    if (keepStored) warn('[KuGouSession] The stored session could not be loaded; it is kept until a new sign-in replaces it');
+    persist();
     return cookies;
   };
   const persist = () => {
-    if (cookies) persistence.save(cookies);
+    if (cookies && !keepStored) persistence.save(cookies);
   };
 
   const loadApi = () => {
@@ -243,16 +282,20 @@ function createKugouApiBridge({
 
   const mergeResponseSession = (result) => {
     const sessionCookies = ensureCookies();
+    const tokenBefore = sessionCookies.token;
     const nextCookies = Array.isArray(result?.cookie) ? result.cookie : [];
     nextCookies.forEach(entry => {
       const parsed = parseCookieEntry(entry);
-      if (parsed) sessionCookies[parsed[0]] = parsed[1];
+      // An empty account cookie ('token=') does not blank the stored one: only a sign-out removes it.
+      if (parsed && !(parsed[1] === '' && AUTH_COOKIE_KEYS.has(parsed[0].toLowerCase()))) sessionCookies[parsed[0]] = parsed[1];
     });
     const body = result?.body ?? result;
     const data = body?.data ?? body;
     if (data?.token) sessionCookies.token = String(data.token);
     if (data?.userid ?? data?.user_id) sessionCookies.userid = String(data.userid ?? data.user_id);
     if (data?.dfid) sessionCookies.dfid = String(data.dfid);
+    // A token this run did not have is a sign-in: it takes the place of a stored session this run could not load.
+    if (sessionCookies.token && sessionCookies.token !== tokenBefore) keepStored = false;
     persist();
     return body;
   };
@@ -320,8 +363,17 @@ function createKugouApiBridge({
     if (operation === 'logout') {
       const sessionCookies = ensureCookies();
       cookies = Object.fromEntries(Object.entries(sessionCookies).filter(([key]) => !AUTH_COOKIE_KEYS.has(key.toLowerCase())));
+      // A sign-out and an ended sign-in (the renderer's signInRanOut) both arrive here: what is
+      // stored goes too, also a session this run could not load, so the next start cannot sign back in.
+      persistence.clear();
+      keepStored = false;
       persist();
       return { code: 200 };
+    }
+    // The login check, while a session is stored that this run cannot load and no sign-in of this
+    // run brought a token: who is signed in is not known, which is not the same as nobody.
+    if (operation === 'user_detail' && keepStored && !ensureCookies().token) {
+      throw Object.assign(new Error('The stored KuGou session cannot be read now'), { sessionUnreadable: true });
     }
     if (operation !== 'register_dev') await ensureRegistered(false);
     let body = await invokeModule(operation, params);

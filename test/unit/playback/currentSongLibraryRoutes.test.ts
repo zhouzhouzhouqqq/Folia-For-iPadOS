@@ -118,6 +118,14 @@ vi.mock('@/utils/appNavidromeLyrics', () => ({
     },
 }));
 
+// The analysis and prefetch of the songs around the one played, stubbed for the whole file: only
+// whether a play asks for it is pinned (the last describe), and no other test here depends on it.
+const { prefetchNearbySongs } = vi.hoisted(() => ({ prefetchNearbySongs: vi.fn(async () => {}) }));
+vi.mock('@/services/prefetchService', async importOriginal => ({
+    ...await importOriginal<typeof import('@/services/prefetchService')>(),
+    prefetchNearbySongs,
+}));
+
 const { useLibraryPlaybackController } = await import('@/components/app/playback/start/useLibraryPlaybackController');
 const { usePlaybackRuntimeRefs } = await import('@/components/app/playback/usePlaybackRuntimeRefs');
 const { usePlaybackStore } = await import('@/stores/usePlaybackStore');
@@ -863,5 +871,44 @@ describe('the audio address of a local file and of a Navidrome song', () => {
 
         expect(watch.take()).toEqual([]);
         expect(status()).toMatchObject({ type: 'error', text: 'Navidrome not configured' });
+    });
+});
+
+describe('a library play and the songs around it', () => {
+    beforeEach(() => {
+        prefetchNearbySongs.mockClear();
+        // A local play from a queue also warms the songs next to it a second later: not this test's subject.
+        vi.stubGlobal('window', { setTimeout: vi.fn() });
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    // Without it no library song was ever analysed for automix: every transition in a local or
+    // Navidrome queue had no profile at either end and came out a plain fade.
+    it('asks for the songs around a local file played from a queue', async () => {
+        const { library } = mount();
+        await library.onPlayLocalSong(localOne, [localOne, localTwo]);
+
+        expect(prefetchNearbySongs).toHaveBeenCalledTimes(1);
+        const [current, queue] = prefetchNearbySongs.mock.calls[0] as unknown as [SongResult, SongResult[]];
+        expect(current).toMatchObject({ name: 'L1' });
+        expect(queue.map(song => song.name)).toEqual(['L1', 'L2']);
+    });
+
+    it('asks for the songs around a Navidrome song played from a queue', async () => {
+        const { library } = mount();
+        await library.onPlayNavidromeSong(navidromeSong, [navidromeSong, navidromeTwo]);
+
+        expect(prefetchNearbySongs).toHaveBeenCalledTimes(1);
+        const [current, queue] = prefetchNearbySongs.mock.calls[0] as unknown as [SongResult, SongResult[]];
+        expect(current).toMatchObject({ name: 'N1' });
+        expect(queue.map(song => song.name)).toEqual(['N1', 'N2']);
+    });
+
+    it('asks for nothing when the song is the whole queue', async () => {
+        const { library } = mount();
+        await library.onPlayLocalSong(localOne);
+        await library.onPlayNavidromeSong(navidromeSong);
+
+        expect(prefetchNearbySongs).not.toHaveBeenCalled();
     });
 });

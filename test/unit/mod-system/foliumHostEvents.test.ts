@@ -32,6 +32,7 @@ import {
 import { supplyLyricsAfterEmptyLoad } from '@/components/app/playback/createLyricsSetter';
 import type { FoliumLine } from '@/mods/folium/contract';
 import { installFoliumHostEvents } from '@/mods/runtime/hostEvents';
+import { buildFoliumQueueSnapshot } from '@/mods/runtime/hostQueue';
 import { addFoliumEventHandler, removeFoliumEventHandlers } from '@/mods/folium/events';
 import { resolveFoliumSongRef, toFoliumSong } from '@/mods/folium/dto';
 import { buildLineRenderHints } from '@/utils/lyrics/renderHints';
@@ -229,7 +230,7 @@ describe('Folium 1.5 playback notifications', () => {
         usePlaybackStore.setState({ isFmMode: true });
         expect(handler).not.toHaveBeenCalled();
         await flushMicrotasks();
-        expect(handler.mock.calls).toEqual([[{ length: 3, currentIndex: 1 }]]);
+        expect(handler.mock.calls).toEqual([[{ length: 3, currentIndex: 1, version: expect.any(String), byThisMod: false }]]);
     });
 
     it('reports a shuffle even though the length and the current index stay the same', async () => {
@@ -240,7 +241,7 @@ describe('Folium 1.5 playback notifications', () => {
         addFoliumEventHandler('mod-a', 'playback.queueChanged', handler);
         usePlaybackStore.setState({ playQueue: [queue[0], queue[2], queue[1]] });
         await flushMicrotasks();
-        expect(handler.mock.calls).toEqual([[{ length: 3, currentIndex: 0 }]]);
+        expect(handler.mock.calls).toEqual([[{ length: 3, currentIndex: 0, version: expect.any(String), byThisMod: false }]]);
     });
 
     it('reports the displayed song moving, FM and Stage switches, but not changes that leave the outline alone', async () => {
@@ -256,17 +257,22 @@ describe('Folium 1.5 playback notifications', () => {
         await flushMicrotasks();
         expect(handler).not.toHaveBeenCalled();
 
+        // The queue's version before the displayed song moves, as getQueue would give it.
+        const before = buildFoliumQueueSnapshot(usePlaybackStore.getState(), undefined, 1).version;
         usePlaybackStore.setState({ currentSong: queue[2] });
         await flushMicrotasks();
         usePlaybackStore.setState({ isFmMode: true });
         await flushMicrotasks();
         usePlaybackStore.setState({ activePlaybackContext: 'stage' });
         await flushMicrotasks();
-        expect(handler.mock.calls).toEqual([
-            [{ length: 3, currentIndex: 2 }],
-            [{ length: 3, currentIndex: 2 }],
-            [{ length: 3, currentIndex: 2 }],
-        ]);
+        const outline = { length: 3, currentIndex: 2, version: expect.any(String), byThisMod: false };
+        expect(handler.mock.calls).toEqual([[outline], [outline], [outline]]);
+        // The song moving keeps the version; entering FM and the Stage each change it.
+        const [moved, fm, stage] = handler.mock.calls.map(([event]) => event.version);
+        expect(moved).toBe(before);
+        expect(fm).not.toBe(before);
+        expect(stage).not.toBe(before);
+        expect(stage).not.toBe(fm);
     });
 
     it('schedules nothing while nobody listens', async () => {

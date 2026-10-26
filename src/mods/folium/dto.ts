@@ -167,7 +167,14 @@ const describeSource = (song: SongResult): string | null => {
  * most 500 songs, well under the bound) can never evict a token that same
  * page has just returned.
  */
-const MAX_SONG_REFS = 2000;
+/**
+ * How many song refs stay resolvable (Folium 1.7: 5,000, up from 2,000). `folium.omni` pages
+ * (searches, lookups, an album's songs) share the pool with the queue, so one mod reading many pages
+ * must not push out the refs the queue and other mods hold; one call still returns far fewer.
+ */
+export const FOLIUM_SONG_REF_POOL_SIZE = 5000;
+/** How every song ref begins; `folium.omni` tells a song DTO from a collection DTO by it. */
+export const FOLIUM_SONG_REF_PREFIX = 'song-';
 const refBySong = new WeakMap<SongResult, string>();
 const songByRef = new Map<string, SongResult>();
 let refCounter = 0;
@@ -181,10 +188,10 @@ const refFor = (song: SongResult): string => {
         return existing;
     }
     refCounter += 1;
-    const ref = `song-${refCounter.toString(36)}`;
+    const ref = `${FOLIUM_SONG_REF_PREFIX}${refCounter.toString(36)}`;
     refBySong.set(song, ref);
     songByRef.set(ref, song);
-    if (songByRef.size > MAX_SONG_REFS) {
+    if (songByRef.size > FOLIUM_SONG_REF_POOL_SIZE) {
         const oldest = songByRef.keys().next().value;
         if (oldest !== undefined) songByRef.delete(oldest);
     }

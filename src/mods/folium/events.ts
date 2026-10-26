@@ -87,6 +87,22 @@ export const emitFoliumEvent = <K extends keyof FoliumEventMap>(type: K, payload
     list.forEach((registration) => runSync(registration, type, event));
 };
 
+/**
+ * Folium 1.7: a notification whose payload is each mod's own (`playback.queueChanged`'s `byThisMod`). As
+ * emitFoliumEvent otherwise: synchronous, and one frozen payload per mod, which that mod's handlers share.
+ */
+export const emitFoliumEventPerMod = <K extends keyof FoliumEventMap>(type: K, payloadFor: (modId: string) => FoliumEventMap[K]) => {
+    const list = handlersByType.get(type);
+    if (!list || list.length === 0) return;
+    const payloads = new Map<string, unknown>();
+    list.forEach((registration) => {
+        if (!payloads.has(registration.modId)) {
+            payloads.set(registration.modId, Object.freeze({ ...payloadFor(registration.modId) }));
+        }
+        runSync(registration, type, payloads.get(registration.modId));
+    });
+};
+
 /** Synchronous hook: handlers mutate `event` in order; async handlers are not awaited. */
 export const dispatchFoliumHookSync = <K extends keyof FoliumEventMap>(type: K, event: FoliumEventMap[K]): FoliumEventMap[K] => {
     const list = handlersByType.get(type);

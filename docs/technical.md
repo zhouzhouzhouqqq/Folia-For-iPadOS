@@ -112,6 +112,8 @@ Folia 当前支持以下两类 AI 提供方式：
 
 Gemini 通常更适合当前项目场景，因为 JSON 输出相对稳定。
 
+桌面版的设置里可以直接选 OpenAI、Anthropic、Google Gemini、DeepSeek、Kimi、智谱 GLM、阿里云 Qwen、腾讯云 TokenHub、小米 MiMo，或自定义兼容接口；有多个站点的（如 Kimi、GLM 的国内站和国际站，Qwen 的各地域）可以选站点。每家供应商一个适配器（`shared/ai/`），按接口地址的主机名选用，分别决定推理开关、温度范围、上限字段和结构化输出：歌词分词和测试连接能关思考就关、关不掉就用最低档；主题用最低档或关掉。网页版用同一批适配器，同样按 `OPENAI_API_URL` 的主机名推断，但只走 OpenAI 兼容协议（没有网页版的 Anthropic 原生协议）。
+
 ### Stage API
 
 Folia 提供了从外部与播放器进行交互的 Stage API，从而可以实现外部程序与播放器的深度集成。可以通过 `npm run stage:client` 启动本地联调台，查看和测试这些接口的功能。
@@ -174,11 +176,11 @@ vercel env pull .env.local
 | `VITE_AI_PROVIDER` | AI 提供商，`google` 或 `openai` | 是 |
 | `GEMINI_API_KEY` | Gemini API Key | 使用 Gemini 时需要 |
 | `OPENAI_API_KEY` | OpenAI 兼容 API Key | 使用 OpenAI兼容接口 时需要 |
-| `OPENAI_API_URL` | OpenAI 兼容接口地址，可填 base URL 或完整 `chat/completions` 地址 | 使用 OpenAI兼容接口 时需要 |
-| `OPENAI_API_MODEL` | 模型名，例如 `gpt-5.6-luna`、`gpt-4.1-mini`、`deepseek-v4-flash` | 使用 OpenAI兼容接口 时需要 |
-| `OPENAI_API_TEMPERATURE` | 温度，范围 `0`–`2`；留空或无效时默认使用 `0.7` | 否 |
+| `OPENAI_API_URL` | OpenAI 兼容接口地址，可填 base URL 或完整 `chat/completions` 地址；留空等于 OpenAI 官方接口。供应商按主机名推断（`api.openai.com`、`api.deepseek.com`、`api.moonshot.cn` / `api.moonshot.ai`、`open.bigmodel.cn` / `api.z.ai`、百炼 `dashscope*.aliyuncs.com`、TokenHub、`*.xiaomimimo.com`），其余主机按自定义兼容接口处理 | 使用 OpenAI兼容接口 时需要 |
+| `OPENAI_API_MODEL` | 模型名，例如 `gpt-5.6-luna`、`deepseek-flash`；留空时用该供应商的默认模型（OpenAI 与自定义接口 `gpt-5.6-luna`、DeepSeek `deepseek-flash`、Kimi `kimi-k2.6`、GLM `glm-5.2`、Qwen `qwen3.8-flash`、TokenHub `deepseek-v4-flash`、MiMo `mimo-v2.6-flash`） | 否 |
+| `OPENAI_API_TEMPERATURE` | 温度，留空或无效时默认使用 `0.7`；只发给接受它的供应商，并截到该供应商的范围 | 否 |
 
-注意：部分模型对于温度参数有特殊要求，例如 `kimi-k3` 要求温度必须为 `1`。
+注意：温度按供应商处理。OpenAI 和 Kimi 从不发温度（OpenAI 的推理模型带温度会报错，Kimi 的模型采样是固定的）；GLM 截到 `1`，MiMo 截到 `1.5`，Qwen 截到 `1.99`，TokenHub 只发给部分模型；DeepSeek 和自定义接口按 `0`–`2`。
 
 Gemini 示例：
 
@@ -223,11 +225,11 @@ VITE_NETEASE_API_BASE=http://localhost:3000
 VITE_AI_PROVIDER=openai
 OPENAI_API_KEY=your_api_key
 OPENAI_API_URL=https://api.deepseek.com
-OPENAI_API_MODEL=deepseek-v4-flash
+OPENAI_API_MODEL=deepseek-flash
 OPENAI_API_TEMPERATURE=0.7
 ```
 
-如果你使用的是 OpenAI 官方接口，也可以这样写：
+如果你使用的是 OpenAI 官方接口，也可以这样写（OpenAI 不发温度，`OPENAI_API_TEMPERATURE` 不用填）：
 
 ```env
 VITE_NETEASE_API_BASE=http://localhost:3000
@@ -235,7 +237,6 @@ VITE_AI_PROVIDER=openai
 OPENAI_API_KEY=your_api_key
 OPENAI_API_URL=https://api.openai.com/v1
 OPENAI_API_MODEL=gpt-5.6-luna
-OPENAI_API_TEMPERATURE=0.7
 ```
 
 #### 3. 启动开发环境

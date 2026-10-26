@@ -720,9 +720,13 @@ function createYtmApiBridge({
     },
 
     // Answered from the stored session: called on every app start, before anything needs the network.
+    // A sign-in stored that this run cannot read is not answered as nobody: the renderer would
+    // take the account for gone.
     async login_status() {
       const user = webRepo.get()?.user;
-      return user ? accountAnswer(user) : null;
+      if (user) return accountAnswer(user);
+      if (webRepo.unreadable()) throw ytmError('unavailable', 'The stored YouTube Music sign-in cannot be read now');
+      return null;
     },
 
     // Removes the sign-in from this computer. It does not end the listener's session with Google.

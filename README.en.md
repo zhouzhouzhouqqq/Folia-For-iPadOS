@@ -31,7 +31,7 @@ Lyrics Reimagined // 辞曲新境
 
 ## About
 
-Folia is an online music player built around full-screen, immersive lyrics. It supports NetEase Cloud Music, Kugou, QQ Music, Navidrome, and local music libraries; the desktop app also supports Bodian Music, YouTube Music, and Spotify. Smart lyric matching, AI-generated color themes, and a range of full-screen lyric animations make listening feel different.
+Folia is an online music player built around full-screen, immersive lyrics. It supports NetEase Cloud Music, Kugou, QQ Music, Navidrome, and local music libraries; the desktop app also supports Bodian Music, YouTube Music, Spotify, and Qishui Music. Smart lyric matching, AI-generated color themes, and a range of full-screen lyric animations make listening feel different.
 
 Folia ships as an Electron desktop app for Windows, macOS, and Linux, and as a Node.js web app you can deploy to many platforms.
 
@@ -43,7 +43,7 @@ To use Folia on a phone or in a browser, [deploy the web app to Vercel in one cl
 > - **GitHub**: [Latest Release](https://github.com/chthollyphile/folia-major/releases/latest) has installers for Windows, macOS, and Linux.
 > - **Cloud drives** (faster in mainland China): [Quark](https://pan.quark.cn/s/6e4c6fa3bc6f) · [Baidu](https://pan.baidu.com/s/1f0x3g-8PMcNCO-TJ5z1rPw?pwd=flia) (code `flia`). Stable installers for Windows and Apple silicon only.
 >
-> For other options (web deployment, Docker, AUR, Flatpak), see [Get Folia](#get-folia) below.
+> For other options (web deployment, Docker, AUR, Flatpak, mobile), see [Get Folia](#get-folia) below.
 
 ## Showcase
 
@@ -143,22 +143,28 @@ On Vercel and Cloudflare, QQ Music no longer needs a separate, always-on API ins
 
 Self-hosters can use the [Docker Compose full-stack deployment](deploy/docker/README.md). Access to local music folders requires a trusted HTTPS secure context; the deployment docs cover NAS reverse proxies and certificate requirements.
 
-On mobile:
-
-We recommend deploying the web or self-hosted version, then installing it as a PWA (add the web app to your home screen) from Chrome for Android or iOS Safari. Folia's web version supports PWA installation.
-
-If you are comfortable with the tooling, you can package the web version as an installable Android APK with Capacitor. See the example repository [chthollyphile/folia-sonnet](https://github.com/chthollyphile/folia-sonnet).
-
 ### Direct download
 
 - **Windows / macOS / Linux**: Download the latest installers from the [Releases page](https://github.com/chthollyphile/folia-major/releases/latest).
 - **Arch Linux**: Install [folia-major-bin](https://aur.archlinux.org/packages/folia-major-bin) from the AUR.
 - **Flatpak**: A community-maintained third-party Flatpak is available on [Flatpark](https://flatpark.org/apps/top.izuna.foliamajor/).
+- **Android**: Third-party community ports are listed under [Mobile](#mobile) below.
 
 > [!IMPORTANT]
 > If GitHub Releases is slow from mainland China, download from [Quark](https://pan.quark.cn/s/6e4c6fa3bc6f) or [Baidu](https://pan.baidu.com/s/1f0x3g-8PMcNCO-TJ5z1rPw?pwd=flia) instead. These links host stable installers for Windows and Apple silicon only.
 
 For Linux packages, the Wayland / Hyprland remote control window, and other desktop details, see [Technical Notes](docs/technical.md) (Chinese).
+
+### Mobile
+
+| Option | Details |
+| --- | --- |
+| **PWA (recommended)** | Deploy the web or self-hosted version, then add it to your home screen from Chrome for Android or iOS Safari to use it as a PWA. |
+| **Community ports (Android)** | [maimai993/folia-sonnet](https://github.com/maimai993/folia-sonnet) · [whycfawa/folia-android](https://github.com/whycfawa/folia-android) |
+| **Build it yourself (Android)** | If you are comfortable with the tooling, package the web version as an installable APK with Capacitor. See the example repository [chthollyphile/folia-sonnet](https://github.com/chthollyphile/folia-sonnet). |
+
+> [!NOTE]
+> Community ports are third-party projects maintained independently by the community, and their features differ from the official desktop version. Please report any issues to the corresponding repository.
 
 ## Documentation and development
 

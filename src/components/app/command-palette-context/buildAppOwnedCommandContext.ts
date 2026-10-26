@@ -6,12 +6,14 @@ import { locatePlayingSongOnWall } from '../lattice/wallLocate';
 import type { CommandPaletteContext } from '../../command-palette/types';
 import { setStatusMessage } from '../../../stores/useStatusMessageStore';
 import { useAudioSettingsStore } from '../../../stores/useAudioSettingsStore';
-import { usePersonalFmModeStore } from '../../../stores/usePersonalFmModeStore';
+import { useOnlineProviderAccountStore } from '../../../stores/useOnlineProviderAccountStore';
+import { getPersonalFmSelection, usePersonalFmModeStore } from '../../../stores/usePersonalFmModeStore';
 import { useDesktopSettingsStore } from '../../../stores/useDesktopSettingsStore';
 import { openAddToPlaylist, useAddToPlaylistStore } from '../../../stores/useAddToPlaylistStore';
 import { useInteractionSettingsStore } from '../../../stores/useInteractionSettingsStore';
 import { usePlaybackStore } from '../../../stores/usePlaybackStore';
 import { isLocalPlaybackSong } from '../../../utils/appPlaybackGuards';
+import { usePlayerBarPresentationStore } from '../../../stores/usePlayerBarPresentationStore';
 
 // src/components/app/command-palette-context/buildAppOwnedCommandContext.ts
 // The four namespaces whose state genuinely still lives in App.tsx: shared, playback, navigation
@@ -43,7 +45,7 @@ export type NavigationCommandContextDeps = Pick<
     | 'toggleRemoteControlWindow' | 'toggleMainWindowAlwaysOnTop'
 >;
 
-export type PanelCommandContextDeps = CommandPaletteContext['panel'];
+export type PanelCommandContextDeps = Omit<CommandPaletteContext['panel'], 'setPlayerBarPresentation'>;
 
 export const buildSharedCommandContext = (
     deps: SharedCommandContextDeps,
@@ -71,13 +73,30 @@ export const buildPlaybackCommandContext = (
         volume: audio.volume,
         isMuted: audio.isMuted,
         setVolume: audio.handleSetVolume,
+        // Read from the store at the press, not from this snapshot: a held key repeats faster
+        // than the context is rebuilt, and each step has to start where the last one ended. Turning
+        // it up also unmutes, like a keyboard's volume key: otherwise the number rises in silence.
+        stepVolume: (delta) => {
+            const live = useAudioSettingsStore.getState();
+            if (delta > 0 && live.isMuted) {
+                live.handleSetMuted(false);
+            }
+            const next = Math.round(Math.min(1, Math.max(0, live.volume + delta)) * 100) / 100;
+            live.handleSetVolume(next);
+        },
         toggleMute: audio.handleToggleMute,
         openAddToPlaylist,
         canAddCurrentSongToPlaylist: useAddToPlaylistStore.getState().availability.canAdd,
         canToggleCurrentSongPureMusicMark: isLocalPlaybackSong(usePlaybackStore.getState().currentSong),
-        personalFmSelection: usePersonalFmModeStore.getState().selection,
+        personalFmSelection: getPersonalFmSelection(useOnlineProviderAccountStore.getState().activeProviderId),
+        personalFmCatalog: usePersonalFmModeStore.getState().catalogs[useOnlineProviderAccountStore.getState().activeProviderId],
         openAudioEqualizer: audio.openAudioEqualizer,
         applyAudioSoundPreset: audio.handleApplyAudioSoundPreset,
+        // Read at the press: a mod's curve comes and goes without this context being rebuilt.
+        hasModEqualizerCurve: () => useAudioSettingsStore.getState().audioEqualizerModCurve !== null,
+        releaseModEqualizerCurve: () => {
+            useAudioSettingsStore.getState().handleReleaseModEqualizerCurve({ kind: 'command' });
+        },
     };
 };
 
@@ -93,4 +112,7 @@ export const buildNavigationCommandContext = (
 
 export const buildPanelCommandContext = (
     deps: PanelCommandContextDeps,
-): CommandPaletteContext['panel'] => deps;
+): CommandPaletteContext['panel'] => ({
+    ...deps,
+    setPlayerBarPresentation: presentation => usePlayerBarPresentationStore.getState().setPresentation(presentation),
+});

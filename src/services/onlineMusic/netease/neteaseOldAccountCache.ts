@@ -7,7 +7,7 @@ import { getProviderCacheKey, getProviderCacheWithLegacyMigration } from '../pro
 // NetEase account: four caches, one each for the user, the playlists, the liked song ids and the
 // cloud entry. Nothing writes them any more. They are read where no snapshot is found, so that a
 // listener who comes from such a build sees the account at once, and they go when the account
-// leaves.
+// leaves. Once made the snapshot they go as well (the adapter's `forgetOldKeptAccount`).
 
 const OLD_CACHES = ['user_profile', 'user_playlists', 'user_liked_songs', 'user_cloud_playlist'] as const;
 

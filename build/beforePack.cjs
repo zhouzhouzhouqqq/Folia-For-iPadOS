@@ -25,5 +25,8 @@ exports.default = async (context) => {
   if (context.electronPlatformName === 'darwin') {
     const { prepareBundledKoffi } = await import('../packaging/macos/prepare-koffi.mjs');
     await prepareBundledKoffi({ arch, projectRoot: context.packager.projectDir });
+    // The wallpaper's Stage Manager click guard (issue #698), a small native helper.
+    const { prepareDesktopClickGuard } = await import('../packaging/macos/build-desktop-click-guard.mjs');
+    await prepareDesktopClickGuard({ arch, projectRoot: context.packager.projectDir });
   }
 };

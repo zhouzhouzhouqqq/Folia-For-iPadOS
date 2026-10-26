@@ -26,7 +26,7 @@ import { applySonnetBeatFxLayers, restoreSonnetBeatFxLayers, type SonnetBeatFxFr
 /** What a shot frame reads besides the view and the clock; all of it is read fresh every frame. */
 export interface SonnetShotFrameContext {
     tuning: SonnetTuning;
-    /** 智能动感模式 (SmartBeatSettings.enabled), whether or not this track's beats are in yet. */
+    /** 智能动感模式 (`smartBeatActive`: on or cached), whether or not this track's beats are in yet. */
     smartBeatEnabled: boolean;
     theme: Theme;
     audioBands?: AudioBands;

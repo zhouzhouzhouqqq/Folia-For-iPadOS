@@ -11,6 +11,7 @@ import { useVisualizerRuntime } from '../runtime';
 import { useVisualizerSongCommit } from '../songHandover';
 import { useFoliumTunings } from '@/mods/folium/registries/tunings';
 import { useVisualizerSettingsStore } from '../../../stores/useVisualizerSettingsStore';
+import { smartBeatActive } from '../../../services/beatFx/beatEffects';
 import VisualizerShell from '../VisualizerShell';
 import VisualizerSubtitleOverlay from '../VisualizerSubtitleOverlay';
 import type {
@@ -64,7 +65,7 @@ const VisualizerSonnet: React.FC<VisualizerSharedProps> = (props) => {
     const sonnetTuningRef = useRef(sonnetTuning);
     sonnetTuningRef.current = sonnetTuning;
     // 智能动感模式 is one setting for every visualizer, so it is not part of the Sonnet tuning prop.
-    const smartBeatEnabled = useVisualizerSettingsStore(state => state.smartBeat.enabled);
+    const smartBeatEnabled = useVisualizerSettingsStore(state => smartBeatActive(state.smartBeat));
     const smartBeatEnabledRef = useRef(smartBeatEnabled);
     smartBeatEnabledRef.current = smartBeatEnabled;
     const latestSongMetadataRef = useRef<SonnetSongMetadata>({

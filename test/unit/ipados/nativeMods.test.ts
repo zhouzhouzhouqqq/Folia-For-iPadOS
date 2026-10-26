@@ -47,6 +47,11 @@ describe('frontend Folium host', () => {
         expect(nativeModList()[0].status).toBe('dependency-failed');
         await expect(installNativeMod(packageFile({ permissions: ['fake.permission'] }))).rejects.toThrow('permission');
     });
+    it('accepts the shared Folium 1.7 queue, equalizer and experimental declarations', async () => {
+        await installNativeMod(packageFile({ permissions: ['playback.queue', 'equalizer.control', 'stageLayers', 'platform.netease.read'], experimental: ['omni.providers', 'platform.raw'] }));
+        await setNativeModEnabled('demo', true);
+        expect(nativeModList()[0]).toMatchObject({ status: 'loaded', permissions: expect.arrayContaining(['playback.queue', 'equalizer.control']) });
+    });
     it('does not load a client whose declared dependency is unavailable', async () => {
         await installNativeMod(packageFile({ depends: ['missing'] }));
         await setNativeModEnabled('demo', true);

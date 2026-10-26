@@ -13,10 +13,12 @@ import type {
     FoliumLyricsService,
     FoliumNetService,
     FoliumPlaybackService,
+    FoliumQueueReplaceResult,
     FoliumQueueSnapshot,
     FoliumSong,
     FoliumUiService,
 } from './contract';
+import { FOLIUM_SONG_REF_POOL_SIZE, FOLIUM_SONG_REF_PREFIX } from './dto';
 import type { FoliumPermissionId } from './shared';
 import { FOLIUM_LYRICS_HELPERS } from './sharedHelpers';
 
@@ -56,6 +58,8 @@ export interface FoliumHostActions {
     getQueue: (offset: number | undefined, limit: number) => FoliumQueueSnapshot;
     /** False when the entry cannot be played: out of range, Stage playback, or no longer `expectedRef`. */
     playQueueItem: (index: number, expectedRef: string | undefined) => Promise<boolean>;
+    /** Folium 1.7: `refs` are song refs (checked by the service); the host answers the state reasons itself. */
+    replaceQueue: (modId: string, refs: readonly string[], expectedVersion: string) => FoliumQueueReplaceResult;
     toast: (message: string, type: 'info' | 'success' | 'error', durationMs?: number) => void;
     openPlayerPanel: (tab: string | null) => void;
     navigate: (view: 'home' | 'player') => void;
@@ -73,6 +77,7 @@ export const registerFoliumHostActions = (actions: FoliumHostActions | null) => 
 };
 
 const PLAYBACK_CONTROL: FoliumPermissionId = 'playback.control';
+const PLAYBACK_QUEUE: FoliumPermissionId = 'playback.queue';
 const NET_EMBED: FoliumPermissionId = 'net.embed';
 
 const unavailable = (what: string, context: FoliumContextKind) => new Error(`${what}-unavailable-in-${context}-context`);
@@ -126,6 +131,30 @@ const resolveQueuePage = (options: { offset?: number; limit?: number } | undefin
     };
 };
 
+const invalidArguments = (problem: string) => new TypeError(`invalid-arguments: ${problem}`);
+
+/*
+ * replaceQueue's arguments, checked: an array of at most one ref pool's worth of song DTOs from the host,
+ * and a version string. A DTO of another kind (a folium.omni album, an object made up by the mod) is a
+ * malformed argument, as folium.omni has it, not a stale ref: reading it again would never mend it.
+ */
+const queueReplaceRefsOf = (songs: unknown, options: unknown): { refs: string[]; expectedVersion: string } => {
+    if (!Array.isArray(songs)) throw invalidArguments('songs must be an array');
+    if (songs.length > FOLIUM_SONG_REF_POOL_SIZE) throw invalidArguments(`songs holds more than ${FOLIUM_SONG_REF_POOL_SIZE} songs`);
+    const refs: string[] = [];
+    for (let index = 0; index < songs.length; index += 1) {
+        const song: unknown = songs[index];
+        const ref = typeof song === 'object' && song !== null ? (song as { ref?: unknown }).ref : undefined;
+        if (typeof ref !== 'string' || !ref.startsWith(FOLIUM_SONG_REF_PREFIX)) {
+            throw invalidArguments(`songs[${index}] is not a song DTO that came from the host`);
+        }
+        refs.push(ref);
+    }
+    const expectedVersion = typeof options === 'object' && options !== null ? (options as { expectedVersion?: unknown }).expectedVersion : undefined;
+    if (typeof expectedVersion !== 'string' || expectedVersion === '') throw invalidArguments('expectedVersion must be a string');
+    return { refs, expectedVersion };
+};
+
 export const createFoliumPlaybackService = (mod: ModRuntimeInfo, context: FoliumContextKind): FoliumPlaybackService => {
     const control = () => {
         requirePermission(mod, PLAYBACK_CONTROL);
@@ -171,6 +200,13 @@ export const createFoliumPlaybackService = (mod: ModRuntimeInfo, context: Folium
         playQueueItem: async (index: number, expectedRef?: string) => {
             if (!Number.isInteger(index)) throw new Error('playback.playQueueItem requires an integer index');
             return control().playQueueItem(index, expectedRef);
+        },
+        // Checked in this order: the permission, the window, the arguments; the host answers the rest.
+        replaceQueue: async (songs: readonly FoliumSong[], options: { expectedVersion: string }) => {
+            requirePermission(mod, PLAYBACK_QUEUE);
+            const actions = requireActions('playback', context);
+            const { refs, expectedVersion } = queueReplaceRefsOf(songs, options);
+            return actions.replaceQueue(mod.id, refs, expectedVersion);
         },
     });
 };

@@ -23,8 +23,12 @@ interface LyricSourceEntry {
      * ids and is reached through those two.
      */
     platform: boolean;
+    /** Selected local-song metadata from this source may resume automatic matching and refresh legacy lyrics. */
+    localMetadataIdentity?: boolean;
     /** True when the source answers only with the listener's own account: it is on offer only while one is signed in. */
     needsAccount?: boolean;
+    /** True when this source requires its provider's runtime bridge or configuration. */
+    needsConfiguredProvider?: boolean;
     /**
      * True when its lyrics are timed by line only and come with no chorus data. The automatic pick
      * asks such a source only while no other source has given lines, keeps what it gives as the
@@ -36,10 +40,11 @@ interface LyricSourceEntry {
 // In the order the automatic pick asks them after the preferred one, which is also the order of
 // the tabs in the match windows and of the choices in settings.
 const ENTRIES = [
-    { id: 'netease', labelKey: 'lyricProvider.netease', platform: true },
+    { id: 'netease', labelKey: 'lyricProvider.netease', platform: true, localMetadataIdentity: true },
     { id: 'amll', labelKey: 'lyricProvider.amll', platform: false },
-    { id: 'qq', labelKey: 'lyricProvider.qq', platform: true },
-    { id: 'kugou', labelKey: 'lyricProvider.kugou', platform: true },
+    { id: 'qq', labelKey: 'lyricProvider.qq', platform: true, localMetadataIdentity: true },
+    { id: 'kugou', labelKey: 'lyricProvider.kugou', platform: true, localMetadataIdentity: true },
+    { id: 'qishui', labelKey: 'lyricProvider.qishui', platform: true, localMetadataIdentity: true, needsConfiguredProvider: true },
     { id: 'spotify', labelKey: 'lyricProvider.spotify', platform: true, needsAccount: true, linesOnly: true },
 ] as const satisfies readonly LyricSourceEntry[];
 

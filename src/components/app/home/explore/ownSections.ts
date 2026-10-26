@@ -37,13 +37,21 @@ export const listenedSongsOf = (providerId: OmniProviderId, accountId: string): 
     return [...songs.values()].slice(0, MAX_LISTENED) as UnifiedSong[];
 };
 
+// The app's own sections that hold something, in the order they stand in.
+const ownSectionsOf = (recent: SongResult[], replayed: SongResult[], t: (key: string) => string): OmniExploreSection[] => [
+    sectionOf(RECENT_SECTION_ID, t('home.exploreRecent'), recent),
+    sectionOf(AGAIN_SECTION_ID, t('home.exploreAgain'), replayed),
+].filter(section => section.items.length > 0);
+
 /** The app's own sections that hold something, in the order they stand in, followed as songs are played. */
 export const useOwnExploreSections = (providerId: OmniProviderId, accountId: string): OmniExploreSection[] => {
     const { t } = useTranslation();
     const recent = useSyncExternalStore(watchRecentPlays, () => recentPlaysOf(providerId, accountId));
     const replayed = useSyncExternalStore(watchRecentPlays, () => replayedSongsOf(providerId, accountId));
-    return useMemo(() => [
-        sectionOf(RECENT_SECTION_ID, t('home.exploreRecent'), recent),
-        sectionOf(AGAIN_SECTION_ID, t('home.exploreAgain'), replayed),
-    ].filter(section => section.items.length > 0), [recent, replayed, t]);
+    return useMemo(() => ownSectionsOf(recent, replayed, t), [recent, replayed, t]);
 };
+
+/** The app's own sections that hold something, as they are now: read once, they stay as they were while songs are played. */
+export const readOwnExploreSections = (providerId: OmniProviderId, accountId: string, t: (key: string) => string): OmniExploreSection[] => (
+    ownSectionsOf(recentPlaysOf(providerId, accountId), replayedSongsOf(providerId, accountId), t)
+);

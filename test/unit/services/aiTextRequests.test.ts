@@ -228,10 +228,10 @@ describe('the missing-key check', () => {
 
     it('knows the errors the main process throws when the key of the chosen service is not set', async () => {
         const gemini = await thrownBy(() => mainProcessClient.runAiJsonCompletion({
-            store: storeWith({}), systemPrompt: 's', sourcePrompt: 'u', customFetch: neverFetch,
+            store: storeWith({}), task: 'theme', systemPrompt: 's', sourcePrompt: 'u', customFetch: neverFetch,
         }));
         const openai = await thrownBy(() => mainProcessClient.runAiJsonCompletion({
-            store: storeWith({ AI_PROVIDER: 'openai' }), systemPrompt: 's', sourcePrompt: 'u', customFetch: neverFetch,
+            store: storeWith({ AI_PROVIDER: 'openai' }), task: 'theme', systemPrompt: 's', sourcePrompt: 'u', customFetch: neverFetch,
         }));
 
         expect((gemini as Error).message).toBe('GEMINI_API_KEY is not configured in settings');

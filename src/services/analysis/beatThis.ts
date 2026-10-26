@@ -1,6 +1,7 @@
 import { beatInference } from '../automix/inferenceBridge';
 import { hasNativeAutomix } from '../../platform/ios/automix';
 import { runBeatThisGpu, type PercussiveEnergyFrames } from './beatThisGpu';
+import type { Urgency } from './scheduler';
 
 import { modelCanRun, noteModelFailed } from './modelAvailability';
 import { fft } from '../automix/signalAnalysis';
@@ -489,10 +490,14 @@ export const canRunBeatThis = (): boolean => {
  */
 export const analyseBeatGrid = async (
     mel: MelSpectrogram,
-    { cpuFallback = false, percussive = false }: {
+    { cpuFallback = false, percussive = false, urgency = 'background', key }: {
         cpuFallback?: boolean;
         /** Also the per-frame percussive energy (beat accents), in the same GPU run; the CPU path has none. */
         percussive?: boolean;
+        /** How the GPU scheduler (scheduler.ts) orders the run: a picture waiting on it is 'onScreen'. */
+        urgency?: Urgency;
+        /** The track, so a caller joining the run can raise it (beatThisGpu.ts raiseGpuUrgency). */
+        key?: string;
     } = {},
 ): Promise<AnalysedBeatGrid | null> => {
     if (!canRunBeatThis()) return null;
@@ -505,7 +510,7 @@ export const analyseBeatGrid = async (
     // The renderer's own GPU first (beatThisGpu.ts); it answers null for whatever it cannot take - no
     // export on disk, no usable device, a failed run - and those go to the CPU, if this caller allows it.
     const request = chunks.map(({ data, frames }) => ({ data, frames }));
-    const logits = await (hasNativeAutomix() ? Promise.resolve(null) : runBeatThisGpu(request, 'beat_this', percussive ? mel : undefined)) ?? (run ? await run(request) : null);
+    const logits = (hasNativeAutomix() ? null : await runBeatThisGpu(request, 'beat_this', percussive ? mel : undefined, { urgency, key })) ?? (run ? await run(request) : null);
     if (!logits || logits.beat.length !== chunks.length) {
         // Nothing usable came back. Not remembered as a failure - the same empty answer arrives when
         // the weights were just deleted or the worker was restarted under this request - so this only

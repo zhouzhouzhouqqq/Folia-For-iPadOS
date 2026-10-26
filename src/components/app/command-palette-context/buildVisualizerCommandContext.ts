@@ -3,6 +3,7 @@ import { useVisualizerSettingsStore } from '../../../stores/useVisualizerSetting
 import { useLyricSegmentationStore } from '../../../stores/useLyricSegmentationStore';
 import { useVideoLayerSettingsStore } from '../../../stores/useVideoLayerSettingsStore';
 import { getVisualizerRegistryEntry } from '../../visualizer/registry';
+import { smartBeatActive } from '../../../services/beatFx/beatEffects';
 import { isLyricSegmentationAiAvailable } from '../../../services/aiText';
 import type { LyricSegmentationActions } from '../playback/createLyricSegmentationActions';
 
@@ -31,9 +32,15 @@ export const buildVisualizerCommandContext = (
             const videoLayer = useVideoLayerSettingsStore.getState();
             videoLayer.setVideoLayerEnabled(!videoLayer.videoLayerEnabled);
         },
+        // One command per mode, as Latent's variants: a toggle would have to guess what "the other one" is
+        // from the middle mode.
+        setSmartBeatMode: mode => useVisualizerSettingsStore.getState().handleSetSmartBeat({ mode }),
+        // The on / off toggle v0.7.21 shipped, kept beside them (from the PR #750 review): shortcuts and
+        // pinned slots bound to its id would otherwise stop working without a word.
         toggleSmartBeat: () => {
             const latest = useVisualizerSettingsStore.getState();
-            latest.handleSetSmartBeat({ enabled: !latest.smartBeat.enabled });
+            // Two ways only: any mode that plays goes off, off goes fully on. `cached` is chosen in the settings.
+            latest.handleSetSmartBeat({ mode: smartBeatActive(latest.smartBeat) ? 'off' : 'on' });
         },
         pickVideoLayerFile: () => useVideoLayerSettingsStore.getState().pickLocalFile(),
         usesWordSegmentation: Boolean(getVisualizerRegistryEntry(visualizer.visualizerMode).usesWordSegmentation),

@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { MutableRefObject, RefObject } from 'react';
 import { PlayerState } from '../../../../types';
 import type { ReplayGainInfo, ReplayGainMode, SongResult, StatusMessage } from '../../../../types';
 import type { LocalSong } from '../../../../types';
 import { resolveNavidromePlaybackCarrier } from '../../../../utils/appPlaybackGuards';
 import { calculateReplayGain } from '../../../../utils/replayGain';
-import { applyAudioEqualizerSettings } from '../../../../services/audioEqualizerGraph';
+import { applyAudioEqualizerSettings, planAudioEqualizerApply } from '../../../../services/audioEqualizerGraph';
 import { type AudioEffectChain } from '../../../../services/audioEffects/effectChain';
 import { buildPlaybackGraph } from '../../../../services/playbackGraph';
 import { cachePlayedTrackAssets } from '../../../../services/playedTrackCache';
@@ -19,6 +19,7 @@ import { usePlaybackStore } from '../../../../stores/usePlaybackStore';
 import { useAppViewStore } from '../../../../stores/useAppViewStore';
 import { prepareIOSNativeMediaSession, bindIOSAudioContextLifecycle, configureIOSWebAudioSession, resumeIOSAudioContext } from '../../../../platform/ios/audioSession';
 import { isNativeIOS } from '../../../../platform/capabilities';
+import { resolveHeardAudioEqualizerSettings } from '../../../../utils/audioEqualizerModCurve';
 
 // src/components/app/playback/bridges/usePlaybackAudioBridge.ts
 
@@ -42,7 +43,12 @@ type UsePlaybackAudioBridgeParams = {
     syncOutputGain: (targetVolume: number, smoothing?: number) => void;
     getTargetPlaybackVolume: () => number;
     getCoverUrl: () => string | null;
+    /** Whether an automix blend can be heard now; a mod's equalizer change waits until it cannot. */
+    isTransitionAudible?: () => boolean;
 };
+
+/** How often a mod's equalizer change held back for a blend checks whether the blend has ended. */
+const DEFERRED_EQUALIZER_POLL_MS = 250;
 
 // Bridges audio element setup, autoplay, replay gain, and media caching.
 export function usePlaybackAudioBridge({
@@ -60,6 +66,7 @@ export function usePlaybackAudioBridge({
     syncOutputGain,
     getTargetPlaybackVolume,
     getCoverUrl,
+    isTransitionAudible,
 }: UsePlaybackAudioBridgeParams) {
     // Read here rather than passed in: all store fields or i18n.
     const { t } = useTranslation();
@@ -74,6 +81,21 @@ export function usePlaybackAudioBridge({
     const effectChainRef = useRef<AudioEffectChain | null>(null);
     const disposeIOSAudioLifecycleRef = useRef<(() => void) | null>(null);
     const audioEqualizerSettings = useAudioSettingsStore(state => state.audioEqualizerSettings);
+    // What is heard: the listener's own settings with a mod's curve over the gains (Folium 1.7). Worked out
+    // here rather than in a selector, which would hand useSyncExternalStore a new object on every read.
+    const modCurve = useAudioSettingsStore(state => state.audioEqualizerModCurve);
+    const modCurveSuspended = useAudioSettingsStore(state => state.audioEqualizerModCurveSuspended);
+    const equalizerOrigin = useAudioSettingsStore(state => state.audioEqualizerChangeOrigin);
+    const heardEqualizerSettings = useMemo(
+        () => resolveHeardAudioEqualizerSettings(audioEqualizerSettings, modCurve, modCurveSuspended),
+        [audioEqualizerSettings, modCurve, modCurveSuspended],
+    );
+    const heardEqualizerSettingsRef = useRef(heardEqualizerSettings);
+    const isTransitionAudibleRef = useRef(isTransitionAudible);
+    // Read only in the equalizer effect and its timer; written in an effect, not while rendering.
+    useEffect(() => {
+        isTransitionAudibleRef.current = isTransitionAudible;
+    }, [isTransitionAudible]);
 
     // Recalculates source-specific gain after the audio graph or playback settings become ready.
     const applyReplayGain = useCallback(() => {
@@ -154,7 +176,7 @@ export function usePlaybackAudioBridge({
                 analyser,
                 connectDecks,
                 equalizerNodesRef,
-                settings: audioEqualizerSettings,
+                settings: heardEqualizerSettings,
             });
             gainNodeRef.current = gainNode;
             // Hands the transport its own fade node; until this runs (or if setup fails) pause and
@@ -173,7 +195,7 @@ export function usePlaybackAudioBridge({
         } catch (error) {
             console.error('Audio Context Setup Failed:', error);
         }
-    }, [analyserRef, applyReplayGain, audioContextRef, audioEqualizerSettings, audioRef, connectDecks, gainNodeRef, getTargetPlaybackVolume, syncOutputGain]);
+    }, [analyserRef, applyReplayGain, audioContextRef, audioRef, connectDecks, gainNodeRef, getTargetPlaybackVolume, heardEqualizerSettings, syncOutputGain]);
 
     /**
      * Writes a fully-played track's audio and cover into the media cache.
@@ -217,14 +239,38 @@ export function usePlaybackAudioBridge({
         applyReplayGain();
     }, [applyReplayGain]);
 
+    /*
+     * Writes what is heard into the graph. A mod's change waits while an automix blend can be heard and is
+     * then applied as it stands by then; any later change re-runs this, which drops the wait and applies at
+     * once by its own origin (planAudioEqualizerApply).
+     */
     useEffect(() => {
+        heardEqualizerSettingsRef.current = heardEqualizerSettings;
         const context = audioContextRef.current;
         if (!context || equalizerNodesRef.current.length === 0) {
             return;
         }
-        applyAudioEqualizerSettings(context, equalizerNodesRef.current, audioEqualizerSettings);
-        effectChainRef.current?.apply(audioEqualizerSettings.effects, audioEqualizerSettings.enabled);
-    }, [audioContextRef, audioEqualizerSettings]);
+        const plan = planAudioEqualizerApply({
+            origin: equalizerOrigin,
+            transitionAudible: isTransitionAudibleRef.current?.() ?? false,
+        });
+        const apply = (settings: typeof heardEqualizerSettings) => {
+            applyAudioEqualizerSettings(context, equalizerNodesRef.current, settings, plan.timeConstant);
+            effectChainRef.current?.apply(settings.effects, settings.enabled);
+        };
+        if (!plan.defer) {
+            apply(heardEqualizerSettings);
+            return;
+        }
+        const timer = setInterval(() => {
+            if (isTransitionAudibleRef.current?.()) {
+                return;
+            }
+            clearInterval(timer);
+            apply(heardEqualizerSettingsRef.current);
+        }, DEFERRED_EQUALIZER_POLL_MS);
+        return () => clearInterval(timer);
+    }, [audioContextRef, heardEqualizerSettings, equalizerOrigin]);
 
     useEffect(() => () => {
         disposeIOSAudioLifecycleRef.current?.();

@@ -4,12 +4,13 @@ import { selectDisplaySong, usePlaybackStore } from '../stores/usePlaybackStore'
 import { useThemeSettingsStore } from '../stores/useThemeSettingsStore';
 import { useVisualizerSettingsStore } from '../stores/useVisualizerSettingsStore';
 import { liveBeatEffects, liveBeatEffectStrength, visualizerWantsBeats, visualizerWantsDrumHits } from '../components/visualizer/beatClockTargets';
-import { resolveBeatEffectSetting } from '../services/beatFx/beatEffects';
+import { BEAT_EFFECT_IDS, resolveBeatEffectSetting, smartBeatMayAnalyse } from '../services/beatFx/beatEffects';
 import { beginBeatFxTrack, getBeatFxHeard, setBeatFxEvents, setBeatFxIntensities, setBeatFxLiveEffects, stopBeatFx } from '../services/beatFx/beatFxLive';
 import { loadBeatFxTrackBeats, loadBeatFxTrackDrums } from '../services/beatFx/beatFxSource';
 import { getPlaybackAnalysisKey, getPlaybackAnalysisTarget } from '../services/playbackRecovery/representationRegistry';
 import { modelsPresent, subscribeModelAvailability } from '../services/analysis/modelAvailability';
-import { setWantedDrumTrack } from '../services/analysis/drumHits';
+import { drumHitsSettled, setWantedDrumTrack } from '../services/analysis/drumHits';
+import { setStemDrumsWanted } from '../services/analysis/stemRange';
 
 // src/hooks/useBeatFxTrack.ts
 // Loads the beat list of the on-screen track into the live beat clock whenever the track changes,
@@ -20,8 +21,14 @@ import { setWantedDrumTrack } from '../services/analysis/drumHits';
 // React; the per-frame clock lives in services/beatFx/beatFxLive. While a live effect on screen plays
 // drum hits (时计's 仿真鼓面), the track's drum hits are read, on their own: a picture with no live
 // beat-list effect never runs beat_this, and the clock then only carries the track and its time.
-// A drum separation started for the track runs on until the track changes or the switch goes off,
-// even if the picture changes meanwhile (see the last effect below).
+// A drum separation started for the track stops (at its next segment) when the picture, the track or
+// the switch changes, and keeps where it was to carry on from when 时计 is back (see the note at the
+// end; until the analysis service's 2b it ran on behind another picture).
+// Under 智能动感模式's `cached` both are read from what is stored only (`storedOnly`, see
+// services/beatFx/beatFxSource.ts) and nothing is run; switching between `cached` and `on` mid-track
+// reloads both, so `on` analyses the track at once and `cached` stops a separation in flight.
+// Also tells the stem segments (services/analysis/stemRange.ts) for which tracks the drums automix
+// separated are worth keeping for the drum hits (from the PR #750 review).
 
 /** An online track's stream URL is resolved by playback around the same time as the lookup. */
 const RETRY_ATTEMPTS = 4;
@@ -33,6 +40,8 @@ export function useBeatFxTrack(): boolean {
     const beatsWanted = useVisualizerSettingsStore(state => visualizerWantsBeats(state)) && !staticMode;
     const drumsWanted = useVisualizerSettingsStore(state => visualizerWantsDrumHits(state)) && !staticMode;
     const wanted = beatsWanted || drumsWanted;
+    // `cached`: read what is stored, never run a model (SmartBeatMode).
+    const storedOnly = !useVisualizerSettingsStore(state => smartBeatMayAnalyse(state.smartBeat));
     // Read by the drum hits' retries, which must not restart (and so cancel a separation) when it changes.
     const beatsWantedRef = useRef(beatsWanted);
     beatsWantedRef.current = beatsWanted;
@@ -44,6 +53,20 @@ export function useBeatFxTrack(): boolean {
     // Asked again when htdemucs_gpu's answer arrives (the startup check; the file ships with the app).
     const presentModels = useSyncExternalStore(subscribeModelAvailability, modelsPresent);
     const drumModel = hasNativeAutomix() ? presentModels.htdemucs : presentModels.htdemucs_gpu;
+
+    // Whether a track's drum hits may still be separated, on any picture (时计 may come on later): only
+    // then are the drums automix's segments leave behind kept (services/analysis/stemRange.ts), and only
+    // for a track whose hits are not all in yet. "All in" is drumHits.ts' settled set, drumless tracks
+    // included (from the PR #750 review: the hit lists in memory hold neither those nor more than 24).
+    // A track whose hits are stored but not read this session still counts as not in: the test is
+    // synchronous, and its drums go once they are read (dropStemDrums) or by the cache's own limit.
+    const drumsMayRun = useVisualizerSettingsStore(state => smartBeatMayAnalyse(state.smartBeat)
+        && resolveBeatEffectSetting(state.smartBeat, BEAT_EFFECT_IDS.pendoloDrumhead).on) && drumModel;
+    useEffect(() => {
+        setStemDrumsWanted(drumsMayRun
+            ? (key) => !drumHitsSettled(key)
+            : () => false);
+    }, [drumsMayRun]);
 
     useEffect(() => {
         setBeatFxIntensities(beatStrength, beatStrength);
@@ -80,7 +103,7 @@ export function useBeatFxTrack(): boolean {
         let retryTimer: ReturnType<typeof setTimeout> | null = null;
         let begunKey: string | null = null;
         const load = (attempt: number) => {
-            const { key, beats } = loadBeatFxTrackBeats(song);
+            const { key, beats } = loadBeatFxTrackBeats(song, { storedOnly });
             // A retry may resolve another key (a transcode registered meanwhile); the clock follows it.
             if (key !== begunKey) {
                 beginBeatFxTrack(key);
@@ -114,7 +137,7 @@ export function useBeatFxTrack(): boolean {
         };
         // Keyed on the track identity and the switches only; the song object changes for unrelated reasons.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [identity, wanted, beatsWanted]);
+    }, [identity, wanted, beatsWanted, storedOnly]);
 
     useEffect(() => {
         if (!drumsWanted || !identity || !song) return undefined;
@@ -122,7 +145,7 @@ export function useBeatFxTrack(): boolean {
         let retryTimer: ReturnType<typeof setTimeout> | null = null;
         // The hits are read off getDrumHits by the frame loop once in; a track with none plays nothing.
         const load = (attempt: number) => {
-            const { key, drums } = loadBeatFxTrackDrums(song);
+            const { key, drums } = loadBeatFxTrackDrums(song, { storedOnly });
             // A retry may resolve another key (a transcode registered meanwhile); with no beats to
             // follow it, the clock follows the drum hits' key, which they are looked up under.
             if (!beatsWantedRef.current && key !== getBeatFxHeard().key) beginBeatFxTrack(key);
@@ -137,21 +160,27 @@ export function useBeatFxTrack(): boolean {
         return () => {
             left = true;
             if (retryTimer) clearTimeout(retryTimer);
-            // The separation is NOT stopped here: leaving the picture is not leaving the track. See below.
+            // The separation stops here (at its next segment) and keeps where it was, to carry on from
+            // when the track is wanted again (drumHits.ts, DrumResume). See below.
+            setWantedDrumTrack(null);
         };
         // Keyed like the lookup above.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [identity, drumsWanted, drumModel]);
+    }, [identity, drumsWanted, drumModel, storedOnly]);
 
-    // A separation still running stops (at its next segment) when the track changes, or 智能动感模式 or
-    // static mode is switched off - not when the picture does. Stopped on a picture switch, it dropped
-    // the hits it had so far, and coming back to 时计 separated the track again from the start: no
-    // drumhead for the seconds that took (2026-10-17, on v0.7.21-rc.1). Left running, it finishes and is
-    // stored, at the cost of sharing the GPU for a while with whatever the new picture runs; the memory
-    // it holds is what it held on 时计.
-    const smartBeatOn = useVisualizerSettingsStore(state => state.smartBeat.enabled) && !staticMode;
-    const playingKey = smartBeatOn && song ? getPlaybackAnalysisKey(song) : null;
-    useEffect(() => () => setWantedDrumTrack(null), [playingKey]);
+    // Until the analysis service's 2b: a separation still running stopped (at its next segment) when the
+    // track changed, or 智能动感模式 or static mode was switched off - not when the picture did. Stopped
+    // on a picture switch, it dropped the hits it had so far, and coming back to 时计 separated the
+    // track again from the start: no drumhead for the seconds that took (2026-10-17, on
+    // v0.7.21-rc.1). Left running, it finished and was stored, at the cost of sharing the GPU for a
+    // while with whatever the new picture ran; the memory it held was what it held on 时计. Switching
+    // to `cached` stops it too: that mode runs nothing.
+    // (`storedOnly` is also true while 智能动感模式 is off.)
+    // @note That was PR #734's stopgap. Since the analysis service's 2b (docs/analysis-service-plan.md)
+    // a picture switch stops it again, in the drum hits' cleanup above, and it no longer starts over: the
+    // hits so far and where it was are kept in memory (drumHits.ts, DrumResume), the hits play as soon as
+    // 时计 is back, and the separation carries on from the segment it stopped before. The decoded track
+    // and the stem are let go meanwhile, and the GPU is the new picture's.
 
     return wanted;
 }

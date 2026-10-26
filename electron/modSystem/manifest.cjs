@@ -42,6 +42,16 @@ const NET_EMBED_PERMISSION = permissionGuarding('folium.ui.embed');
 // Unfrozen surfaces a mod must opt into explicitly; they may change in any minor.
 const KNOWN_EXPERIMENTAL = new Set(Object.values(shared.experimental));
 
+/*
+ * Folium 1.7: the permissions of the experimental platform.raw, `platform.<id>.read` and
+ * `platform.<id>.write` (one pair per platform that can be called through it, listed in
+ * foliumShared.json). They unlock nothing without the opt-in, and writing goes with reading: a manifest
+ * that declares one without the other is refused, so the trust dialog never shows a grant that does
+ * not work.
+ */
+const PLATFORM_RAW_EXPERIMENTAL = shared.experimental.platformRaw;
+const PLATFORM_PERMISSION = /^platform\.([^.]+)\.(read|write)$/;
+
 const MOD_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
 // Deterministic result envelope shared by all validators.
@@ -270,6 +280,17 @@ const validateManifest = (raw) => {
     manifest.experimental.forEach((feature) => {
         if (typeof feature !== 'string' || !KNOWN_EXPERIMENTAL.has(feature)) {
             errors.push(`unknown experimental feature ${String(feature)}`);
+        }
+    });
+
+    permissionIds.forEach((permission) => {
+        const platform = PLATFORM_PERMISSION.exec(permission);
+        if (!platform) return;
+        if (!manifest.experimental.includes(PLATFORM_RAW_EXPERIMENTAL)) {
+            errors.push(`permission ${permission} needs "${PLATFORM_RAW_EXPERIMENTAL}" under experimental`);
+        }
+        if (platform[2] === 'write' && !permissionIds.has(`platform.${platform[1]}.read`)) {
+            errors.push(`permission ${permission} needs platform.${platform[1]}.read as well`);
         }
     });
 

@@ -252,6 +252,31 @@ describe('folium:check', () => {
         ]);
     });
 
+    it('holds the platforms platform.raw requests to the read permissions in mod.json', () => {
+        const client = `
+            export default async function activate(folium) {
+                const platform = folium.experimental['platform.raw'];
+                platform.describe('netease');
+                await platform.request('netease', 'user_record', { type: 1 });
+                await folium.experimental['platform.raw']?.request("nowhere", 'x');
+            }
+        `;
+        const without = writeMod('raw-without', { experimental: ['platform.raw'] }, client);
+        expect(checkFoliumMod(without).problems).toEqual([
+            'folium.experimental[\'platform.raw\'].request(\'netease\', …) needs the permission "platform.netease.read" in mod.json',
+            'folium.experimental[\'platform.raw\'] cannot call "nowhere": no platform of that id has raw endpoints',
+        ]);
+        const declared = writeMod('raw-declared', { experimental: ['platform.raw'], permissions: ['platform.netease.read'] }, client.replace(/.*nowhere.*\n/, ''));
+        expect(checkFoliumMod(declared).problems).toEqual([]);
+        // The platform id is not written out: nothing to hold to a permission, so a note says what is missing.
+        const indirect = writeMod('raw-indirect', { experimental: ['platform.raw'] }, `
+            export default function activate(folium, id) { return folium.experimental['platform.raw'].request(id, 'user_record'); }
+        `);
+        const { problems, notes } = checkFoliumMod(indirect);
+        expect(problems).toEqual([]);
+        expect(notes.some((note) => note.includes('declares no platform.<platform>.read permission'))).toBe(true);
+    });
+
     it('reports a Folia version the app would refuse, and names the mods it depends on without checking them', () => {
         const directory = writeMod('wrong-host', { folia: '>=99.0.0', depends: ['some-library@^1.0.0'] }, 'export default function activate() {}\n');
         const { problems, notes } = checkFoliumMod(directory);

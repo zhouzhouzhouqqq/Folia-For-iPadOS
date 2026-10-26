@@ -18,8 +18,8 @@ import './WallToolsButton.css';
 // 面板从上到下：一排纯图标快捷格 → 音量 → 墙自己的条目 → 海报叠色 → 开灯 / 关灯与帮助。
 // 两面墙结构一致，只有和场景有关的部分由使用方传入：按钮上方的定位按钮（above）、快捷排里的 destination
 // （bravais 前往 Lattice、Lattice 回到首页）、自己的条目（bravais 的「墙面外观」与透光、Lattice 的「墙面」与切歌自动聚焦）
-// 和帮助内容。洗牌、主题、队列、播放器四格与音量滑条是公共部分，由 useWallToolsCommonActions 从宿主（wallToolsHost）组装；
-// 快捷格的固定顺序是 shuffle-queue / generate-theme / queue / destination / open-player，缺的跳过。
+// 和帮助内容。洗牌、主题、队列、播放器、设置五格与音量滑条是公共部分，由 useWallToolsCommonActions 从宿主（wallToolsHost）组装；
+// 快捷格的固定顺序是 shuffle-queue / generate-theme / queue / destination / open-player / open-settings，缺的跳过。
 // 面板与队列浮岛（WallToolsQueueIsland，由快捷排的「队列」格开合、偏好记在 useLatticeSettingsStore）都放在
 // .lattice-tools-stack 里、都在 rootRef 之内：点外部关闭天然把浮岛算作「里面」。stack 是 column-reverse：DOM 里面板在前、
 // 浮岛在后（Tab 顺序面板 → 浮岛 → 按钮），视觉上浮岛在面板上方。浮岛只在面板打开、偏好展开、有宿主且不在私人 FM 时显示；
@@ -41,7 +41,7 @@ export type WallToolsButtonProps = {
     /** 按钮的 title 与面板的可访问名。 */
     label: string;
     isDaylight: boolean;
-    /** 快捷排倒数第二格：这面墙的去处（bravais 是 open-lattice，Lattice 是 go-home）；不给时没有这一格。 */
+    /** 快捷排第四格（播放器、设置之前）：这面墙的去处（bravais 是 open-lattice，Lattice 是 go-home）；不给时没有这一格。 */
     destination?: WallToolsQuickSlot;
     /** 音量下面那几行（墙自己的条目）；给函数时只在面板打开着渲染时求值（条目的可用性随时变）。 */
     entries: readonly WallToolsEntry[] | (() => readonly WallToolsEntry[]);
@@ -141,9 +141,9 @@ export function WallToolsSurface({ idPrefix, label, isDaylight, destination, ent
     const common = useWallToolsCommonActions({ queueIslandId });
     const showQueueIsland = isOpen && common.queueIslandShown && host !== null;
     const rows = isOpen ? (typeof entries === 'function' ? entries() : entries) : [];
-    // 快捷排的固定顺序：洗牌、主题、队列、去处、播放器；缺的跳过。
+    // 快捷排的固定顺序：洗牌、主题、队列、去处、播放器、设置；缺的跳过。
     const quick: WallToolsQuickAction[] = isOpen
-        ? [common.shuffle, common.theme, common.queue, resolveSlot(destination), common.openPlayer]
+        ? [common.shuffle, common.theme, common.queue, resolveSlot(destination), common.openPlayer, common.settings]
             .filter((action): action is WallToolsQuickAction => action !== null)
         : [];
     // 叠色开关两边都有（颜色与强度的细调仍在设置页与命令面板）。

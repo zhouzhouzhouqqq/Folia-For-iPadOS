@@ -1,5 +1,8 @@
 import { webkit } from '@playwright/test';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+const output = resolve(process.env.FOLIA_AI_SMOKE_OUTPUT || 'docs/ipados-validation');
+mkdirSync(output, { recursive: true });
 
 // Real WebKit form interaction with a synthetic Capacitor bridge; no account, external request or real key.
 const browser = await webkit.launch();
@@ -22,6 +25,7 @@ await page.addInitScript(() => {
             if (method === 'saveSettings') { const { apiKey, ...metadata } = payload; settings = { ...metadata, hasKey: Boolean(apiKey), revision: 'synthetic' }; }
             if (method === 'clearSettings') settings = { ...settings, hasKey: false, revision: '' };
             if (method === 'request') {
+                if (payload.method === 'GET') return { status: 200, contentType: 'application/json', body: JSON.stringify({ data: [{ id: 'test-model' }, { id: 'catalog-model' }] }) };
                 const theme = { name: 'Synthetic theme', backgroundColor: '#112233', primaryColor: '#eeddcc', accentColor: '#cc6622', secondaryColor: '#aabbcc', wordColors: [{ word: 'sun', color: '#cc6622' }], lyricsIcons: ['Sun'] };
                 const content = JSON.parse(payload.body).messages[0].role === 'system' ? JSON.stringify({ light: theme, dark: theme }) : 'hello back';
                 return { status: 200, contentType: 'application/json', body: JSON.stringify({ choices: [{ message: { content }, finish_reason: 'stop' }] }) };
@@ -44,15 +48,20 @@ try {
     await page.getByRole('status').filter({ hasText: 'hello back' }).waitFor();
     page.once('dialog', dialog => dialog.accept());
     const theme = await page.evaluate(async () => {
-        const { generateThemeFromLyrics } = await import('/src/services/gemini.ts');
+        const { generateThemeFromLyrics } = await import('/src/services/aiText.ts');
         return generateThemeFromLyrics('sun');
     });
     if (theme.light.wordColors[0].word !== 'sun' || theme.dark.lyricsIcons[0] !== 'Sun') throw new Error('real browser engine lost theme fields');
-    await page.screenshot({ path: 'docs/ipados-validation/ai-direct-settings-landscape.png', fullPage: true });
+    await page.screenshot({ path: resolve(output, 'ai-direct-settings-landscape.png'), fullPage: true });
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.screenshot({ path: 'docs/ipados-validation/ai-direct-settings-portrait.png', fullPage: true });
+    await page.screenshot({ path: resolve(output, 'ai-direct-settings-portrait.png'), fullPage: true });
     if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)) throw new Error('horizontal overflow');
-    await page.getByLabel('Model ID', { exact: true }).fill('edited-model');
+    await page.getByRole('button', { name: 'Fetch models', exact: true }).click();
+    await page.getByRole('button', { name: 'Fetch models', exact: true }).waitFor();
+    const modelPicker = page.getByRole('combobox').last();
+    await modelPicker.click();
+    await page.getByRole('option', { name: 'Enter manually', exact: true }).click();
+    await page.getByRole('textbox', { name: 'Enter manually', exact: true }).fill('edited-model');
     if (await test.isEnabled()) throw new Error('unsaved configuration can test');
     page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: 'Clear AI settings and key' }).click();
@@ -60,7 +69,7 @@ try {
     if (await test.isEnabled()) throw new Error('test allowed after clear');
     const calls = await page.evaluate(() => window.__aiCalls);
     if (errors.length || external.length) throw new Error(JSON.stringify({ errors, external }));
-    writeFileSync('docs/ipados-validation/ai-direct-settings-webkit.json', JSON.stringify({ engine: 'Playwright macOS WebKit, synthetic Capacitor bridge; not physical iPad',
-        results: ['load', 'save', 'clear password after save', 'explicit hello test', 'original theme pipeline with synthetic response', 'unsaved test blocked', 'clear', 'landscape/portrait no overflow'], calls, errors, external }, null, 2));
+    writeFileSync(resolve(output, 'ai-direct-settings-webkit.json'), JSON.stringify({ engine: 'Playwright macOS WebKit, synthetic Capacitor bridge; not physical iPad',
+        results: ['load', 'save', 'clear password after save', 'explicit hello test', 'original theme pipeline with synthetic response', 'saved catalogue GET', 'manual model entry', 'unsaved test blocked', 'clear', 'landscape/portrait no overflow'], calls, errors, external }, null, 2));
     console.log('PASS: native AI settings editor in macOS WebKit (mock bridge); landscape/portrait, save/test/clear, key field cleared, no external requests.');
 } finally { await browser.close(); }

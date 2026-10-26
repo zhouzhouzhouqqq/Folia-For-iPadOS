@@ -1,6 +1,7 @@
-import React, { memo, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import React, { memo, useId, useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { kitTransition, useKitReducedMotion } from './motion';
+import { usePicturesInView } from './usePicturesInView';
 
 // src/components/modal/settings/kit/PictureGrid.tsx
 // A choice among many options that differ in look: pictures in a fixed number of columns, each
@@ -23,7 +24,6 @@ const RING_ROOM = 4;
 /** How much of the grid's lower end fades while more rows follow. */
 const FADE = 40;
 const FADE_MASK = `linear-gradient(#000 calc(100% - ${FADE}px), transparent)`;
-const NONE: ReadonlySet<string> = new Set();
 
 export type PictureState = {
     /** On screen at this moment: in the part of the grid that shows, in a grid that is itself in view. */
@@ -99,7 +99,6 @@ export const PictureGrid = <T extends string>({ value, options, picture, columns
     const markId = useId();
     const reduced = useKitReducedMotion();
     const rootRef = useRef<HTMLDivElement>(null);
-    const [seen, setSeen] = useState(NONE);
     const [pointed, setPointed] = useState<string | null>(null);
     const [more, setMore] = useState(false);
     // Where the keys only move the focus: the picture that has it, while the focus is in the grid.
@@ -110,34 +109,8 @@ export const PictureGrid = <T extends string>({ value, options, picture, columns
     const focusedAt = focused === null ? -1 : options.findIndex(option => option.value === focused);
     const tabStopAt = focusedAt >= 0 ? focusedAt : Math.max(0, chosenAt);
 
-    // Which pictures are on screen. The browser reports it: it knows the grid's own scroll, every
-    // scroll and clip around the grid, and the edge of the window. Where it cannot report, every
-    // picture counts as on screen. A picture that is no longer among the options is forgotten.
-    useEffect(() => {
-        const root = rootRef.current;
-        if (!root) {
-            return undefined;
-        }
-        const offered = new Set(values.split('\n'));
-        if (typeof IntersectionObserver === 'undefined') {
-            setSeen(offered);
-            return undefined;
-        }
-        setSeen(before => ([...before].every(tile => offered.has(tile)) ? before : new Set([...before].filter(tile => offered.has(tile)))));
-        const observer = new IntersectionObserver((entries) => {
-            setSeen((before) => {
-                const after = new Set(before);
-                for (const entry of entries) {
-                    const tile = (entry.target as HTMLElement).dataset.value ?? '';
-                    if (entry.isIntersecting) after.add(tile);
-                    else after.delete(tile);
-                }
-                return after;
-            });
-        });
-        root.querySelectorAll('[data-value]').forEach(tile => observer.observe(tile));
-        return () => observer.disconnect();
-    }, [values]);
+    // Which pictures are on screen (usePicturesInView.ts).
+    const seen = usePicturesInView(rootRef, values);
 
     // Where `settle` left the grid's scroll; null once a person has scrolled it since.
     const settledTop = useRef<number | null>(null);

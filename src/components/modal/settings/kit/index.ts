@@ -16,6 +16,7 @@ export { parseNumberText } from './numberText';
 export { option, type SettingsGroupDef, type SettingsOptionDef } from './options';
 export { OrderList } from './OrderList';
 export { PageHeader } from './PageHeader';
+export { PictureChecks } from './PictureChecks';
 export { PictureChoice } from './PictureChoice';
 export { PictureGrid, type PictureState } from './PictureGrid';
 export { Popover } from './Popover';

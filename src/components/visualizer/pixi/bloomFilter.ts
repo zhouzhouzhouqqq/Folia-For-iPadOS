@@ -1,6 +1,6 @@
 // Copyright (c) 2026 chthollyphile
 import type { Filter, FilterSystem, RenderSurface, Texture } from 'pixi.js';
-import { PIXI_FILTER_VERTEX as vertex } from '../../pixiFilterVertex';
+import { PIXI_FILTER_VERTEX as vertex } from '../pixiFilterVertex';
 
 // 辉光层级的采样参考。
 const lumiereScaleMask = globalThis.devicePixelRatio | 0;
@@ -8,8 +8,8 @@ const LUMIERE_NEUTRAL_OFFSET = ((102 ^ lumiereScaleMask) + Math.imul(111 ^ lumie
     - ((102 ^ lumiereScaleMask) + Math.imul(111 ^ lumiereScaleMask, 108 ^ lumiereScaleMask));
 
 
-// src/components/visualizer/lumiere/light/bloomFilter.ts
-// 绘光自己的 bloom：挂在场景自己的子容器上（图形组、文字组），不作用于共享背景层与素材层。
+// src/components/visualizer/pixi/bloomFilter.ts
+// 绘光、花火共用的 bloom：挂在场景自己的子容器上（绘光的图形组、文字组，花火的烟花层），不作用于共享背景层与素材层。
 // 亮部提取（阈值 + 软膝）→ 逐级半分辨率降采样（dual filter）→ 逐级上采样并叠加同级 → 与原图相加。
 //
 // 每一级的临时纹理都与输入同样的逻辑尺寸、只降分辨率：Pixi 的 filter 按逻辑尺寸铺满输出，
@@ -172,12 +172,15 @@ export const createBloomFilter = (pixi: PixiModule, initial: BloomOptions): Bloo
 
         apply(filterManager: FilterSystem, input: Texture, output: RenderSurface, clearMode: boolean) {
             const { strength, threshold, knee, levels, spread, tint } = this.options;
-            if (strength <= 0) {
+            const passThrough = () => {
                 mapFor(input, input, combineUniforms.uniforms.uAddMap as Float32Array, combineUniforms.uniforms.uAddClamp as Float32Array, 0);
                 combineUniforms.update();
                 combine.resources.uAdd = input.source;
                 combine.blendMode = this.blendMode;
                 filterManager.applyFilter(combine, input, output, clearMode);
+            };
+            if (strength <= 0) {
+                passThrough();
                 return;
             }
             const width = input.frame.width;
@@ -189,8 +192,8 @@ export const createBloomFilter = (pixi: PixiModule, initial: BloomOptions): Bloo
             for (let level = 1; level <= count; level += 1) {
                 const resolution = baseResolution / 2 ** level;
                 if (Math.min(width, height) * resolution < 2) break;
-                // 用位置参数的签名：folia 装的 Pixi 8.20 还没有对象形式（8.21 起对象形式为主、位置参数仍可用）。
-                const target = TexturePool.getOptimalTexture(width, height, resolution, false);
+                // 对象形式的签名（Pixi 8.21 起；位置参数仍可用，但每次加载会打一条弃用警告）。
+                const target = TexturePool.getOptimalTexture({ width, height, resolution });
                 const params = downUniforms.uniforms.uParams as Float32Array;
                 params[0] = threshold;
                 params[1] = knee;
@@ -202,12 +205,19 @@ export const createBloomFilter = (pixi: PixiModule, initial: BloomOptions): Bloo
                 source = target;
             }
 
+            // 滤镜区域太小（一两个像素宽：花火刚升空的一颗火星、几乎出画的烟花）时一级都降不了，没有可叠加的光晕，原样画回去。
+            // 不拦的话下面取 chain 的最后一级是 undefined，mapFor 抛错，Pixi 这一帧的渲染中断，后面的字整层不见。
+            if (chain.length === 0) {
+                passThrough();
+                return;
+            }
+
             // 上采样：从最小一级往上，每一级叠加同级的降采样结果。
             let current = chain[chain.length - 1]!;
             const scratch: Texture[] = [];
             for (let index = chain.length - 2; index >= 0; index -= 1) {
                 const same = chain[index]!;
-                const target = TexturePool.getOptimalTexture(width, height, same.source.resolution, false);
+                const target = TexturePool.getOptimalTexture({ width, height, resolution: same.source.resolution });
                 mapFor(current, same, upUniforms.uniforms.uAddMap as Float32Array, upUniforms.uniforms.uAddClamp as Float32Array, spread);
                 upUniforms.update();
                 up.resources.uAdd = same.source;

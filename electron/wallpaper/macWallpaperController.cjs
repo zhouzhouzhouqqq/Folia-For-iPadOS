@@ -380,6 +380,10 @@ function isDesktopPoint(x, y) {
       // Our own wallpaper window: WindowServer lists the simple-full-screen presentation at the
       // full-screen layer spanning the whole display, so it must not "cover" every desktop point.
       if (ownerPid === process.pid && layer >= FULLSCREEN_PRESENTATION_LAYER) continue;
+      // Our own click catchers over the wallpaper's controls (macWallpaperHitPanels.cjs) sit one
+      // level above the Finder icons: they take the click away from Finder, the wallpaper still
+      // gets it from here.
+      if (ownerPid === process.pid && layer < 0) continue;
       const boundsValue = s.fn.CFDictionaryGetValue(dict, s.consts.kWindowBounds);
       if (!boundsValue) continue;
       if (!s.fn.CGRectMakeWithDictionaryRepresentation(boundsValue, rect)) continue;

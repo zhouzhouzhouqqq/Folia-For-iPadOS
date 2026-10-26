@@ -8,6 +8,16 @@ import { reportFoliumIssue } from '../runtime/status';
 // so no two surfaces can disagree on what a schema means.
 
 const PARAM_TYPES: readonly FoliumSettingType[] = ['number', 'text', 'boolean', 'select', 'color'];
+// Folium 1.7: a key the user types in. Settings sections only; its value never lives with the others.
+const SECRET_TYPE: FoliumSettingType = 'secret';
+
+/** Whether a field is a `secret`, whose value the host keeps in the main process (folium/secrets.ts). */
+export const isFoliumSecretParam = (param: Pick<FoliumSetting, 'type'>) => param.type === SECRET_TYPE;
+
+export interface FoliumParamSanitizeOptions {
+    /** Keeps `secret` fields. Only settings sections (and the forms drawing them) accept one. */
+    allowSecret?: boolean;
+}
 
 /** A `color` value: #rrggbb, six hex digits. */
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
@@ -23,13 +33,15 @@ const wellFormedOptions = (options: unknown) => (
 );
 
 /** Why a declared field is dropped, or null when it is kept. `seen` holds the keys kept so far. */
-const rejectFoliumParam = (raw: unknown, seen: ReadonlySet<string>): string | null => {
+const rejectFoliumParam = (raw: unknown, seen: ReadonlySet<string>, allowSecret: boolean): string | null => {
     if (!raw || typeof raw !== 'object') return 'not an object';
     const param = raw as Partial<FoliumSetting>;
     if (typeof param.key !== 'string' || !param.key) return 'key must be a non-empty string';
     if (seen.has(param.key)) return 'the key is used by an earlier field';
     const { type, defaultValue: fallback } = param;
-    if (!PARAM_TYPES.includes(type as FoliumSettingType)) return `type must be one of ${PARAM_TYPES.join(', ')}`;
+    // Outside settings sections a secret goes the way of an unknown type: dropped and named on the mod's row.
+    if (type === SECRET_TYPE) return allowSecret ? null : 'a secret field is only allowed in settings sections';
+    if (!PARAM_TYPES.includes(type as FoliumSettingType)) return `type must be one of ${(allowSecret ? [...PARAM_TYPES, SECRET_TYPE] : PARAM_TYPES).join(', ')}`;
     if (fallback !== undefined) {
         if (type === 'number' && !isFiniteNumber(fallback)) return 'defaultValue must be a finite number';
         if (type === 'boolean' && typeof fallback !== 'boolean') return 'defaultValue must be true or false';
@@ -51,13 +63,21 @@ const rejectFoliumParam = (raw: unknown, seen: ReadonlySet<string>): string | nu
  * With `modId` (a registry checking a definition, once per registration) each
  * dropped entry goes on that mod's row as `settings <key>` with the reason;
  * without it (a form sanitizing again to draw) nothing is reported.
+ *
+ * A `secret` field is kept only with `allowSecret` (settings sections), and
+ * without a default: its value is never one of the schema's values.
  */
-export const sanitizeFoliumParams = (params: unknown, modId?: string): FoliumSetting[] => {
+export const sanitizeFoliumParams = (
+    params: unknown,
+    modId?: string,
+    options: FoliumParamSanitizeOptions = {},
+): FoliumSetting[] => {
     if (!Array.isArray(params)) return [];
+    const allowSecret = options.allowSecret === true;
     const seen = new Set<string>();
     const out: FoliumSetting[] = [];
     params.forEach((raw, index) => {
-        const reason = rejectFoliumParam(raw, seen);
+        const reason = rejectFoliumParam(raw, seen, allowSecret);
         if (reason !== null) {
             if (modId !== undefined) {
                 const key = (raw as Partial<FoliumSetting> | null)?.key;
@@ -79,7 +99,9 @@ export const sanitizeFoliumParams = (params: unknown, modId?: string): FoliumSet
             label: param.label && typeof param.label === 'object' ? param.label : {},
             description: param.description && typeof param.description === 'object' ? param.description : undefined,
             group: param.group && typeof param.group === 'object' ? param.group : undefined,
-            defaultValue: type === 'color' && typeof fallback === 'string' ? fallback.toLowerCase() : fallback,
+            defaultValue: type === SECRET_TYPE
+                ? undefined
+                : type === 'color' && typeof fallback === 'string' ? fallback.toLowerCase() : fallback,
             min,
             max,
             step: isFiniteNumber(param.step) && param.step > 0 ? param.step : undefined,
@@ -123,16 +145,19 @@ export const coerceFoliumParamValue = (param: FoliumSetting, value: unknown): un
             return typeof value === 'string' && param.options?.some((option) => option.value === value) ? value : undefined;
         case 'color':
             return typeof value === 'string' && HEX_COLOR.test(value) ? value.toLowerCase() : undefined;
+        case 'secret':
+            // Never a schema value: the host keeps it in the main process.
+            return undefined;
         default:
             return typeof value === 'string' ? value : undefined;
     }
 };
 
-/** Keeps only the keys the schema declares, each coerced; invalid entries are dropped. */
+/** Keeps only the keys the schema declares, each coerced; invalid entries and `secret` fields are dropped. */
 export const filterFoliumParamPatch = (schema: readonly FoliumSetting[], patch: Record<string, unknown>): Record<string, unknown> => {
     const out: Record<string, unknown> = {};
     schema.forEach((param) => {
-        if (!(param.key in patch)) return;
+        if (isFoliumSecretParam(param) || !(param.key in patch)) return;
         const coerced = coerceFoliumParamValue(param, patch[param.key]);
         if (coerced !== undefined) out[param.key] = coerced;
     });
@@ -142,7 +167,8 @@ export const filterFoliumParamPatch = (schema: readonly FoliumSetting[], patch: 
 /*
  * Stored values merged over defaults. Stored values are re-validated too: a
  * schema that tightened its range or dropped an option since the value was
- * saved must not leak a now-invalid value into the mod.
+ * saved must not leak a now-invalid value into the mod. A `secret` field has
+ * no value here at all.
  */
 export const mergeFoliumParamValues = (
     schema: readonly FoliumSetting[],
@@ -150,6 +176,7 @@ export const mergeFoliumParamValues = (
 ): Record<string, unknown> => {
     const out: Record<string, unknown> = {};
     schema.forEach((param) => {
+        if (isFoliumSecretParam(param)) return;
         const saved = stored && param.key in stored ? coerceFoliumParamValue(param, stored[param.key]) : undefined;
         out[param.key] = saved !== undefined ? saved : resolveFoliumParamDefault(param);
     });

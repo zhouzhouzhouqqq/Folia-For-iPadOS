@@ -1,8 +1,59 @@
+# iPadOS 测试报告
+
+## 2026-10-26：0.7.22 / build 6 当前工作树
+
+源码固定对齐官方 `v0.7.22` / `1f6d0f468f5bc81b23a8b40ad7ca96ccd4b1ecbe`，保留现有 iOS 修改。没有连接实体设备，没有使用真实账号、AI key 或用户音乐做测试；没有发布 GitHub。以下区分断言、构建和运行时检查，不把它们合并为“全功能通过”。
+
+### 构建与可复现日志
+
+实际使用 Node 24.19.0、npm 11.17.0、Xcode 26.5 / iOS 26.5 SDK。已读取 App 工程实际 scheme：App、CapApp-SPM、FoliaAutomixRuntime。日志根目录（本机源码树外）：`/Users/macbookpro/Developer/Folia-Migration/upstream-0722/`。
+
+| 检查 | 实际结果 | 证据 / 范围 |
+|---|---|---|
+| 依赖安装与锁文件 | 通过；增加原生协议 bundle 所需 esbuild/Noble 及上游测试缺少的 jsdom | npm-install.log / npm-tools.log / npm-jsdom.log；没有执行 audit fix --force；安装报告的 20 个依赖漏洞未在本轮全面治理 |
+| TypeScript | 通过，交付前再次检查结果见日志 | typecheck-last.log、typecheck-delivery.log |
+| API + Web/PWA | 通过；PWA 原路径保留，生成 precache 220 项 | web-build-final.log；存在大 chunk / 无效 dynamic import 提示，不视为设备性能结论 |
+| iOS 本地 bundle + Capacitor sync | 通过；最终 manifest 采用实验值而非键名 | ios-sync-last.log；5803 modules，App/public 是本地资源，无远程 server.url、无 sw.js 注册 |
+| 视觉注册表 | 通过：15 歌词、6 背景，无模式排除 | visual-audit-final.log / ipados-visual-inventory.json；含所有源码入口、tuning 观察和 121 Tempera shots |
+| App arm64 Release 无签名 archive | **ARCHIVE SUCCEEDED** | xcode-archive-last.log；包含本轮 Swift AI/Provider 修改，SDK iphoneos26.5，版本 0.7.22 / 6，通用 Bundle ID；AppIntents 无依赖的 metadata extraction 提示不影响归档 |
+| IPA 打包检查 | 通过：arm64、通用 Bundle ID、无个人 profile/Team 签名、CRC/可执行位、本地资源 | ipa-manifest.json；仅供自行签名安装，不能双击直接安装 |
+
+### 单元与 Swift 检查（不重复累计为一个总数）
+
+| 测试组 | 实际结果 | 范围 / 修复 |
+|---|---|---|
+| 初轮广范围：iOS、analysis、AutoMix、theme、visualizer、onlineMusic、settings、AI | 275 文件通过、4451 断言通过、8 断言失败、1 跳过，另有 suite/worker 错误；初次整组退出失败 | tests-first.log。7 个断言为 5 秒超时，另 1 个为平台名架构计数；AI form mock 缺 initReactI18next，部分 worker 在安装 jsdom 之前未启动。后续分别修复/复测，未把初轮写成全绿 |
+| 花火全部测试 + Lumiere/Fume 穷举 + 酷狗协议 + AI form | **15 文件 / 182 项通过**，串行、单项上限 60 秒 | tests-heavy-final.log；保留全部断言和效果代码，未改全局测试超时或降低效果来通过 |
+| 独立官方 0.7.22 快照比较 | **4 文件 / 76 项通过**，同样单项上限 60 秒 | tests-official-baseline.log；用于核对花火/Lumiere/AI form 基线，不将超时冒称上游视觉缺陷 |
+| native AI/汽水 crypto/完整扫码协议/Keychain secrets | **4 文件 / 19 项通过** | tests-native-final.log；全合成 HTTP 和存储，不访问真实账号 |
+| 更新后的 native AI（含模型目录和 Anthropic） | **13 项通过** | tests-native-ai-latest.log；固定 hello、原主题/分词、GET 模型目录、端点约束、取消和 Messages schema |
+| iOS QQ musicu | **2 项通过** | tests-qq-form.log 中该文件通过；无 cookie HTTPS、429/Retry-After 保留。该日志里的 form mock 失败随后由 heavy-final 修复通过 |
+| 原生模组包 / Folium 1.7 | **6 项通过** | tests-manifest-boundary-final.log 中 nativeMods 通过；真实 ZIP/声明验证，queue/EQ/stage/raw 等新声明可安装，Node main 仍拒绝 |
+| Omni 架构 | **3 项通过** | tests-boundary-fixed.log；保留 guard，收缩已移除的 release 字段计数；native protocol 类型是有说明的桥接契约，manifest 从共享 JSON 读取 |
+| 补充组：汽水、Folium、试听时钟、Bravais、模型桥、EQ 等 | **87 文件 / 1041 项通过**，另 1 个 worker 启动失败，整组退出失败 | tests-extra.log；失败文件 foliumGuard 没执行，不能算通过 |
+| foliumGuard 单独重跑 | **8 项通过**（threads pool） | tests-guard-threads.log；forks pool 两次未响应的记录保留；没有删除权限断言 |
+| Swift AI 配置/安全/传输 | **通过** | ai-swift-tests-pagination.log；HTTPS、密钥端点绑定、模型/分页 GET 白名单、Anthropic/Gemini、保存、鉴权、重定向拒绝、取消、响应上限；mock transport，不等于真实 Keychain/网络 |
+| 生成镜像 | AI ESM 与官方纯协议源机械生成检查通过 | `node dev/ipados/ai/sync-client.mjs --check`；汽水 vendor 可由对应生成器再生，许可证齐全 |
+
+### 本轮 WebKit 运行未通过完整验收
+
+已运行更新后的 `dev/ipados/webkit-smoke.mjs`，使用 macOS Playwright WebKit、full 参数、合成音频、横竖屏/卸载。claddagh 成功挂载、旋转并观察到动态像素，无 pageerror。cadenza/classic/diorama/fume/hanabi 在页面加载超时，cappella 等待探针超时；该次未完成 27 个场景即终止。记录在 `webkit/webkit-smoke.json` 和 webkit-smoke.log。没有发现可用于归因的 pageerror，**尚不能区分开发服务器/自动化时序与应用问题，不能声明其它模式运行通过**。
+
+AI WebKit 表单脚本已更新到新版 AiModelPicker 和 aiText 入口，但两次页面加载超时，未完成交互，日志 ai-webkit.log / ai-webkit-warm.log。单元及 Swift mock 的通过不替代浏览器表单/真实服务验收。诊断 server/浏览器已停止。后续先以新版本在 Xcode 真机运行或稳定的 probe 环境复验这些失败；此前 0.7.21 全模式结果仍仅是历史记录。
+
+### 安装包与待验证
+
+本机产物：`/Users/macbookpro/Developer/FoliaBuild/Folia-iPadOS-0.7.22-build6-unsigned.ipa`，19,299,896 bytes（约 18.4 MiB），SHA-256 `aaea1442be004a4c2406cd406caaa94e906155140bc0e91b863226f035ad829c`。App 版本 0.7.22，build 6，最低部署目标 15.6。此系统版本不是兼容性验收承诺。未覆盖旧 Preview 3 文件，也未自动上传。
+
+真机未验：全部视觉和参数/分镜、长期切换资源释放、帧率/功耗/内存；网易/QQ/酷狗/汽水真实扫码、续期、完整/试听播放；后台/锁屏/控制中心/蓝牙/音频中断与 route change；AutoMix/智能动感的原生模型性能和三源/四源差异；本地文件/导出。用户需自行配置 AI 服务端点和 key。Spotify/YTM iOS bridge、DSD 解码/转码、Node-main/RPC、桌面离线/透明导出未实现，逐项见功能矩阵及 0.7.22 记录。
+
+---
+
 ## 2026-10-19：开发预览 2 发布验证
 
-## 2026-10-23：0.7.21 合入验证（当前结果）
+## 2026-10-23：0.7.21 合入验证（历史结果）
 
-本节取代下面历史报告对“当前”的描述。源码基于官方 `33b25ff75252435a78006af45114fdf10e64727a`；设备暂时无法连接，未作真机验收。验证日志与截图保存在工作区 `work/upstream-0721-validation/`，没有放入源码或上传个人数据。
+本节是 0.7.21 历史结果；当前 0.7.22 结果见文件开头。源码基于官方 `33b25ff75252435a78006af45114fdf10e64727a`；设备暂时无法连接，未作真机验收。验证日志与截图保存在工作区 `work/upstream-0721-validation/`，没有放入源码或上传个人数据。
 
 | 检查 | 本次结果及边界 |
 | --- | --- |
@@ -283,3 +334,33 @@ SPM官方Capacitor8.5.3 artifacts按原Package校验：Capacitor ZIP SHA256 `931
 
 
 2026-10-23 最终产物补记：正式工作目录 App scheme 的 iphoneos arm64 Debug 与 Release 无签名构建均为 BUILD SUCCEEDED；Release IPA 已在源码目录外生成并通过 ZIP CRC/执行权限/arm64/无个人 Team/无 profile/无远程首页/无 iOS Service Worker 检查，SHA-256 随产物保存。该 IPA 必须自行签名后安装，未上传 GitHub，未安装真机，不能代表播放与视觉的最终验收。
+
+## 2026-10-26：底栏收起 / 隐藏增量验证
+
+- `npm run typecheck`：通过。
+- `npm run test:unit -- test/unit/stores/playerBarPresentation.test.ts test/unit/command-palette/commandRegistryContract.test.ts test/unit/command-palette/commandRegistry.test.ts --maxWorkers=1 --pool=threads --testTimeout=60000`：3 文件 / 93 项通过。覆盖已有隐藏设置的恢复、定位取消回滚、手动隐藏不覆盖持久化偏好与命令注册/三语文案。命令顺序快照按新增三个动作更新。
+- Mac WebKit 触屏上下文：390×844、844×390、1024×1366、507×768、320×568 均通过收起→紧凑播放按钮可点击→隐藏→恢复，恢复按钮全部位于窗口内，0 个 pageerror。证据：`/Users/macbookpro/Developer/Folia-Migration/upstream-0722/player-bar/webkit-isolated.json` 与同目录截图；此结果仅属于底栏组件，不代表全部视觉模式通过。
+- 初轮混合布局探针在两个窄屏尺寸中因主页专属的搜索悬浮按钮遮挡而失败，原记录为同目录 `webkit.json`。源码核对搜索/账号控件属于曲库/首页；新增 `playerBarOnly=1` 探针参数按实际播放页排除它们后重测。未使用强制点击掩盖命中问题。
+- 本轮未连接真机；待验证真实音乐连续播放期间收起/隐藏/恢复、系统媒体控制不受影响、带键盘/触控板的恢复入口、安全区、旋转和 Stage Manager。
+- 本次仅更新源码与 Xcode 内置 Web 资源，不重新发布或覆盖旧 IPA；iOS sync 结果在下方补记。
+
+资源同步补记：`npm run ios:sync` 退出码 0；iOS Vite 构建完成（9.93 秒），本地资源复制到 `ios/App/App/public`，Capacitor 插件同步成功。日志 `/tmp/folia-bar-ios-sync.log`。本轮没有修改 Swift、签名或版本号，也没有重新执行原生 archive；可直接用当前 Xcode 工程 Run 重新安装新界面。
+
+
+## 2026-10-26：收起进度条样式修订
+
+用户否定迷你播放器形态后，收起改回原动态 ProgressBar + 当前时间/总时长 + 展开箭头，删除歌名/播放按钮；展开栏删除独立标题行，收起/隐藏按钮并入歌名区域。细轨道保持原外观、range 输入命中区为 44px。
+
+- typecheck 通过；presentation 状态与 command registry contract：2 文件 / 17 项通过。
+- Impeccable 检测（FloatingPlayerControls / PlayerBarDisclosure）：无发现。
+- 初次 WebKit 检查发现 seek 命中区不足，随后已改为 ProgressBar 内显式 `h-11`，不再依赖外围选择器覆盖。后续确认轮导航超时，诊断主动终止，完整流程未通过本轮浏览器验收。先前进度条以外的迷你播放器测试结果仅属于上一轮。
+- 展开态截图位于源码外 `Folia-Migration/upstream-0722/player-bar-progress/`；未取得修改后全流程截图，不声称已验证全部横竖屏/分屏。待实体设备确认拖动进度、点击展开/隐藏/恢复、安全区与切歌保持。
+
+本轮 `npm run ios:sync` 退出码 0：iOS 前端构建 37.01 秒，内置资源复制与 Capacitor 插件同步完成（日志 `/tmp/folia-progress-ios-sync.log`）。开发服务器与本轮浏览器诊断进程已停止；未重新打包 IPA，未发布 GitHub，未修改个人签名配置。
+
+
+## 2026-10-26：Preview 4 发布包验证
+
+以当前完整 0.7.22 迁移及收起进度条修改为发布范围；App 构建号递增为 7，标签 `ipados-0.7.22-preview.4`。实际 App scheme / Xcode 26.5 / iOS 26.5 SDK / arm64 Release archive 成功，命令明确关闭签名并覆盖通用 Bundle ID。日志位于源码外 `/tmp/folia-preview4-archive.log`。
+
+IPA `Folia-iPadOS-0.7.22-preview.4-unsigned.ipa` 为 19,305,243 字节；SHA-256 `9cc26fada8a9fc3076650602824f1a4bbf657ee80fe51c5c429adc9cbe716a34`。已检查版本 0.7.22 / build 7、最低系统 15.6、arm64、ZIP CRC、执行权限、无个人 Team/签名描述文件、无远程首页、无 iOS Service Worker；归档中 1,898 个 Web 文件与最终 dist 逐个哈希一致。类型检查及相关专项结果沿用本报告明确记录，不宣称全量通过或实体设备已验收。源码提交去除个人签名；源工作目录保留个人配置。正式发布的源码 SHA 和附件信息写入 Release manifest。

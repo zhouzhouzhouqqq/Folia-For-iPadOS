@@ -132,7 +132,7 @@ test('Bravais 墙：锚点和合成界面里的真实元素严丝合缝', async 
     await settled(stage);
     await expectAligned(stage, 'toolsPanel', '[data-ponder-bravais-tools-panel="solid"]');
     await expectAligned(stage, 'toolsLook', '[data-ponder-bravais-look-row="solid"]');
-    await expectAligned(stage, 'toolsLattice', '[data-ponder-bravais-tools-panel="solid"] [data-ponder-bravais-quick="4"]');
+    await expectAligned(stage, 'toolsLattice', '[data-ponder-bravais-tools-panel="solid"] [data-ponder-bravais-quick="3"]');
     await expectAligned(stage, 'window', '[data-ponder-bravais-window="left:0:0:1"]');
 });
 

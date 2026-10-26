@@ -1,4 +1,4 @@
-import React, { useId, useMemo, useState } from 'react';
+import React, { useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PlayerState, type Theme, type VisualizerBackgroundMode, type VisualizerMode } from '../../../types';
 import { getVisualizerModeLabel, getVisualizerRegistryEntry, VISUALIZER_REGISTRY } from '../../visualizer/registry';
@@ -15,11 +15,13 @@ import { openCommandPaletteCommand } from '../../../stores/useAppViewStore';
 import { useLyricSegmentationStore } from '../../../stores/useLyricSegmentationStore';
 import { LYRIC_SEGMENTATION_COMMAND_ID } from '../../command-palette/commands/lyricSegmentationCommand';
 import ModeStepperRow from './ModeStepperRow';
-import { BackgroundModeGlyph, VisualizerModeGlyph } from '../../visualizer/modeGlyphs';
+import { BackgroundModeGlyph } from '../../visualizer/modeGlyphs';
 import { panelMakesImages, panelPictureTheme } from './panelPictures';
 import BackgroundPicture from '../../visualizer/preview/BackgroundPicture';
 import { LyricPreviewProvider, type LyricPreviewLook } from '../../visualizer/preview/LyricPreviewContext';
-import LyricStylePicture from '../../visualizer/preview/LyricStylePicture';
+import { drawLyricStyleChoice, drawLyricStyleChoiceGlyph, RANDOM_VISUALIZER_CHOICE, selectLyricStyleChoice } from '../../visualizer/random/lyricStyleChoices';
+import RandomPoolPicker from '../../visualizer/random/RandomPoolPicker';
+import { useRandomPool } from '../../visualizer/random/useRandomPool';
 import { usePreviewClock } from '../../visualizer/preview/usePreviewClock';
 import { backgroundTuningActions, getVisualizerTuning } from '../../visualizer/tuningRegistry';
 import type { VisualizerTuningSettings } from '../../visualizer/tuningDefinition';
@@ -40,6 +42,8 @@ import { Toggle, type PictureState } from '../../modal/settings/kit';
 // 行里只有字形；点开后的一格一格小图画的是真的样式和背景，用的是当前主题和已保存的设置；
 // 它们共用这里的一个预览时钟，只有某一行的选择器开着时时钟才走。
 // 歌在放的时候，只有选择器开着才做小图，换歌带来的新主题也要等下一次打开选择器才用上（panelPictures.ts）。
+// 歌词样式选「随机」时，下面一行是这首歌抽到的样式和「选择随机池」：前者点一下从随机池里另抽一种，后者打开随机池的多选层（RandomPoolPicker.tsx），
+// 那里每格只画样式的字形、不画小图，所以它开着时时钟不走，也不做小图。
 
 interface AppearanceSectionProps {
     theme: Theme;
@@ -56,9 +60,7 @@ interface AppearanceSectionProps {
 
 const ANIMATION_INTENSITIES: Theme['animationIntensity'][] = ['calm', 'normal', 'chaotic'];
 
-const drawStyle = (mode: VisualizerMode, state: PictureState) => <LyricStylePicture mode={mode} {...state} />;
 const drawBackground = (mode: VisualizerBackgroundMode, state: PictureState) => <BackgroundPicture mode={mode} {...state} />;
-const drawStyleGlyph = (mode: VisualizerMode) => <VisualizerModeGlyph mode={mode} size={18} />;
 const drawBackgroundGlyph = (mode: VisualizerBackgroundMode) => <BackgroundModeGlyph mode={mode} size={18} />;
 
 type PictureTheme = { theme: Theme; isDaylight: boolean };
@@ -82,14 +84,19 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
     // says which, so adding such a mode does not mean editing a list here.
     const usesWordSegmentation = Boolean(getVisualizerRegistryEntry(visualizerMode).usesWordSegmentation);
     const hasSavedSegmentation = useLyricSegmentationStore(state => Boolean(state.record));
+    const randomEnabled = useVisualizerSettingsStore(state => state.randomVisualizerModePerSong);
+    const randomPool = useRandomPool();
     const visualizerBackgroundMode = useVisualizerSettingsStore(state => state.visualizerBackgroundMode);
     const setVisualizerBackgroundMode = useVisualizerSettingsStore(state => state.handleSetVisualizerBackgroundMode);
 
     const visualizerOptions = useMemo(
-        () => VISUALIZER_REGISTRY.map(entry => ({
-            value: entry.mode,
-            label: getVisualizerModeLabel(entry.mode, t),
-        })),
+        () => [
+            ...VISUALIZER_REGISTRY.map(entry => ({
+                value: entry.mode,
+                label: getVisualizerModeLabel(entry.mode, t),
+            })),
+            { value: RANDOM_VISUALIZER_CHOICE, label: t('ui.visualizerRandom') },
+        ],
         [t],
     );
     const visualizerModes = useMemo(() => visualizerOptions.map(option => option.value), [visualizerOptions]);
@@ -104,9 +111,12 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
     );
     const resolvedBackgroundMode = resolveVisualizerBackgroundMode(visualizerBackgroundMode, visualizerMode);
 
-    // Which row's picker is open, if any. The pictures' clock runs only then: a picture moves only
-    // while the pointer rests on it in an open picker.
-    const [openPicker, setOpenPicker] = useState<'style' | 'background' | null>(null);
+    // Which row's picker is open, if any (the random pool's is the style row's second one). The
+    // pictures' clock runs only while one of the two rows' pictures is open: a picture moves only
+    // while the pointer rests on it in an open picker. The pool's layer draws glyphs, no pictures.
+    const [openPicker, setOpenPicker] = useState<'style' | 'pool' | 'background' | null>(null);
+    const picturesOpen = openPicker === 'style' || openPicker === 'background';
+    const poolChipRef = useRef<HTMLButtonElement>(null);
     const isPlaying = usePlaybackStore(state => selectDisplayPlayerState(state) === PlayerState.PLAYING);
     const pageTheme = useMemo<PictureTheme>(() => ({ theme, isDaylight }), [theme, isDaylight]);
     // No picture is drawn before a picker opens, and opening one takes the page's theme.
@@ -115,15 +125,17 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
     if (followedTheme !== pictureTheme) {
         setPictureTheme(followedTheme);
     }
-    const changeOpenPicker = (next: 'style' | 'background' | null) => {
+    const changeOpenPicker = (next: 'style' | 'pool' | 'background' | null) => {
         setOpenPicker(next);
-        if (next !== null) {
+        if (next === 'style' || next === 'background') {
             setPictureTheme(held => panelPictureTheme(held, pageTheme, { playing: isPlaying, pickerOpens: true }));
+        }
+        if (next !== null) {
             // The rows' Ponder hint, if it is showing, would lie over the picker (lyricStyle.target.ts keeps it away while one is open).
             usePonderStore.getState().setHoveredTargetId(null);
         }
     };
-    const previewClock = usePreviewClock({ mode: visualizerMode, paused: openPicker === null });
+    const previewClock = usePreviewClock({ mode: visualizerMode, paused: !picturesOpen });
     const visualizerTunings = useVisualizerTunings();
     const lyricsFontScale = useTypographySettingsStore(state => state.lyricsFontScale);
     const pictureLook = useMemo<LyricPreviewLook>(() => ({ visualizerTunings, lyricsFontScale }), [visualizerTunings, lyricsFontScale]);
@@ -200,15 +212,15 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
                     isDaylight={pictureTheme.isDaylight}
                     look={pictureLook}
                     background={pictureBackground}
-                    making={panelMakesImages({ playing: isPlaying, pickerOpen: openPicker !== null })}
+                    making={panelMakesImages({ playing: isPlaying, pickerOpen: picturesOpen })}
                 >
                     <ModeStepperRow<VisualizerMode>
-                        value={visualizerMode}
+                        value={randomEnabled ? RANDOM_VISUALIZER_CHOICE : visualizerMode}
                         options={visualizerOptions}
-                        onSelect={onVisualizerModeChange}
+                        onSelect={mode => selectLyricStyleChoice(mode, onVisualizerModeChange)}
                         onStep={stepVisualizerMode}
-                        renderGlyph={drawStyleGlyph}
-                        renderPicture={drawStyle}
+                        renderGlyph={drawLyricStyleChoiceGlyph}
+                        renderPicture={drawLyricStyleChoice}
                         caption={t('ui.animationMode')}
                         moreLabel={t('ui.moreSettings')}
                         onOpenMore={openVisualizerSettings}
@@ -221,7 +233,24 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
                                 onClick={cycleAnimationIntensity}
                             />
                         )}
-                        params={(usesWordSegmentation || hasStyleQuickControls) && (
+                        params={randomEnabled ? (
+                            <>
+                                {/* 这首歌抽到的样式：点一下从随机池里另抽一种。 */}
+                                <QuickControlChip
+                                    label={getVisualizerModeLabel(visualizerMode, t)}
+                                    title={`${t('options.randomVisualizerReroll')}: ${getVisualizerModeLabel(visualizerMode, t)}`}
+                                    disabled={!randomPool.canReroll}
+                                    onClick={randomPool.reroll}
+                                />
+                                <QuickControlChip
+                                    buttonRef={poolChipRef}
+                                    expanded={openPicker === 'pool'}
+                                    label={t('options.randomPoolChoose')}
+                                    title={`${t('options.randomPoolChoose')}: ${randomPool.countLabel}`}
+                                    onClick={() => changeOpenPicker(openPicker === 'pool' ? null : 'pool')}
+                                />
+                            </>
+                        ) : (usesWordSegmentation || hasStyleQuickControls) && (
                             <>
                                 {usesWordSegmentation && (
                                     <QuickControlToggle
@@ -238,6 +267,14 @@ const AppearanceSection: React.FC<AppearanceSectionProps> = ({
                                 {styleQuickControls}
                             </>
                         )}
+                    />
+                    {/* The pool's layer stays mounted while it leaves (Popover); it opens from the chip above. */}
+                    <RandomPoolPicker
+                        anchorRef={poolChipRef}
+                        open={randomEnabled && openPicker === 'pool'}
+                        onClose={() => changeOpenPicker(null)}
+                        moreLabel={t('ui.moreSettings')}
+                        onOpenMore={openVisualizerSettings}
                     />
 
                     <ModeStepperRow<VisualizerBackgroundMode>

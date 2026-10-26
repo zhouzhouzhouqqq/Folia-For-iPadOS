@@ -3,7 +3,8 @@
 // it may be dragged. Pure: screen positions in, screen positions out.
 
 // The window is one size for good: 4 px of room around a 594 x 176 card. The card in use is the
-// right 420 of it; the 174 to its left hold the large cover of the idle look and are empty in use.
+// right 420 of it; the 174 to its left hold the large cover of the idle look and are empty in use
+// (and always, with the switch "expand cover" off).
 // The page lays itself out to the same numbers (src/components/remote/remote.css).
 const REMOTE_CONTROL_WINDOW_WIDTH = 602;
 const REMOTE_CONTROL_WINDOW_HEIGHT = 184;
@@ -21,10 +22,15 @@ function getInitialRemoteControlWindowPosition(workArea) {
   };
 }
 
+/** How wide the part of the window left of the card in use is. */
+function getRemoteControlStripWidth(bounds) {
+  // The card is centred in the window, so a window manager that sizes the window differently moves it.
+  return Math.floor((bounds.width - REMOTE_CONTROL_CARD_WIDTH) / 2) + REMOTE_CONTROL_SLEEVE_WIDTH;
+}
+
 /** Whether a screen point is over the part of the window left of the card in use. */
 function isPointOverRemoteControlStrip(bounds, point) {
-  // The card is centred in the window, so a window manager that sizes the window differently moves it.
-  const stripRight = bounds.x + Math.floor((bounds.width - REMOTE_CONTROL_CARD_WIDTH) / 2) + REMOTE_CONTROL_SLEEVE_WIDTH;
+  const stripRight = bounds.x + getRemoteControlStripWidth(bounds);
   return point.x >= bounds.x
     && point.x < stripRight
     && point.y >= bounds.y
@@ -41,12 +47,16 @@ const overlapArea = (a, b) => (
 );
 
 /**
- * The x the window may take, given the screens' bounds: its left edge, where the large cover sits,
- * stays on a screen. Over another screen is fine; past the outer left edge of the screen that
- * holds most of the window it is pushed back to that edge.
+ * The x the window may take, given the screens' bounds: the left edge of what is drawn stays on a
+ * screen. With the cover expanded that is the window's own left edge, where the large cover sits;
+ * with it collapsed the strip left of the card is always empty, so it is the card in use's edge.
+ * Over another screen is fine; past the outer left edge of the screen that holds most of what is
+ * drawn it is pushed back to that edge.
  */
-function clampRemoteControlWindowX(bounds, screenBounds) {
-  const leftEdge = { x: bounds.x, y: bounds.y + Math.floor(bounds.height / 2) };
+function clampRemoteControlWindowX(bounds, screenBounds, expandCover = true) {
+  const inset = expandCover ? 0 : getRemoteControlStripWidth(bounds);
+  const drawn = { x: bounds.x + inset, y: bounds.y, width: bounds.width - inset, height: bounds.height };
+  const leftEdge = { x: drawn.x, y: drawn.y + Math.floor(drawn.height / 2) };
   if (screenBounds.some(area => containsPoint(area, leftEdge))) {
     return bounds.x;
   }
@@ -54,13 +64,13 @@ function clampRemoteControlWindowX(bounds, screenBounds) {
   let home = null;
   let homeOverlap = 0;
   for (const area of screenBounds) {
-    const overlap = overlapArea(area, bounds);
+    const overlap = overlapArea(area, drawn);
     if (overlap > homeOverlap) {
       home = area;
       homeOverlap = overlap;
     }
   }
-  return home ? Math.max(bounds.x, home.x) : bounds.x;
+  return home ? Math.max(drawn.x, home.x) - inset : bounds.x;
 }
 
 module.exports = {

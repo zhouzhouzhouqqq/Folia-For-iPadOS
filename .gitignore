@@ -63,6 +63,7 @@ build/windowtolayer
 build/windowtolayer-COPYING
 build/ffmpeg/
 build/koffi/
+build/mac-helper/
 # MNN runtime library (build/buildMnnRuntime.mjs): the pinned source, its build tree, and the result.
 build/mnn/
 build/.mnn-src/

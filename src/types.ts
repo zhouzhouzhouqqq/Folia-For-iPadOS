@@ -595,19 +595,32 @@ export interface BeatEffectSetting {
 }
 
 /**
- * 智能动感模式, one switch for every visualizer and background that draws beat FX, and each effect's
+ * 智能动感模式's three settings (2026-10-17, the user's 全开 / 半开 / 不开):
+ * - `on`: the effects play, and a track with nothing stored is analysed now on the GPU.
+ * - `cached`: the effects play from what is already stored - a track analysed before under `on`, or
+ *   whose beats automix analysed - and nothing is ever started for them: no model run, no decode, no
+ *   stream read. A track with nothing stored keeps its original picture. Runs already in flight
+ *   elsewhere (automix's) are waited for and used, as they cost nothing more. Automix itself is not
+ *   changed by this setting.
+ * - `off`: every picture exactly as it was; nothing read, nothing run.
+ */
+export type SmartBeatMode = 'off' | 'cached' | 'on';
+
+/**
+ * 智能动感模式, one setting for every visualizer and background that draws beat FX, and each effect's
  * own setting. The effects a picture has are declared on its registry entry (`beatEffects`), each
  * reading beat_this' beats or htdemucs' drum hits (src/services/beatFx). An effect with nothing
- * stored plays at strength 1. Off leaves every picture exactly as it was.
+ * stored plays at strength 1. Read `mode` through `smartBeatActive` / `smartBeatMayAnalyse`
+ * (services/beatFx/beatEffects.ts), never by comparing it in place.
  */
 export interface SmartBeatSettings {
-  enabled: boolean;
+  mode: SmartBeatMode;
   /** Keyed by effect id (`sonnet.lensTear`); only the effects the user has touched. */
   effects: Readonly<Record<string, BeatEffectSetting>>;
 }
 
 export const DEFAULT_SMART_BEAT_SETTINGS: SmartBeatSettings = {
-  enabled: false,
+  mode: 'off',
   effects: {},
 };
 

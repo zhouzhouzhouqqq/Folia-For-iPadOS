@@ -47,12 +47,18 @@ interface SearchWalk { songs: UnifiedSong[]; seen: Set<string>; asked: number; d
 // The searches gone back to are few: the one on screen, and the ones the listener returns to.
 const MAX_SEARCH_WALKS = 8;
 const searchWalks = new Map<string, SearchWalk>();
-// Makes room for `kept`. A search read past its first page is one the listener is in; a lookup
-// (a song's lyrics) asks one page and never comes back. So the oldest of those goes first.
-const dropSearchWalk = (kept: SearchWalk): void => {
-    const held = [...searchWalks];
+// The searches of callers beside the host's own screen (a mod, through Folium's `folium.omni`),
+// which name themselves with a `session`: kept apart from the host's by session and text, under a
+// bound of their own, so that such a search never starts the listener's search over and never
+// drops it to make room.
+const MAX_SESSION_SEARCH_WALKS = 16;
+const sessionSearchWalks = new Map<string, SearchWalk>();
+// Makes room for `kept` in `walks`. A search read past its first page is one the listener is in; a
+// lookup (a song's lyrics) asks one page and never comes back. So the oldest of those goes first.
+const dropSearchWalk = (walks: Map<string, SearchWalk>, kept: SearchWalk): void => {
+    const held = [...walks];
     const [text] = held.find(([, walk]) => !walk.paged && walk !== kept) ?? held[0];
-    searchWalks.delete(text);
+    walks.delete(text);
 };
 // The sign-in attempt in progress; the desktop side decides how long it stays open.
 let activeLogin: SpotifyWireLoginStart | null = null;
@@ -85,15 +91,20 @@ export const spotifyProvider: OnlineMusicProvider = {
         // its start and kept: a page here is what the next rows add that no earlier row gave. A
         // search the listener comes back to goes on where it was; one no longer kept is walked again
         // from its start as far as the page asked for. A search asked from offset 0 begins anew.
-        async searchSongs(query, limit, offset) {
+        // A caller with a `session` has walks of its own (`sessionSearchWalks`).
+        async searchSongs(query, limit, offset, context) {
             const text = query.trim();
             if (!text) return { items: [], total: 0, nextOffset: offset, hasMore: false };
-            let walk = offset === 0 ? undefined : searchWalks.get(text);
+            const session = context?.session;
+            const walks = session === undefined ? searchWalks : sessionSearchWalks;
+            const maxWalks = session === undefined ? MAX_SEARCH_WALKS : MAX_SESSION_SEARCH_WALKS;
+            const key = session === undefined ? text : `${session}\n${text}`;
+            let walk = offset === 0 ? undefined : walks.get(key);
             if (!walk) {
                 walk = { songs: [], seen: new Set(), asked: 0, done: false, queue: Promise.resolve(), paged: false };
-                searchWalks.delete(text);
-                searchWalks.set(text, walk);
-                while (searchWalks.size > MAX_SEARCH_WALKS) dropSearchWalk(walk);
+                walks.delete(key);
+                walks.set(key, walk);
+                while (walks.size > maxWalks) dropSearchWalk(walks, walk);
             }
             if (offset > 0) walk.paged = true;
             const current = walk;

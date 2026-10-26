@@ -22,6 +22,7 @@
 - **上游变了怎么跟**：
   - `neteaseApiWorker.cjs` 直接 require 包里的这几个路径：`util/request`、`main`、`util/xeapiKey`、`util/index`、`server`；补丁脚本改的是 `server.js`。升级前先看这些文件还在不在、导出的名字变没变。
   - 升级要改三处：根目录 `package.json` 和锁文件、`deploy/docker/netease-api/package.json` 和它的锁文件。
+  - 模组的实验接口 `platform.raw`（Folium 1.7）按包里 `module/` 的文件名直通后端：哪些模块能读、能写、永远拒绝，记在 `netease/neteaseRaw.ts` 的分类表里，表外的一律拒绝。上游新增模块、有人要用时在表里补一行；改名或删掉的模块，`test/unit/onlineMusic/neteaseRaw.test.ts` 读包的 `module/` 目录会报出来。那里报给模组的后端名字和版本取自包自己的 `package.json`，升级后不用改。
   - 测试：`test/unit/electron/neteaseApiStartup.test.ts`、`neteaseApiHost.test.ts`、`lazyJsdom.test.ts`、`neteaseLoginDiagnostics.test.ts` 都用替身，抓不到上游的变化。`npm run probe:netease-xeapi`（`test/manual/netease_xeapi_probe.cjs`）是手动跑的诊断，看 xeapi key 接口在不同网络路径下的答复。
 
 ## 酷狗（`kugou`）
@@ -42,12 +43,14 @@
 - **怎么用**：
   - 桌面端：主进程 require 这个包，包在 require 时自己起一个 HTTP 服务（`electron/qq/qqApiStartup.cjs`）；页面经 `window.electron.getQqPort` 拿到端口，向 `http://127.0.0.1:<端口>` 发请求（`qq/qqTransport.ts`）。登录会话由 `electron/qq/qqAuthSessionRepository.cjs` 存。
   - 网页版：用包的 `./serverless` 导出，Vercel 的入口是 `api-ts/qq.ts`（编译成入库的 `api/qq.js`），Cloudflare 的是 `worker/qq.ts`，扫码登录通道在 `worker/qqQrChannel.ts`。两边都挂在 `/api/qq`，`VITE_QQ_API_BASE` 填 `/api/qq`。
+  - 有两处不经后端，直接向 QQ 的 musicu 发匿名请求：匿名搜歌与歌词（`qq/qqLyricProvider.ts`）、按数字 songid 查歌和批量查歌（`qq/qqTransport.ts` 的 `requestQqMusicu`）。桌面端直连 `u.y.qq.com`，网页版经前端同源的 `/api/lyric-proxy`。
 - **我们改了什么**：不改包。`api-ts/qq.ts` 和 `worker/qq.ts` 只把宿主的路径还原成包认识的路径。部署细节（Vercel、Cloudflare、Docker、裸 Node 四种）在 [`docs/qq-music-deployment.md`](../../../docs/qq-music-deployment.md)。
 - **上游变了怎么跟**：
   - `test/unit/onlineMusic/qqServerlessClosure.test.ts` 读真的包：`./serverless` 的依赖里不能有别的 npm 包和 `node:*`，`process.env.*` 要能在编译时换掉，入库的 `api/qq.js` 要存在。升级后这条最先告诉你网页版还能不能部署。
   - `test/unit/onlineMusic/qqServerlessAdapter.test.ts`、`qqTransport.test.ts`、`test/unit/electron/qqApiStartup.test.ts` 用替身，抓不到包的接口变化。
   - 包的路径（`/getMusicPlay/:songmid` 这类）写在 `qq/qqTransport.ts` 开头的操作表里，包改了路径要跟着改这张表。
   - 升级改根目录和 `deploy/docker/qq-api/` 两处，再按 `npm run build:vercel-api` 重新生成 `api/qq.js`。
+  - 按数字 songid 查歌不走后端：3.3.3 的 `/getSongInfo` 把 songid 当字符串交给 QQ，QQ 只认数字（2026-10-21 实测），serverless 的这条路由 songmid 必填。上游修好后也不改回来：用户自己部署的后端版本跟不上。QQ 改了 musicu 的协议或子请求上限时，用 `node test/manual/qq_musicu_song_detail_probe.mjs` 复查（加 `--relay <网页部署的源>` 查中转出口）。
 
 ## 波点（`bodian`，仅桌面端）
 
@@ -90,8 +93,23 @@
   - `test/unit/spotify/` 下的测试（`spotifyApiBridge.test.ts`、`spotifyAudio.test.ts`、`spotifyAudioFiles.test.ts` 等）用替身，抓不到 Spotify 改了查询或答复。
   - 升级 node-librespot 前看它支持哪些系统；平台条目里的实测在同目录 `README.md` 的 `spotify/spotifyProvider.ts` 一条。
 
+## 汽水音乐（`qishui`，桌面及 iOS 适配）
+
+- **上游**：[`qishui-music-api`](https://github.com/GSQZ/qishui-music-api)，MIT 许可，独立维护车机 HTTP 协议、客户端参数、票据签名、主动扫码授权、目录分页、推荐状态及未加密音频地址选择，不依赖官方客户端安装。
+- **版本**：0.2.2，钉死在根目录 `package.json`，锁文件使用 npm Registry 的 tarball 和 integrity，不使用本地文件、tarball 或 Git 分支引用。包没有传递的运行时依赖；网页版和 Docker 不调用它。
+- **怎么用**：`electron/qishui/qishuiApiBridge.cjs` 直接调用 `createQishuiApi`，注入设备标识、会话仓库和 Electron `net.fetch`，只放行包导出的 `QISHUI_OPERATIONS`。`session.cjs` 保留原来的存储键和 safeStorage 加密，设备标识由包生成和校验；加密不可用时会话只在内存中保存。`mediaCors.cjs` 只登记已签发音频地址及公共图片域名。渲染进程只从包导入类型，不加载协议代码。
+- **我们不改包**：Folia 不覆盖包内文件，不保留平台客户端标识、签名或协议实现。包只使用主动扫码授权的会话，不读取其他应用凭据、不加载官方客户端原生模块、不解密受保护音频；没有接口的写入能力保持关闭。
+- **上游变了怎么跟**：在独立仓库修复协议并发布新版本，Folia 明确升级钉死版本后回归。确认扫码、会话恢复、搜索、自己的歌单及下一页、逐字歌词、标准音质地址、试听标记与片段歌词起点、场景切换和补歌，以及红心、自建歌单增删、最近播放分页和可播性检查；场景目录仍从包读取，不在界面写死。打包后核对 npm 包及其运行时依赖进入产物。
+- **测试**：协议、扫码、推荐流和受保护音频拒绝的单测跟随独立包。Folia 的 `test/unit/electron/qishuiApiBridge.test.ts` 测操作白名单、会话加密恢复、内存回退和音频登记；`test/unit/qishui/packagePaging.test.ts` 使用真实包、桥和 renderer adapter，只替换 HTTP 答复，核对不透明游标、喜欢列表、最近播放分页和新增写入操作。`test/unit/qishui/` 其余测试覆盖归一化、歌词时间、本地匹配、歌词源可用性、电台目录和 Omni 能力边界。0.2.0 接入后已启动 macOS Electron 开发版，确认加载新版包、恢复登录、读取喜欢列表并打开最近播放，用户本地测试反馈未发现问题；0.2.1 补上公共客户端票据过期重取与失效后的有界重试，已核对 Registry 发布内容并做宿主回归；Windows、Linux、完整安装包和真实长期续期仍需人工验收。
+
 ## Navidrome（不是 Omni 的 provider）
 
 - **上游**：用户自己的 Navidrome 服务，走 Subsonic API（`/rest/<接口>`），入口是 `src/services/navidromeService.ts`。歌词等扩展先问 `getOpenSubsonicExtensions` 再决定用不用。
 - **版本**：请求里写 `v=1.16.1`（Subsonic API 版本）、`c=Folia`；鉴权用 `md5(密码 + salt)` 的 token。没有要装的包。
 - **上游变了怎么跟**：Subsonic 是公开的协议，服务端版本由用户自己定。`test/unit/navidrome/navidromeService.test.ts` 用替身代替服务端，管的是我们拼请求和读答复的写法。
+
+### iOS 0.7.22 补充
+
+汽水设备端由 `qishui/qishuiNative.ts` 注入 URLSession HTTPS 和 Keychain，`dev/ipados/vendor-qishui.mjs` 将同一 0.2.2 协议编入浏览器 ESM；`qishui-crypto.mjs` 仅替换其同步 P-256/CSR/MD5/CSPRNG 边界，非完整 Node crypto。Noble curves 2.4.0、传递 hashes、buffer/base64-js/ieee754/blueimp-md5 的许可证随 vendor 保存；升级后重新运行生成器，并跑 `test/unit/ipados/qishuiCrypto.test.ts` 和 `qishuiNativeProtocol.test.ts` 的 OpenSSL 互验。本次不声明真实扫码或受保护流播放已通过；标准明文流选择保持包的限制。
+
+QQ 的公开 numeric musicu 请求在 iOS 经 cookie-free 原生 HTTPS；HTTP 429 和 Retry-After 保留，不能被统一改成“网络不可达”。桌面/Web 路径继续沿用上文。

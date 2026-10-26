@@ -11,9 +11,10 @@ import { whyNotTheSong } from '../wholeSongCheck';
 //
 // Three analysers read tracks - automix's profile (automix/profileService.ts), stem separation
 // (automix/stems.ts) and 智能动感模式 (beatFx/beatFxSource.ts). This is the "where are this track's
-// bytes" ladder of 智能动感模式, and of automix's profile for a local track with no URL; automix keeps
-// its own ladders for the rest, which also weigh what the provider keeps and a copy that is not the
-// whole song (wholeSongCheck.ts, 2026-10-17). A cached copy that is not the song is not read here
+// bytes" ladder of 智能动感模式 and of stem separation (which also reads a file its provider keeps,
+// `mayReadOnlineUrl`), and of automix's profile for a local track with no URL; the profile keeps its
+// own ladder for the rest, which may download (2026-10-17). What any of them reads is shared by the
+// others through trackBytes.ts. A cached copy that is not the song is not read here
 // either: beats measured off a clip would be stored as the song's. Downloading an online track is not on
 // it (a library source that is merely served over http - Navidrome, a stage feed - is read): whether a
 // track is worth bandwidth is each caller's question (only automix's profile ever says yes).
@@ -53,6 +54,11 @@ export interface LocalTrackBytesOptions {
     audioUrl?: string | null;
     /** Overrides the registered local file reader, for a caller that was handed its own. */
     readLocalFile?: () => Promise<ArrayBuffer | null>;
+    /**
+     * Whether an online URL in hand may be read after all: stem separation's "its provider keeps the
+     * file on this machine", where reading the URL reads the kept file, not a download.
+     */
+    mayReadOnlineUrl?: (audioUrl: string) => Promise<boolean>;
 }
 
 /**
@@ -61,7 +67,7 @@ export interface LocalTrackBytesOptions {
  */
 export const readLocalTrackBytes = async (
     song: SongResult,
-    { representation, audioUrl, readLocalFile }: LocalTrackBytesOptions,
+    { representation, audioUrl, readLocalFile, mayReadOnlineUrl }: LocalTrackBytesOptions,
 ): Promise<LocalTrackBytes> => {
     if (representation) {
         try {
@@ -103,7 +109,24 @@ export const readLocalTrackBytes = async (
         }
     }
 
-    // A local track with no URL in hand - the next-up head (prefetch skips local files), or any
+    if (audioUrl && mayReadOnlineUrl && await mayReadOnlineUrl(audioUrl)) {
+        try {
+            const response = await fetch(audioUrl);
+            // A URL the provider no longer honours answers with a status and no audio.
+            if (!response.ok) throw new Error(`kept file responded ${response.status}`);
+            const blob = await response.blob();
+            // Held to the media cache's rule: a file under half the song is not the song, and what is
+            // read here is shared with every analyser (trackBytes.ts).
+            const notTheSong = await whyNotTheSong(song, audioUrl, blob);
+            if (notTheSong) return { skipped: `the file its provider keeps is ${notTheSong}` };
+            return { bytes: await blob.arrayBuffer() };
+        } catch (error) {
+            console.warn('[Analysis] could not read a file its provider keeps', error);
+            return { skipped: 'the file its provider keeps could not be read' };
+        }
+    }
+
+    // A local track with no URL in hand - the next-up head (the prefetcher has none to give), or any
     // track whose blob: URL belongs to a deck rather than to us. Its file is read off its handle.
     // A caller's own reader is asked whatever the source; it knows which songs it can read.
     const read = readLocalFile ?? (() => readLocalTrackFile(song));

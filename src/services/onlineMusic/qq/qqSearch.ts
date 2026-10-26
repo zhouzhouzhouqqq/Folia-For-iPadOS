@@ -3,7 +3,7 @@ import type { ProviderPage } from '../../../types/onlineMusic';
 import { OnlineProviderError } from '../../../types/onlineMusic';
 import { searchQQSongs } from './qqLyricProvider';
 import { normalizeQqSong } from './qqNormalize';
-import { hasQqSession, requestQq } from './qqTransport';
+import { hasUsableQqSession, requestQq } from './qqTransport';
 
 // src/services/onlineMusic/qq/qqSearch.ts
 //
@@ -18,6 +18,30 @@ import { hasQqSession, requestQq } from './qqTransport';
 const QQ_SEARCH_MAX_PAGE_SIZE = 20;
 /** 上游精简版搜索最多收 60 个字，后端超长回 400。 */
 const QQ_SEARCH_MAX_KEYWORD_LENGTH = 60;
+
+// 会话搜索空、匿名有结果时，后续页仍会走会话；记住这次回退的关键词，避免第 2 页又回到空清单。
+// 首页会话重新有结果时再忘掉它；上限只防长期运行累积。
+const ANONYMOUS_FALLBACK_KEYWORD_LIMIT = 100;
+const anonymousSearchFallbackKeywords = new Set<string>();
+
+const rememberAnonymousSearchFallback = (keyword: string): void => {
+    anonymousSearchFallbackKeywords.delete(keyword);
+    anonymousSearchFallbackKeywords.add(keyword);
+    while (anonymousSearchFallbackKeywords.size > ANONYMOUS_FALLBACK_KEYWORD_LIMIT) {
+        const oldest = anonymousSearchFallbackKeywords.values().next().value;
+        if (oldest === undefined) break;
+        anonymousSearchFallbackKeywords.delete(oldest);
+    }
+};
+
+const forgetAnonymousSearchFallback = (keyword: string): void => {
+    anonymousSearchFallbackKeywords.delete(keyword);
+};
+
+/** 测试与重置运行时缓存用：忘掉所有回退过匿名的关键词。 */
+export const resetQqSearchFallbackMemory = (): void => {
+    anonymousSearchFallbackKeywords.clear();
+};
 
 const SEARCH_REJECTED_KEY = 'search.rejected';
 
@@ -70,6 +94,7 @@ const searchAnonymously = async (keyword: string, page: number, pageSize: number
 /**
  * 按 offset 翻页搜歌。有会话先走后端；后端被上游拒绝（`search.rejected`）就直接报错，
  * 其他失败（旧后端 404、会话失效 401、后端没起来）退回匿名直连。
+ * 第一页回退过匿名的关键词，后续页也直接走匿名。
  */
 export const searchQqSongs = async (query: string, limit: number, offset: number): Promise<ProviderPage<UnifiedSong>> => {
     const keyword = query.trim().slice(0, QQ_SEARCH_MAX_KEYWORD_LENGTH);
@@ -78,12 +103,33 @@ export const searchQqSongs = async (query: string, limit: number, offset: number
     const pageSize = Math.max(1, Math.min(limit, QQ_SEARCH_MAX_PAGE_SIZE));
     const page = Math.floor(Math.max(0, offset) / pageSize) + 1;
 
-    if (hasQqSession()) {
+    if (hasUsableQqSession()) {
+        // 首页已确认会拿到空清单时，后续页直接走匿名，别让列表又断在 20 条。
+        if (offset > 0 && anonymousSearchFallbackKeywords.has(keyword)) {
+            return searchAnonymously(keyword, page, pageSize);
+        }
         try {
-            return await searchWithSession(keyword, page, pageSize);
+            const sessionPage = await searchWithSession(keyword, page, pageSize);
+            // 会话路径固定送 search_type 0；上游对部分账号会回 200 + 空清单（匿名路径的 7 正常）。
+            // 只有第一页又空又没有下一页时才重试匿名，别把上游的拒绝显示成「没有结果」。
+            if (sessionPage.items.length > 0 || sessionPage.hasMore) {
+                if (offset === 0) forgetAnonymousSearchFallback(keyword);
+                return sessionPage;
+            }
+            if (offset > 0) return sessionPage;
+            console.warn('[QQProvider] session search returned no items, retrying anonymously');
+            rememberAnonymousSearchFallback(keyword);
+            try {
+                return await searchAnonymously(keyword, page, pageSize);
+            } catch (fallbackError) {
+                // 匿名也失败时保留会话的空页，只记日志，别把「没有结果」变成错误页。
+                console.warn('[QQProvider] anonymous search fallback failed, keeping the empty session page', fallbackError);
+                return sessionPage;
+            }
         } catch (error) {
             if (isSearchRejected(error)) throw error;
             console.warn('[QQProvider] session search unavailable, falling back to anonymous search', error);
+            rememberAnonymousSearchFallback(keyword);
         }
     }
     return searchAnonymously(keyword, page, pageSize);

@@ -1,5 +1,5 @@
 {
-    "version": { "major": 1, "minor": 6 },
+    "version": { "major": 1, "minor": 7 },
     "permissions": {
         "filesystem.data": { "guards": ["folium.storage", "api.storage"] },
         "playback.read": { "guards": ["api.runtime.getPlaybackSnapshot"] },
@@ -22,17 +22,22 @@
                 "folium.playback.playQueueItem"
             ]
         },
+        "playback.queue": { "guards": ["folium.playback.replaceQueue"] },
+        "equalizer.control": { "guards": ["folium.equalizer.setMode", "folium.equalizer.applyCurve", "folium.equalizer.releaseCurve"] },
         "render.export": { "guards": ["api.render.exportVideo"] },
         "net.fetch": { "guards": ["folium.net.fetch"] },
         "net.embed": { "guards": ["folium.ui.embed"] },
-        "stageLayers": { "guards": ["folium.registries.stageLayers"] }
+        "stageLayers": { "guards": ["folium.registries.stageLayers"] },
+        "platform.netease.read": { "guards": ["folium.experimental.platform.raw.request"] },
+        "platform.netease.write": { "guards": ["folium.experimental.platform.raw.request.write"] }
     },
     "experimental": {
         "omniProviders": "omni.providers",
         "omniHooks": "omni.hooks",
         "ponderTargets": "ponder.targets",
         "playerLayout": "player.layout",
-        "remoteActions": "remote.actions"
+        "remoteActions": "remote.actions",
+        "platformRaw": "platform.raw"
     },
     "channels": {
         "list": "folia-mods:list",
@@ -40,6 +45,7 @@
         "reload": "folia-mods:reload",
         "rpc": "folia-mods:rpc",
         "storage": "folia-mods:storage",
+        "secrets": "folia-mods:secrets",
         "netFetch": "folia-mods:net-fetch",
         "pickFile": "folia-mods:pick-file",
         "restoreFile": "folia-mods:restore-file",
@@ -56,6 +62,8 @@
         "startAlive": "folia-mods:start-alive",
         "fStateChanged": "folia-mods:state-changed",
         "fExportProgress": "folia-mods:export-progress",
-        "fLog": "folia-mods:log"
+        "fLog": "folia-mods:log",
+        "fRpcMessage": "folia-mods:rpc-message",
+        "fSecretChanged": "folia-mods:secret-changed"
     }
 }

@@ -1,6 +1,7 @@
 import { hasNativeAutomix } from '../../platform/ios/automix';
 import { nativeSeparateStems } from '../automix/nativeInference';
-import { HTDEMUCS_GPU_SEGMENT, runHtdemucsGpu } from './beatThisGpu';
+import { HTDEMUCS_GPU_SEGMENT } from './beatThisGpu';
+import { separateStemSegment, stemSegmentStarts, stemSegmentWindow } from './stemRange';
 
 // src/services/analysis/drumStem.ts
 // A whole track's drum stem from htdemucs on the renderer's GPU (beatThisGpu.ts runHtdemucsGpu, the
@@ -22,31 +23,23 @@ import { HTDEMUCS_GPU_SEGMENT, runHtdemucsGpu } from './beatThisGpu';
 // has had every contribution it will get, so its quotient is final - divided there and then, and
 // handed to `onSegment` as the stem's finished head, for a caller that reads hits while the rest is
 // still separating (drumHitStream.ts). Each sample is divided once, so the stem is the same either way.
+//
+// The running sum is also what a stopped separation resumes from (analysis service plan, 2b): with
+// `progress`, the sum, the weight, the next segment and how far it is divided live in the caller's
+// object, so a separation stopped at a segment boundary can be handed back what it had - only the
+// part not yet final matters, the next segment's quarter - and carry on from that segment. The stem
+// is then the same, bit for bit, as one separated in a single go.
+//
+// Since the analysis service's phase 3 the grid, the window and the segments themselves are
+// stemRange.ts': with the track's `key`, a segment automix already separated (the track's head,
+// while the one before played) is taken from there rather than run again, and one automix said it
+// wants (the track's tail) is kept for it.
 
 /** The triangular overlap-add window of htdemucs.cjs `buildWindow`, for one segment. */
-export const drumStemWindow = (segment: number): Float32Array => {
-    const overlap = Math.floor(segment / 4);
-    const win = new Float32Array(segment).fill(1);
-    for (let i = 0; i < overlap; i += 1) {
-        const ramp = i / (overlap - 1);
-        win[i] = ramp;
-        win[segment - 1 - i] = ramp;
-    }
-    return win;
-};
+export const drumStemWindow = (segment: number): Float32Array => stemSegmentWindow(segment);
 
 /** Where each segment starts, for a track of `total` samples: a step of three quarters of a segment. */
-export const drumStemSegments = (total: number, segment = HTDEMUCS_GPU_SEGMENT): number[] => {
-    const stride = segment - Math.floor(segment / 4);
-    const count = Math.max(1, Math.ceil(total / stride));
-    const starts: number[] = [];
-    for (let c = 0; c < count; c += 1) {
-        const start = c * stride;
-        if (start >= total && c > 0) break;
-        starts.push(start);
-    }
-    return starts;
-};
+export const drumStemSegments = (total: number, segment = HTDEMUCS_GPU_SEGMENT): number[] => stemSegmentStarts(total, segment);
 
 /**
  * The drum stem of a stereo track at 44.1 kHz, as mono (the two channels averaged), or null when any
@@ -54,22 +47,42 @@ export const drumStemSegments = (total: number, segment = HTDEMUCS_GPU_SEGMENT):
  * `onSegment` hears each finished segment's index and the count, and the stem so far: `drums` is final
  * up to `final` samples (the rest of it is not yet divided, and is not to be read).
  */
+/** Where a separation is: the running sum and weight, the next segment, and how far it is final. */
+export interface DrumStemProgress {
+    drums: Float32Array;
+    weight: Float32Array;
+    /** The index of the next segment to separate. */
+    next: number;
+    /** Samples from the start whose quotient is final (divided). */
+    divided: number;
+}
+
+/** A fresh progress for a track of `total` samples. */
+export const startDrumStem = (total: number): DrumStemProgress => ({
+    drums: new Float32Array(total),
+    weight: new Float32Array(total),
+    next: 0,
+    divided: 0,
+});
+
 export const separateDrumStem = async (
     left: Float32Array,
     right: Float32Array,
     onSegment?: (done: number, count: number, drums: Float32Array, final: number) => void,
     keepGoing: () => boolean = () => true,
+    progress: DrumStemProgress = startDrumStem(left.length),
+    /** The track's analysis key: segments shared with automix through stemRange.ts. */
+    key?: string,
 ): Promise<Float32Array | null> => {
     const segment = HTDEMUCS_GPU_SEGMENT;
     const total = left.length;
     const win = drumStemWindow(segment);
     const starts = drumStemSegments(total, segment);
-    const drums = new Float32Array(total);
-    const weight = new Float32Array(total);
+    const { drums, weight } = progress;
     const inLeft = new Float32Array(segment);
     const inRight = new Float32Array(segment);
-    let divided = 0;
-    for (const [index, start] of starts.entries()) {
+    for (let index = progress.next; index < starts.length; index += 1) {
+        const start = starts[index];
         if (!keepGoing()) return null;
         const n = Math.min(segment, total - start);
         // The last segment runs past the end of the track: zeros, as the reference pads it.
@@ -77,18 +90,21 @@ export const separateDrumStem = async (
         inRight.fill(0);
         inLeft.set(left.subarray(start, start + n));
         inRight.set(right.subarray(start, start + n));
-        const stem = hasNativeAutomix()
-            ? (await nativeSeparateStems({ left: inLeft, right: inRight }))?.drums
-            : await runHtdemucsGpu(inLeft, inRight);
-        if (!stem) return null;
+        // Native ORT uses its own v2 model; do not mix its three sources with the WGSL four-source cache.
+        const stems = hasNativeAutomix()
+            ? await nativeSeparateStems({ left: inLeft, right: inRight }).then(value => value ? [value.drums] : null)
+            : await separateStemSegment(key, index, total, inLeft, inRight, 'drums', { urgency: 'onScreen', stillWanted: keepGoing, unitsLeft: starts.length - index });
+        if (!stems) return null;
+        const stem = stems[0];
         for (let i = 0; i < n; i += 1) {
             drums[start + i] += ((stem.left[i] + stem.right[i]) / 2) * win[i];
             weight[start + i] += win[i];
         }
         // Up to where the next segment starts, nothing more will be added.
         const final = index + 1 < starts.length ? starts[index + 1] : total;
-        for (let i = divided; i < final; i += 1) drums[i] /= Math.max(weight[i], 1e-8);
-        divided = final;
+        for (let i = progress.divided; i < final; i += 1) drums[i] /= Math.max(weight[i], 1e-8);
+        progress.divided = final;
+        progress.next = index + 1;
         onSegment?.(index + 1, starts.length, drums, final);
     }
     return drums;

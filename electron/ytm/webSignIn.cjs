@@ -63,15 +63,34 @@ function createYtmWebSessionRepository({
 }) {
   let loaded = false;
   let current = null;
+  // A sign-in is stored that this run could not read for want of OS encryption (see `get`).
+  let unread = false;
   const canEncrypt = () => safeStorage?.isEncryptionAvailable()
     && safeStorage.getSelectedStorageBackend?.() !== 'basic_text';
-  const persist = () => {
-    try {
-      if (!canEncrypt()) throw new Error('Encryption unavailable');
-      store.set(WEB_SESSION_KEY, safeStorage.encryptString(JSON.stringify(current)).toString('base64'));
-    } catch {
+  // Where nothing can be sealed, the sign-in of this run still replaces the stored one: that one
+  // is deleted, so an older account cannot come back at a later start. Where the store cannot be
+  // written (a file locked for a moment), what is stored stays as it was, unless it is another
+  // account's: `replaced` is the sign-in a new one takes the place of (`set`), and where its account
+  // is not the new one's, it is deleted as well. The first is said once a run.
+  let toldUnsealed = false;
+  const persist = (replaced = null) => {
+    if (!canEncrypt()) {
       store.delete(WEB_SESSION_KEY);
-      warn('[Ytm] Web sign-in is kept for this run only: OS encryption is unavailable');
+      if (!toldUnsealed) warn('[Ytm] Web sign-in is kept for this run only: OS encryption is unavailable');
+      toldUnsealed = true;
+      return;
+    }
+    try {
+      store.set(WEB_SESSION_KEY, safeStorage.encryptString(JSON.stringify(current)).toString('base64'));
+    } catch (error) {
+      let removed = false;
+      if (replaced && replaced.user.id !== current.user.id) {
+        try {
+          store.delete(WEB_SESSION_KEY);
+          removed = true;
+        } catch { /* as locked as the write: what is stored stays, as said below */ }
+      }
+      warn(`[Ytm] Web sign-in could not be stored; ${removed ? 'the one of another account stored before was removed' : 'what is stored stays as it was'}`, error);
     }
   };
   return {
@@ -84,7 +103,11 @@ function createYtmWebSessionRepository({
           log('[Ytm] No stored web sign-in');
           return null;
         }
+        // Only a run without OS encryption leaves it unread, for a run that has it. What does not
+        // unseal while encryption works (sealed by another OS account, a keychain that was reset,
+        // damaged) is nothing stored.
         if (!canEncrypt()) {
+          unread = true;
           warn('[Ytm] Stored web sign-in cannot be read: OS encryption is unavailable');
           return null;
         }
@@ -99,9 +122,10 @@ function createYtmWebSessionRepository({
     set({ cookie, userAgent, user }) {
       const value = { version: 1, cookie, userAgent, user: { ...user }, storedAt: now() };
       if (!isWebSession(value)) throw new Error('Invalid YouTube Music web session');
+      const replaced = canEncrypt() ? this.get() : null;
       loaded = true;
       current = value;
-      persist();
+      persist(replaced);
     },
     // Whether the account has Premium was learnt anew (`user.premium`). The stored sign-in stays
     // the object it was: a request under way tells by it whether the sign-in changed meanwhile.
@@ -110,9 +134,15 @@ function createYtmWebSessionRepository({
       current.user.premium = premium;
       persist();
     },
+    // Whether a sign-in is stored that this run could not read (see `get`): who is signed in is
+    // then not known, which is not the same as nobody.
+    unreadable() {
+      return !this.get() && unread;
+    },
     clear() {
       loaded = true;
       current = null;
+      unread = false;
       store.delete(WEB_SESSION_KEY);
     },
   };

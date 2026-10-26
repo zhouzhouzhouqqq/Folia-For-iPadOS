@@ -34,6 +34,7 @@ const createContext = (overrides: CommandPaletteContextOverrides = {}): CommandP
             volume: 0.5,
             isMuted: false,
             setVolume: vi.fn(),
+            stepVolume: vi.fn(),
             toggleMute: vi.fn(),
             toggleSongLike: vi.fn(),
             isSongLiked: false,
@@ -61,6 +62,8 @@ const createContext = (overrides: CommandPaletteContextOverrides = {}): CommandP
             setReplayGainMode: vi.fn(),
             openAudioEqualizer: vi.fn(),
             applyAudioSoundPreset: vi.fn(),
+            hasModEqualizerCurve: () => false,
+            releaseModEqualizerCurve: vi.fn(),
             runAutoMatchBestLyric: vi.fn(async () => true),
             toggleCurrentSongPureMusicMark: vi.fn(async () => true),
             canToggleCurrentSongPureMusicMark: true,
@@ -81,6 +84,7 @@ const createContext = (overrides: CommandPaletteContextOverrides = {}): CommandP
         panel: {
             setPanelTab: vi.fn(),
             setIsPanelOpen: vi.fn(),
+            setPlayerBarPresentation: vi.fn(),
         },
         settings: {
             toggleRememberHomeCardPosition: vi.fn(),
@@ -114,6 +118,8 @@ const createContext = (overrides: CommandPaletteContextOverrides = {}): CommandP
             setLibraryWallSeamStyle: vi.fn(),
             toggleLibraryWallBackdropLyrics: vi.fn(),
             toggleLibraryWallBackdropBlur: vi.fn(),
+            libraryWallSeamDirection: () => 'auto' as const,
+            setLibraryWallSeamDirection: vi.fn(),
             ponderHintVisibility: 'always' as const,
             setPonderHintVisibility: vi.fn(),
             togglePonderTouchButton: vi.fn(),
@@ -153,6 +159,7 @@ const createContext = (overrides: CommandPaletteContextOverrides = {}): CommandP
             modSystemEnabled: false,
             toggleVoiceInputPause: vi.fn(),
             togglePreventDisplaySleepDuringPlayback: vi.fn(),
+            toggleBackgroundThrottling: vi.fn(),
             toggleWallpaperMode: vi.fn(),
             toggleCloseToTray: vi.fn(),
             toggleHideRemoteControlTitlebar: vi.fn(),
@@ -160,6 +167,8 @@ const createContext = (overrides: CommandPaletteContextOverrides = {}): CommandP
             unlockRemoteControl: vi.fn(),
             toggleObsKeepMainWindowAnimation: vi.fn(),
             toggleWallpaperMacAutohideDock: vi.fn(),
+            gpuPreference: () => 'auto',
+            setGpuPreference: vi.fn(),
             sleepTimerEnabled: false,
             setSleepTimerEnabled: vi.fn(),
             sleepTimerHours: 0,
@@ -192,6 +201,7 @@ const createContext = (overrides: CommandPaletteContextOverrides = {}): CommandP
             setMonetBackgroundTuning: vi.fn(),
             setLatentBackgroundTuning: vi.fn(),
             toggleVideoLayer: vi.fn(),
+            setSmartBeatMode: vi.fn(),
             toggleSmartBeat: vi.fn(),
             pickVideoLayerFile: vi.fn(async () => null),
             usesWordSegmentation: true,
@@ -868,6 +878,19 @@ describe('command palette registry', () => {
             expect(match.command.id).toBe('desktop-toggle-prevent-display-sleep');
             await match.command.execute('', context);
             expect(context.settings.togglePreventDisplaySleepDuringPlayback).toHaveBeenCalled();
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it('matches and executes the desktop background throttling toggle', async () => {
+        vi.stubGlobal('window', { electron: {} });
+        try {
+            const context = createContext();
+            const [match] = getCommandPaletteMatches('后台节流', context);
+            expect(match.command.id).toBe('desktop-toggle-background-throttling');
+            await match.command.execute('', context);
+            expect(context.settings.toggleBackgroundThrottling).toHaveBeenCalled();
         } finally {
             vi.unstubAllGlobals();
         }

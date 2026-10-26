@@ -11,6 +11,7 @@ import { FOLIUM_OLD_CLIENT_NAMES } from '../deprecated/oldNames';
 import { sayFoliumOldNameOnce } from '../deprecated/warnings';
 import { createFoliumRegistry } from '../../runtime/registry';
 import { timeFoliumMod } from '../../runtime/guard';
+import { foliumProviderId } from '../omni/providerIds';
 
 // src/mods/folium/registries/omniProviders.ts
 // EXPERIMENTAL `omni.providers`: a mod's online music source, adapted to the
@@ -24,8 +25,9 @@ import { timeFoliumMod } from '../../runtime/guard';
 // Songs keep the mod's own id as `sourceRef.mediaId`, so queues and history
 // that outlive the mod still name the song; they become unplayable, not
 // corrupt, while the mod is off.
-
-export const foliumProviderId = (id: string) => `folium.${id.replace(':', '.')}`;
+//
+// The provider id is made in omni/providerIds.ts (`foliumProviderId`), which others read without
+// loading this registry.
 
 const toUnifiedSong = (providerId: string, song: FoliumProviderSong): UnifiedSong => ({
     id: song.id,
@@ -70,6 +72,9 @@ const buildProvider = (modId: string, providerId: string, def: FoliumOmniProvide
         mutations: false,
         // A provider's tracks can be word-timed. Declarative only: nothing in the host reads this flag.
         wordByWordLyrics: typeof def.getLyrics === 'function',
+        // Songs are looked up by id only through the mod's `getSong`. Without it `playback.getSongDetail`
+        // still answers (null), so the flag tells such a source apart before anything is asked.
+        songDetail: typeof def.getSong === 'function',
     };
     return {
         id: providerId,

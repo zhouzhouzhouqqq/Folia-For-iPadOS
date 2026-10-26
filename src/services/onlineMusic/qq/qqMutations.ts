@@ -4,7 +4,7 @@ import { OnlineProviderError } from '../../../types/onlineMusic';
 import { normalizeQqCollection } from './qqNormalize';
 import { qqListKindOf } from './qqLists';
 import { requestQqSongDetail } from './qqSongDetail';
-import { hasQqSession, requestQq } from './qqTransport';
+import { hasUsableQqSession, requestQq } from './qqTransport';
 
 // src/services/onlineMusic/qq/qqMutations.ts
 // QQ 音乐的写入：往自建歌单加歌删歌、收藏歌单，以及查询收藏状态（qq-music-api 3.3.0）；红心与收藏专辑（3.3.1）。
@@ -141,7 +141,7 @@ const subscribeAlbum: NonNullable<OnlineMutationProvider['subscribeAlbum']> = as
  * 收藏按钮的状态留空（界面按未收藏显示，点了只会去收藏，不会误取消）。
  */
 export const getQqSubscriptionStatus = async (type: 'playlist' | 'album', id: MediaId): Promise<boolean> => {
-    if (!hasQqSession()) return false;
+    if (!hasUsableQqSession()) return false;
     const key = type === 'playlist' ? positiveInteger(id) : String(id ?? '').trim();
     if (key === null || key === '') return false;
     const response = await requestQq<any>('user_subscription_status', { type, ids: String(key) });

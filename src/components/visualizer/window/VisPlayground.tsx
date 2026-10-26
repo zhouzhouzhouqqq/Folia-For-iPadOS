@@ -7,7 +7,7 @@ import VisualizerRenderer from '../VisualizerRenderer';
 import { type StoredCustomLyricsFont, type SubtitleContentMode, type Theme, type VisualizerMode } from '../../../types';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { selectVisualizerSettingsSnapshot, useVisualizerSettingsStore } from '../../../stores/useVisualizerSettingsStore';
-import { PictureGrid, Tooltip, type PictureState } from '../../modal/settings/kit';
+import { PictureGrid, Tooltip } from '../../modal/settings/kit';
 import { kitTransition, useKitReducedMotion } from '../../modal/settings/kit/motion';
 import StudioWindow from '../../shared/StudioWindow';
 import { visualizersRegistry } from '@/mods/folium/registries/visualizers';
@@ -15,7 +15,7 @@ import { useFoliumRegistryEntries } from '@/mods/runtime/registry';
 import { colorWithAlpha } from '../colorMix';
 import { type PreviewPlaceholderId } from '../PreviewPlaceholder';
 import { VISUALIZER_REGISTRY, getVisualizerModeLabel, getVisualizerRegistryEntry } from '../registry';
-import VisPlaygroundPreviewHotspots, { type VisPlaygroundEditSection } from './VisPlaygroundPreviewHotspots';
+import VisPlaygroundPreviewHotspots, { type VisPlaygroundEditSection, type VisPlaygroundHotspotSection } from './VisPlaygroundPreviewHotspots';
 import VisPlaygroundSampleStage from './VisPlaygroundSampleStage';
 import VisPlaygroundSettingsPanel from './VisPlaygroundSettingsPanel';
 import FontPicker, { type LocalFontEntry } from './FontPicker';
@@ -23,7 +23,7 @@ import { useTuningDrafts } from './useTuningDrafts';
 import { useVisualizerStyleAssets } from '../useVisualizerStyleAssets';
 import type { VisualizerBackgroundActions, VisualizerBackgroundConfig } from '../backgrounds/definition';
 import { LyricPreviewProvider, type LyricPreviewLook } from '../preview/LyricPreviewContext';
-import LyricStylePicture from '../preview/LyricStylePicture';
+import { drawLyricStyleChoice, RANDOM_VISUALIZER_CHOICE, selectLyricStyleChoice } from '../random/lyricStyleChoices';
 import { usePreviewClock } from '../preview/usePreviewClock';
 
 interface VisPlaygroundProps {
@@ -115,8 +115,6 @@ const clampFontScale = (value: number) => Math.min(1.4, Math.max(0.85, value));
 
 /** How many pictures of lyric styles lie side by side under the sample: in the wide window, and where it is one column. */
 const SHELF_COLUMNS = { wide: 7, narrow: 4 };
-
-const drawStyle = (mode: VisualizerMode, state: PictureState) => <LyricStylePicture mode={mode} {...state} />;
 
 const VisPlayground: React.FC<VisPlaygroundProps> = ({
     theme,
@@ -247,10 +245,13 @@ const VisPlayground: React.FC<VisPlaygroundProps> = ({
     // changes, not only on language changes.
     const foliumVisualizerEntries = useFoliumRegistryEntries(visualizersRegistry);
     const modeOptions = useMemo(() => (
-        VISUALIZER_REGISTRY.map(entry => ({
-            label: getVisualizerModeLabel(entry.mode, t),
-            value: entry.mode,
-        }))
+        [
+            ...VISUALIZER_REGISTRY.map(entry => ({
+                label: getVisualizerModeLabel(entry.mode, t),
+                value: entry.mode,
+            })),
+            { label: t('ui.visualizerRandom'), value: RANDOM_VISUALIZER_CHOICE },
+        ]
         // eslint-disable-next-line react-hooks/exhaustive-deps
     ), [t, foliumVisualizerEntries]);
     // The window's own split: under it the column lies under the stage and the shelf is narrow.
@@ -285,7 +286,7 @@ const VisPlayground: React.FC<VisPlaygroundProps> = ({
     useEffect(() => { setActiveEditSection(initialEditSection); }, [initialEditSection]);
 
     const visualizerEntry = getVisualizerRegistryEntry(visualizerMode);
-    const hotspotLabels = useMemo<Record<Exclude<VisPlaygroundEditSection, 'common'>, string>>(() => ({
+    const hotspotLabels = useMemo<Record<VisPlaygroundHotspotSection, string>>(() => ({
         background: t('options.previewBackgroundHotspot'),
         visualizer: t('options.previewVisualizerHotspot'),
         subtitle: t('options.previewSubtitleHotspot'),
@@ -515,11 +516,14 @@ const VisPlayground: React.FC<VisPlaygroundProps> = ({
                     <span className="ml-1.5 font-normal text-[color:var(--st-t3)]">{modeOptions.length}</span>
                 </h3>
                 <PictureGrid
-                    value={visualizerMode}
+                    value={settings.randomVisualizerModePerSong ? RANDOM_VISUALIZER_CHOICE : visualizerMode}
                     options={modeOptions}
-                    picture={drawStyle}
+                    picture={drawLyricStyleChoice}
                     columns={isWideWindow ? SHELF_COLUMNS.wide : SHELF_COLUMNS.narrow}
-                    onChange={mode => onVisualizerModeChange?.(mode)}
+                    onChange={mode => {
+                        selectLyricStyleChoice(mode, next => onVisualizerModeChange?.(next));
+                        setActiveEditSection('visualizer');
+                    }}
                     label={t('ui.animationMode')}
                     maxHeight={250}
                     className="-mx-4"

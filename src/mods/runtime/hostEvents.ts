@@ -15,8 +15,9 @@ import { getPlaybackSongKey } from '@/utils/appPlaybackGuards';
 import { clampMediaVolume } from '@/utils/appPlaybackHelpers';
 import type { FoliumBeforePlayEvent, FoliumLyricsTransformEvent, FoliumPlaybackState, FoliumSong } from '../folium/contract';
 import { fromFoliumLines, resolveFoliumSongRef, toFoliumLines, toFoliumPlaybackFailureReason, toFoliumSong } from '../folium/dto';
-import { dispatchFoliumHookAsync, dispatchFoliumHookSync, emitFoliumEvent, hasFoliumEventHandlers } from '../folium/events';
-import { findFoliumQueueCurrentIndex } from './hostQueue';
+import { dispatchFoliumHookAsync, dispatchFoliumHookSync, emitFoliumEvent, emitFoliumEventPerMod, hasFoliumEventHandlers } from '../folium/events';
+import { findFoliumQueueCurrentIndex, resolveFoliumQueueKind } from './hostQueue';
+import { takeFoliumQueueChange } from './queue/queueVersion';
 
 // src/mods/runtime/hostEvents.ts
 // Main-window wiring between host state and the Folium event bus:
@@ -90,12 +91,17 @@ type PlaybackStoreState = ReturnType<typeof usePlaybackStore.getState>;
 
 const displayedSongKey = (song: SongResult | null) => (song ? getPlaybackSongKey(song) : null);
 
-/* What playback.queueChanged reports moved: the queue array, FM / Stage, or the displayed song's key. */
+/*
+ * What playback.queueChanged reports moved: the queue array, FM / Stage, or the displayed song's key.
+ * Folium 1.7: also the end of an automix blend (cancelled back to the outgoing song too, where the key
+ * stays), so a mod whose replaceQueue was refused `transition` hears when to try again.
+ */
 const queueOutlineChanged = (state: PlaybackStoreState, previous: PlaybackStoreState) => {
     if (
         state.playQueue !== previous.playQueue
         || state.isFmMode !== previous.isFmMode
         || state.activePlaybackContext !== previous.activePlaybackContext
+        || (previous.transitionDisplay !== null && state.transitionDisplay === null)
     ) {
         return true;
     }
@@ -109,16 +115,18 @@ const queueOutlineChanged = (state: PlaybackStoreState, previous: PlaybackStoreS
  * change, read from the state as it settled (playSong writes the queue, the
  * song and FM mode one after another). Never deduplicated by payload: a
  * shuffle keeps both the length and the current index.
+ * Folium 1.7: with the queue's version, and `byThisMod` true only for the mod whose replaceQueue made
+ * this change (runtime/queue/queueVersion.ts says which, once).
  */
 let queueChangePending = false;
 const emitQueueChanged = () => {
     queueChangePending = false;
     if (!hasFoliumEventHandlers('playback.queueChanged')) return;
     const state = usePlaybackStore.getState();
-    emitFoliumEvent('playback.queueChanged', {
-        length: state.playQueue.length,
-        currentIndex: findFoliumQueueCurrentIndex(state),
-    });
+    const { version, writer } = takeFoliumQueueChange(state.playQueue, resolveFoliumQueueKind(state));
+    const length = state.playQueue.length;
+    const currentIndex = findFoliumQueueCurrentIndex(state);
+    emitFoliumEventPerMod('playback.queueChanged', (modId) => ({ length, currentIndex, version, byThisMod: writer === modId }));
 };
 
 let installed = false;

@@ -20,6 +20,7 @@ import { resolvePendoloFallbackAnchorIndex } from './pendoloTimeline';
 import PendoloRotatingLine from './PendoloRotatingLine';
 import { resolvePendoloWaveReach, usePendoloBeatFx } from './usePendoloBeatFx';
 import { useVisualizerSettingsStore } from '../../../stores/useVisualizerSettingsStore';
+import { smartBeatActive } from '../../../services/beatFx/beatEffects';
 
 const PENDOLO_SCROLL_IDLE_RESET_MS = 2500;
 /** Peak alpha of the beat halo's front, at full strength (additive). */
@@ -361,7 +362,7 @@ const VisualizerPendolo: React.FC<VisualizerSharedProps> = (props) => {
     const angleStepRad = totalArcRad / Math.max(1, visibleWindowCount - 1);
     // 智能动感模式 (usePendoloBeatFx): the shockwave on the lyric lines and the shake. Off, every
     // MotionValue it returns stays 0. The wheel itself keeps to the lyrics; beats move the lower gears.
-    const smartBeatEnabled = useVisualizerSettingsStore(state => state.smartBeat.enabled);
+    const smartBeatEnabled = useVisualizerSettingsStore(state => smartBeatActive(state.smartBeat));
     const beatFx = usePendoloBeatFx(
         smartBeatEnabled,
         {
@@ -487,7 +488,11 @@ const VisualizerPendolo: React.FC<VisualizerSharedProps> = (props) => {
         >
             <div ref={visualizerRef} className="relative w-full h-full overflow-hidden select-none pointer-events-none">
                 {/* The halo sits under the clockwork and the lyrics, outside the shake: the shake's
-                    transform would make a stacking context and change what the additive blend lights. */}
+                    transform would make a stacking context and change what the additive blend lights.
+                    will-change keeps its gradient rastered once, the compositor scaling it: without it
+                    every hit's scale re-rasters a layer that reaches past the far corner (7567 px square
+                    at 2x), ~10-20 points of GPU-process CPU and ~300-500 MB more while 仿真鼓面 plays;
+                    the pixels move by at most 2/255 of gradient rounding (2026-10-18). */}
                 {smartBeatEnabled && (
                     <motion.div
                         aria-hidden
@@ -500,6 +505,7 @@ const VisualizerPendolo: React.FC<VisualizerSharedProps> = (props) => {
                             zIndex: 0,
                             background: haloBackground,
                             mixBlendMode: 'plus-lighter',
+                            willChange: 'transform',
                             x: beatFx.haloX,
                             y: beatFx.haloY,
                             scale: beatFx.haloScale,

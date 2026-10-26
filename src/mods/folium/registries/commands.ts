@@ -14,14 +14,26 @@ import { reportFoliumIssue } from '../../runtime/status';
 export interface StoredFoliumCommand {
     def: FoliumCommandDef;
     params: FoliumSetting[];
+    /**
+     * Offered to Settings → Global shortcuts (Folium 1.7): the mod set `globalShortcut: true` and the
+     * command has no params. Read once at registration, like the params, so a mod cannot flip it later
+     * by changing the object it handed over.
+     */
+    globalShortcut: boolean;
 }
 
 export const commandsRegistry = createFoliumRegistry<FoliumCommandDef, StoredFoliumCommand>('commands', {
-    validate: (def, { modId }) => {
+    validate: (def, { modId, id }) => {
         if (typeof def.run !== 'function') {
             throw new Error('commands.register: run must be a function');
         }
-        return { def, params: sanitizeFoliumParams(def.params, modId) };
+        const params = sanitizeFoliumParams(def.params, modId);
+        const wantsShortcut = def.globalShortcut === true;
+        if (wantsShortcut && params.length > 0) {
+            // Ignored rather than refused: the command still works from the palette and the panel.
+            console.warn(`[Folium] commands.register: ${id} has params, so globalShortcut is ignored`);
+        }
+        return { def, params, globalShortcut: wantsShortcut && params.length === 0 };
     },
 });
 

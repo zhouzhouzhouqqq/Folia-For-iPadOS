@@ -40,7 +40,7 @@ export const restoreSavedFoliumSelections = () => {
         const store = useVisualizerSettingsStore.getState();
         const visualizer = readSaved(VISUALIZER_MODE_KEY);
         if (visualizer && hasVisualizerMode(visualizer) && store.visualizerMode !== visualizer) {
-            store.handleSetVisualizerMode(visualizer, { notify: false });
+            store.handleSetVisualizerMode(visualizer, { notify: false, preserveRandom: true });
         }
         const background = readSaved(BACKGROUND_MODE_KEY);
         if (background && hasVisualizerBackgroundMode(background) && store.visualizerBackgroundMode !== background) {

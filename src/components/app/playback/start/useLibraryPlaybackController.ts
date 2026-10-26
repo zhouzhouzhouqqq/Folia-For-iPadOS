@@ -7,7 +7,7 @@ import { getCachedCoverUrl, loadCachedOrFetchCover } from '../../../../services/
 import { ensureLocalSongCoverAsset } from '../../../../services/localMusicService';
 import { addSongsToLocalPlaylist, buildCanonicalLocalSongIdIndex, createLocalPlaylist, getLocalPlaylists, setLocalSongFavorite } from '../../../../services/localPlaylistService';
 import { applyLocalLibraryEntityDisplay, buildLocalQueue, buildNavidromeQueue, buildUnifiedLocalSong, buildUnifiedNavidromeSong, resolveLocalSongMetadata } from '../../../../services/playbackAdapters';
-import { getPrefetchedData } from '../../../../services/prefetchService';
+import { getPrefetchedData, prefetchNearbySongs } from '../../../../services/prefetchService';
 import { retireBlobUrl } from '../../../../services/playbackBlobUrls';
 import type { ThemeCacheSongKey } from '../../../../services/themeCache';
 import { hasRenderableLyrics } from '../../../../utils/appPlaybackHelpers';
@@ -19,6 +19,7 @@ import {
     getPlaybackSongKey,
     hasMixedPlaybackSources,
     replacePlaybackSongInQueue,
+    replacePlaybackSongWhereQueued,
     resolveNavidromePlaybackCarrier,
     getPlaybackSourceRef,
 } from '../../../../utils/appPlaybackGuards';
@@ -36,6 +37,7 @@ import { getSongCacheWithLegacyMigration } from '../../../../services/onlineMusi
 import { getProviderCacheKey } from '../../../../services/onlineMusic/providerStorage';
 import { getNavidromeConfig, navidromeApi } from '../../../../services/navidromeService';
 import { notifyPlaybackFailed } from '../../../../services/hostExtensionHooks';
+import { wholeQueueWritesSoFar } from '../../../../services/wholeQueueWrites';
 import type { LyricData, LocalPlaylist, LocalSong, OnlineLyricsState, QueueAddBehavior, SongResult, StatusMessage } from '../../../../types';
 import type { AudioQualityPreference, MediaId, ProviderCollection } from '../../../../types/onlineMusic';
 import type { PlaybackSnapshot, PlaybackNavigationOptions } from '../../../../types/appPlayback';
@@ -107,6 +109,29 @@ const isStillPlaying = (song: SongResult): boolean => {
     const key = getPlaybackSongKey(song);
     const shown = usePlaybackStore.getState().currentSong;
     return askedSongKeyRef.current === key && shown !== null && getPlaybackSongKey(shown) === key;
+};
+
+/*
+ * Whether a library play's landing leaves a whole-queue write standing (a mod's replaceQueue, its undo,
+ * made while the play waited). playSong hands its own judgement in (`queueRewritten`); a play called here
+ * directly with a unified queue (a reload of the song after its lyrics changed, which passes the store's
+ * queue) counts the writes from its start; one without (a click in the local library) is a list of its own.
+ */
+const queueRewrittenFor = (options: PlaybackNavigationOptions): (() => boolean) => {
+    if (options.queueRewritten) return options.queueRewritten;
+    const writesAtEntry = wholeQueueWritesSoFar();
+    return () => options.unifiedQueue !== undefined && wholeQueueWritesSoFar() !== writesAtEntry;
+};
+
+/*
+ * The queue a library play lands in. Rewritten meanwhile: the store's queue as it is now, with the song
+ * swapped in only where it holds it (`write` null: nothing to write). Otherwise the play's own.
+ */
+const landingQueue = (rewritten: boolean, own: SongResult[], song: SongResult): { write: SongResult[] | null; queue: SongResult[] } => {
+    if (!rewritten) return { write: own, queue: own };
+    const live = usePlaybackStore.getState().playQueue;
+    const swapped = replacePlaybackSongWhereQueued(live, song);
+    return { write: swapped, queue: swapped ?? live };
 };
 
 type UseLibraryPlaybackControllerParams = {
@@ -557,11 +582,14 @@ export function useLibraryPlaybackController({
     const handleLocalQueueAdd = useCallback(async (localSong: LocalSong) => {
         const preparedLocalSong = await ensureLocalSongCoverAsset(localSong);
         const { unifiedSong } = await resolveLocalMetadataUI(preparedLocalSong, null);
-        const baseQueue = playQueue.length > 0 ? playQueue : (currentSong ? [currentSong] : []);
+        // The queue and the song as the store holds them after those waits, as the online add reads them
+        // (appendOnlineSongsToMainQueue): an edit or a whole-queue write made meanwhile is added to, not undone.
+        const live = usePlaybackStore.getState();
+        const baseQueue = live.playQueue.length > 0 ? live.playQueue : (live.currentSong ? [live.currentSong] : []);
         const { nextQueue, affectedSongs, changed } = applyQueueAddBehavior({
             queue: baseQueue,
             songs: [unifiedSong],
-            currentSong,
+            currentSong: live.currentSong,
             behavior: queueAddBehavior,
         });
 
@@ -570,14 +598,14 @@ export function useLibraryPlaybackController({
         }
 
         setPlayQueue(nextQueue);
-        void persistLastPlaybackCache(currentSong, nextQueue);
+        void persistLastPlaybackCache(live.currentSong, nextQueue);
         setStatusMsg({
             type: 'success',
             text: queueAddBehavior === 'next' ? (t('status.insertedToNext') || '') : (t('status.queueUpdated') || ''),
             nonce: Date.now(),
             durationMs: 1200,
         });
-    }, [currentSong, persistLastPlaybackCache, playQueue, queueAddBehavior, resolveLocalMetadataUI, setPlayQueue, setStatusMsg, t]);
+    }, [persistLastPlaybackCache, queueAddBehavior, resolveLocalMetadataUI, setPlayQueue, setStatusMsg, t]);
 
     // 预热一首本地歌曲的封面与在线匹配；可能写过库（提取了封面或跑过匹配）时返回 true，供调用方回写到 localSongs。
     const prewarmLocalSongMetadata = useCallback(async (localSong: LocalSong): Promise<boolean> => {
@@ -639,6 +667,7 @@ export function useLibraryPlaybackController({
 
     const onPlayLocalSong = useCallback(async (localSong: LocalSong, queue: LocalSong[] = [], options: PlaybackNavigationOptions = {}) => {
         const stillWanted = startPlay();
+        const queueRewritten = queueRewrittenFor(options);
         interruptStagePlaybackForMainTransition();
 
         const audio = await loadLocalSongAudio(localSong);
@@ -700,13 +729,19 @@ export function useLibraryPlaybackController({
 
         setIsLyricsLoading(true);
 
-        const finalQueue = options.unifiedQueue
+        const landed = landingQueue(queueRewritten(), options.unifiedQueue
             ? replacePlaybackSongInQueue(options.unifiedQueue, initialMeta.unifiedSong)
             : queue.length > 0
                 ? buildLocalQueue(queue, initialMeta.unifiedSong, initialMeta.catalog)
-                : [initialMeta.unifiedSong];
-        setPlayQueue(finalQueue);
+                : [initialMeta.unifiedSong], initialMeta.unifiedSong);
+        const finalQueue = landed.queue;
+        if (landed.write) setPlayQueue(landed.write);
         void persistLastPlaybackCache(initialMeta.unifiedSong, finalQueue);
+        // As playSong does for an online song: this song and the one after it are analysed for the
+        // blend between them, and online songs queued nearby are fetched ahead.
+        if (finalQueue.length > 1) {
+            void prefetchNearbySongs(initialMeta.unifiedSong, finalQueue, audioQuality, userId);
+        }
 
         if (options.shouldNavigateToPlayer ?? true) {
             navigateToPlaybackView();
@@ -777,6 +812,7 @@ export function useLibraryPlaybackController({
             }
         })();
     }, [
+        audioQuality,
         blobUrlRef,
         currentTime,
         handleLocalSongMatch,
@@ -795,6 +831,7 @@ export function useLibraryPlaybackController({
         setPlayQueue,
         setStatusMsg,
         shouldAutoPlayRef,
+        userId,
     ]);
 
     const onPlayNavidromeSong = useCallback(async (
@@ -803,6 +840,7 @@ export function useLibraryPlaybackController({
         options: PlaybackNavigationOptions = {},
     ) => {
         const stillWanted = startPlay();
+        const queueRewritten = queueRewrittenFor(options);
         interruptStagePlaybackForMainTransition();
 
         const shouldNavigateToPlayer = options.shouldNavigateToPlayer ?? true;
@@ -1003,13 +1041,18 @@ export function useLibraryPlaybackController({
             // The lyrics came with the match data; a song without any may get some from a mod.
             supplyLyricsAfterEmptyLoad();
 
-            const finalQueue = options.unifiedQueue
+            const landed = landingQueue(queueRewritten(), options.unifiedQueue
                 ? replacePlaybackSongInQueue(options.unifiedQueue, unifiedSong)
                 : queue.length > 0
                     ? buildNavidromeQueue(queue, unifiedSong)
-                    : [unifiedSong];
-            setPlayQueue(finalQueue);
+                    : [unifiedSong], unifiedSong);
+            const finalQueue = landed.queue;
+            if (landed.write) setPlayQueue(landed.write);
             void persistLastPlaybackCache(unifiedSong, finalQueue);
+            // As in onPlayLocalSong.
+            if (finalQueue.length > 1) {
+                void prefetchNearbySongs(unifiedSong, finalQueue, audioQuality, userId);
+            }
 
             if (shouldNavigateToPlayer) {
                 navigateToPlaybackView();
@@ -1030,6 +1073,7 @@ export function useLibraryPlaybackController({
             notifyPlaybackFailed({ song: navidromeSong, reason: null, phase: 'play', willAutoSkip: false });
         }
     }, [
+        audioQuality,
         currentTime,
         interruptStagePlaybackForMainTransition,
         lyricsLoadingWritesRef,
@@ -1045,6 +1089,7 @@ export function useLibraryPlaybackController({
         setStatusMsg,
         shouldAutoPlayRef,
         t,
+        userId,
     ]);
 
     const onMatchNavidromeSong = useCallback(async () => {
@@ -1064,14 +1109,16 @@ export function useLibraryPlaybackController({
             await saveLocalSong(updatedLocalSong);
             await loadLocalSongs();
             if (isStillPlaying(currentSong)) {
-                void onPlayLocalSong(updatedLocalSong, localSongs, { unifiedQueue: playQueue });
+                // The store's queue after those waits, not this render's: a whole-queue write (a mod's
+                // replaceQueue) or an edit made while the lyrics were saved is what the reload lands in.
+                void onPlayLocalSong(updatedLocalSong, localSongs, { unifiedQueue: usePlaybackStore.getState().playQueue });
             }
             setStatusMsg({ type: 'success', text: isTranslation ? 'Translation lyrics updated' : 'Lyrics updated' });
         } catch (error) {
             console.error('Failed to save local lyrics', error);
             setStatusMsg({ type: 'error', text: 'Failed to save lyrics' });
         }
-    }, [currentSong, loadLocalSongs, localSongs, onPlayLocalSong, playQueue, resolveLatestLocalSongRecord, setStatusMsg]);
+    }, [currentSong, loadLocalSongs, localSongs, onPlayLocalSong, resolveLatestLocalSongRecord, setStatusMsg]);
 
     const handleChangeLyricsSource = useCallback(async (source: 'local' | 'embedded' | 'online') => {
         if (!isLocalPlaybackSong(currentSong)) return;
@@ -1138,7 +1185,8 @@ export function useLibraryPlaybackController({
                 const updatedList = await getLocalSongs();
                 const found = updatedList.find(song => song.id === matchedFor.localRef.songId);
                 if (found && isStillPlaying(matchedFor)) {
-                    await onPlayLocalSong(found, localSongs, { unifiedQueue: playQueue });
+                    // The store's queue after the reads above, as for uploaded lyrics.
+                    await onPlayLocalSong(found, localSongs, { unifiedQueue: usePlaybackStore.getState().playQueue });
                     reloaded = true;
                 }
             }
@@ -1151,7 +1199,7 @@ export function useLibraryPlaybackController({
                 setStatusMsg({ type: 'success', text: t('status.matchSuccessful') || 'Match successful' });
             }
         }
-    }, [closeLyricMatchOf, loadLocalSongs, localSongs, onPlayLocalSong, playQueue, setStatusMsg]);
+    }, [closeLyricMatchOf, loadLocalSongs, localSongs, onPlayLocalSong, setStatusMsg]);
 
     // The match window switched the instrumental mark: it closes, and the records and the lyrics shown are
     // refreshed (onRefreshLocalSongs changes them where they are), without playing the song again.

@@ -8,6 +8,7 @@ const transportState = vi.hoisted(() => ({ hasSession: true }));
 
 vi.mock('@/services/onlineMusic/qq/qqTransport', () => ({
     hasQqSession: () => transportState.hasSession,
+    hasUsableQqSession: () => transportState.hasSession,
     requestQq: requestMock,
 }));
 
@@ -15,7 +16,7 @@ vi.mock('@/services/onlineMusic/qq/qqLyricProvider', () => ({
     searchQQSongs: searchQQSongsMock,
 }));
 
-import { searchQqSongs } from '@/services/onlineMusic/qq/qqSearch';
+import { resetQqSearchFallbackMemory, searchQqSongs } from '@/services/onlineMusic/qq/qqSearch';
 import { OnlineProviderError } from '@/types/onlineMusic';
 
 // 后端 `/search` 原样交出的精简版搜索条目（字段按 qq-music-api 3.3.1 文档，标识符取公开曲目）。
@@ -52,6 +53,8 @@ describe('searchQqSongs', () => {
         requestMock.mockReset();
         searchQQSongsMock.mockReset();
         transportState.hasSession = true;
+        // 回退过匿名的关键词记在模块里；不清的话前一条用例的回退会把后一条的后续页送去匿名。
+        resetQqSearchFallbackMemory();
     });
 
     it('searches through the backend with the session and keeps the catalog mids', async () => {
@@ -75,6 +78,100 @@ describe('searchQqSongs', () => {
         requestMock.mockResolvedValue({ code: 200, more: false, items: Array.from({ length: 20 }, () => LITE_ITEM) });
 
         await expect(searchQqSongs('海阔天空', 20, 0)).resolves.toMatchObject({ hasMore: false, nextOffset: 20 });
+    });
+
+    it('retries anonymously when the session returns an empty first page', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        requestMock.mockResolvedValue({ code: 200, more: false, items: [] });
+        searchQQSongsMock.mockResolvedValue([ANONYMOUS_RESULT]);
+
+        const page = await searchQqSongs('海阔天空', 20, 0);
+
+        expect(searchQQSongsMock).toHaveBeenCalledWith('海阔天空', 1, 20);
+        expect(page.items[0]?.sourceRef).toMatchObject({ providerId: 'qq', mediaId: '003rJSwm3TechU' });
+    });
+
+    it('keeps an empty first page when the backend still reports more', async () => {
+        requestMock.mockResolvedValue({ code: 200, more: true, items: [] });
+
+        const page = await searchQqSongs('海阔天空', 20, 0);
+
+        expect(searchQQSongsMock).not.toHaveBeenCalled();
+        expect(page).toMatchObject({ items: [], hasMore: true });
+    });
+
+    it('does not retry anonymously on later pages', async () => {
+        requestMock.mockResolvedValue({ code: 200, more: false, items: [] });
+
+        const page = await searchQqSongs('未回退', 20, 20);
+
+        expect(searchQQSongsMock).not.toHaveBeenCalled();
+        expect(page.items).toEqual([]);
+    });
+
+    it('uses the anonymous search on later pages after a first-page fallback', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        requestMock.mockResolvedValue({ code: 200, more: false, items: [] });
+        searchQQSongsMock.mockResolvedValue([ANONYMOUS_RESULT]);
+
+        await searchQqSongs('翻页回退', 20, 0);
+        expect(searchQQSongsMock).toHaveBeenCalledWith('翻页回退', 1, 20);
+
+        requestMock.mockClear();
+        searchQQSongsMock.mockClear();
+        const page = await searchQqSongs('翻页回退', 20, 20);
+
+        expect(requestMock).not.toHaveBeenCalled();
+        expect(searchQQSongsMock).toHaveBeenCalledWith('翻页回退', 2, 20);
+        expect(page.items).toHaveLength(1);
+    });
+
+    it('returns to the session search when a marked keyword works again', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        requestMock.mockResolvedValue({ code: 200, more: false, items: [] });
+        searchQQSongsMock.mockResolvedValue([ANONYMOUS_RESULT]);
+
+        await searchQqSongs('恢复会话', 20, 0);
+
+        requestMock.mockReset();
+        searchQQSongsMock.mockReset();
+        requestMock.mockResolvedValue({ code: 200, more: true, items: [LITE_ITEM] });
+        await expect(searchQqSongs('恢复会话', 20, 0)).resolves.toMatchObject({ items: [expect.anything()] });
+
+        requestMock.mockClear();
+        await searchQqSongs('恢复会话', 20, 20);
+
+        expect(requestMock).toHaveBeenCalledWith('search', { keyword: '恢复会话', type: 'song', page: 2, limit: 20 });
+        expect(searchQQSongsMock).not.toHaveBeenCalled();
+    });
+
+    it('forgets the marked keywords when the runtime memory is reset', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        requestMock.mockResolvedValue({ code: 200, more: false, items: [] });
+        searchQQSongsMock.mockResolvedValue([ANONYMOUS_RESULT]);
+        await searchQqSongs('重置记录', 20, 0);
+
+        resetQqSearchFallbackMemory();
+        requestMock.mockClear();
+        searchQQSongsMock.mockClear();
+        await searchQqSongs('重置记录', 20, 20);
+
+        expect(requestMock).toHaveBeenCalledWith('search', { keyword: '重置记录', type: 'song', page: 2, limit: 20 });
+        expect(searchQQSongsMock).not.toHaveBeenCalled();
+    });
+
+    it('keeps the empty session page when the anonymous fallback fails', async () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        requestMock.mockResolvedValue({ code: 200, more: false, total: 0, items: [] });
+        searchQQSongsMock.mockRejectedValue(new Error('QQ Music API error: code 2001'));
+
+        const page = await searchQqSongs('匿名失败', 20, 0);
+
+        expect(page).toMatchObject({ items: [], hasMore: false, total: 0 });
+        expect(warn).toHaveBeenCalledWith(
+            '[QQProvider] anonymous search fallback failed, keeping the empty session page',
+            expect.any(Error),
+        );
     });
 
     it('surfaces an upstream refusal instead of reporting no results', async () => {
@@ -122,6 +219,7 @@ describe('searchQqSongs', () => {
         expect(requestMock).not.toHaveBeenCalled();
 
         requestMock.mockResolvedValue({ code: 200, more: false, items: [] });
+        searchQQSongsMock.mockResolvedValue([]);
         await searchQqSongs('长'.repeat(80), 20, 0);
         expect(requestMock).toHaveBeenCalledWith('search', expect.objectContaining({ keyword: '长'.repeat(60) }));
     });

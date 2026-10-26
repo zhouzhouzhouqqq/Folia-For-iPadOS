@@ -41,6 +41,20 @@ func mustFail(_ message: String, _ operation: () throws -> Void) throws {
         try check(reused.apiKey == config.apiKey && reused.revision != config.revision, "key reuse or revision failed")
         try mustFail("key moved to another endpoint") { _ = try config.replacing(provider: "openai", apiUrl: "https://other.example/v1", model: "", temperature: 1, stream: false, newKey: "") }
         try mustFail("key moved to another provider") { _ = try config.replacing(provider: "gemini", apiUrl: "", model: "", temperature: 1, stream: false, newKey: "") }
+        let google = try AIConfiguration().replacing(provider: "gemini", apiUrl: "", model: "gemini-3-flash-preview", temperature: 0.7, stream: false, newKey: "synthetic-key")
+        try check(try google.permittedRequest(url: "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&pageToken=next", method: "GET").host == "generativelanguage.googleapis.com", "Gemini catalogue blocked")
+        let changedModel = try google.replacing(provider: "gemini", apiUrl: "", model: "gemini-test-model", temperature: 0.7, stream: false, newKey: "")
+        try check(changedModel.apiUrl.contains("gemini-test-model:generateContent"), "Gemini model not applied")
+        let anthropic = try AIConfiguration().replacing(provider: "openai", apiUrl: "https://api.anthropic.com/v1", model: "claude-test", temperature: 0.7, stream: false, newKey: "synthetic-key")
+        try check(anthropic.apiUrl == "https://api.anthropic.com/v1/messages", "Anthropic endpoint not normalized")
+        _ = try anthropic.permittedRequest(url: "https://api.anthropic.com/v1/models?limit=1000&after_id=next", method: "GET")
+        let compatible = try config.replacing(provider: "openai", apiUrl: "https://ai.example/v1", model: "selected", temperature: 0.7, stream: false, newKey: "synthetic")
+        for query in ["after=cursor", "pageNum=2", "page_no=2"] {
+            _ = try compatible.permittedRequest(url: "https://ai.example/v1/models?\(query)", method: "GET")
+        }
+        for url in ["https://other.example/v1/models", "https://api.anthropic.com/v1/other", "https://api.anthropic.com/v1/models?redirect=https://evil.example"] {
+            try mustFail("model listing can escape saved endpoint") { _ = try anthropic.permittedRequest(url: url, method: "GET") }
+        }
         let storage = MemoryAIStore()
         let settings = URLSessionConfiguration.ephemeral
         settings.protocolClasses = [AIProtocol.self]; settings.httpShouldSetCookies = false

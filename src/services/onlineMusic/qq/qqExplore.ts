@@ -12,7 +12,7 @@ import { createHandedOut, cursorWords, stampCursor } from '../exploreReads';
 import { errorMessage } from '../../../utils/errorText';
 import { qqRadioCollection, qqToplistCollection } from './qqLists';
 import { normalizeQqCollection, normalizeQqSong } from './qqNormalize';
-import { hasQqSession, requestQq } from './qqTransport';
+import { hasUsableQqSession, requestQq } from './qqTransport';
 
 // src/services/onlineMusic/qq/qqExplore.ts
 // QQ 音乐的探索页。QQ 没有一条能直接用的推荐页接口（它的首页 feed 登录后只给 3 栏、卡片分不出类型，
@@ -350,7 +350,8 @@ export const createQqExplore = (): OnlineExploreProvider => {
     };
 
     const firstPage = async (listened: UnifiedSong[]): Promise<ProviderExplorePage> => {
-        const signedIn = hasQqSession();
+        // 停用的会话（isQqSessionParked）请求不带，照游客读。
+        const signedIn = hasUsableQqSession();
         if (hadAccount !== undefined && hadAccount !== signedIn) {
             memory = newMemory();
             console.log(`[QQ] Explore page: read ${signedIn ? 'for an account after a guest' : 'for a guest after an account'}; what the shelves handed out before is forgotten`);

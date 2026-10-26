@@ -49,6 +49,18 @@ describe('readLocalTrackBytes', () => {
         expect(fetch).not.toHaveBeenCalled();
     });
 
+    it('reads an online URL only when the caller says its provider keeps the file (stem separation)', async () => {
+        const fetch = vi.fn(async () => audioResponse(6));
+        vi.stubGlobal('fetch', fetch);
+        const kept = vi.fn(async () => true);
+        const found = await readLocalTrackBytes(online, { representation: null, audioUrl: 'https://cdn/x.mp3', mayReadOnlineUrl: kept });
+        expect(found && 'bytes' in found ? found.bytes.byteLength : -1).toBe(6);
+        expect(kept).toHaveBeenCalledWith('https://cdn/x.mp3');
+        fetch.mockClear();
+        expect(await readLocalTrackBytes(online, { representation: null, audioUrl: 'https://cdn/x.mp3', mayReadOnlineUrl: async () => false })).toBeNull();
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
     it('reads a local track with no URL through the registered file reader', async () => {
         const reader = vi.fn(async () => bytes(5));
         registerLocalTrackFileReader(reader);

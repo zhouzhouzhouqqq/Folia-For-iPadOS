@@ -39,7 +39,7 @@ describe('the final0 model', () => {
         modelCanRun.mockReturnValue(true);
         runBeatThisGpu.mockResolvedValue(null);
         expect(await analyseBeatGrid(mel)).toBeNull();
-        expect(runBeatThisGpu).toHaveBeenCalledWith(expect.any(Array), 'beat_this', undefined);
+        expect(runBeatThisGpu).toHaveBeenCalledWith(expect.any(Array), 'beat_this', undefined, { urgency: 'background' });
         expect(runBeatThis).not.toHaveBeenCalled();
     });
 
@@ -52,7 +52,7 @@ describe('the final0 model', () => {
             percussive: energy,
         }));
         const grid = await analyseBeatGrid(mel, { percussive: true });
-        expect(runBeatThisGpu).toHaveBeenCalledWith(expect.any(Array), 'beat_this', mel);
+        expect(runBeatThisGpu).toHaveBeenCalledWith(expect.any(Array), 'beat_this', mel, { urgency: 'background' });
         expect(grid?.percussive).toBe(energy);
     });
 
@@ -61,7 +61,7 @@ describe('the final0 model', () => {
         runBeatThisGpu.mockResolvedValue(null);
         runBeatThis.mockResolvedValue(null);
         await analyseBeatGrid(mel, { cpuFallback: true });
-        expect(runBeatThisGpu).toHaveBeenCalledWith(expect.any(Array), 'beat_this', undefined);
+        expect(runBeatThisGpu).toHaveBeenCalledWith(expect.any(Array), 'beat_this', undefined, { urgency: 'background' });
         expect(runBeatThis).toHaveBeenCalledTimes(1);
         expect(noteModelFailed).toHaveBeenCalledWith('beat_this');
     });

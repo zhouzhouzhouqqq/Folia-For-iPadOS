@@ -105,9 +105,10 @@ describe('where a browser is looked for', () => {
         platform, env, exists: (candidate: string) => installed.includes(candidate), log: () => {}, warn: () => {},
     }).findBrowser();
 
-    it('lists Chrome, Edge, Chromium, Brave on Windows: all four under the computer\'s programs folders, then under the person\'s own', () => {
+    it('lists the four stable browsers first on Windows, every browser under the computer\'s programs folders before any under the person\'s own', () => {
         const candidates = browserCandidates({ platform: 'win32', env: windows });
-        expect(candidates).toHaveLength(12);
+        // Seven browsers under two programs folders (Chrome Canary is never installed there), then all eight under the person's own.
+        expect(candidates).toHaveLength(22);
         expect(candidates.slice(0, 4)).toEqual([
             'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
             'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
@@ -115,8 +116,27 @@ describe('where a browser is looked for', () => {
             'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
         ]);
         expect(candidates[7]).toBe('C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe');
-        expect(candidates.slice(8).every((candidate: string) => candidate.startsWith('C:\\Users\\某人\\AppData\\Local\\'))).toBe(true);
-        expect(candidates[8]).toBe('C:\\Users\\某人\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe');
+        expect(candidates.slice(14).every((candidate: string) => candidate.startsWith('C:\\Users\\某人\\AppData\\Local\\'))).toBe(true);
+        expect(candidates[14]).toBe('C:\\Users\\某人\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe');
+    });
+
+    it('then Chrome Beta, Dev and Helium under the programs folders, and Chrome Canary only under the person\'s own on Windows', () => {
+        const candidates = browserCandidates({ platform: 'win32', env: windows });
+        expect(candidates.slice(8, 14)).toEqual([
+            'C:\\Program Files\\Google\\Chrome Beta\\Application\\chrome.exe',
+            'C:\\Program Files (x86)\\Google\\Chrome Beta\\Application\\chrome.exe',
+            'C:\\Program Files\\Google\\Chrome Dev\\Application\\chrome.exe',
+            'C:\\Program Files (x86)\\Google\\Chrome Dev\\Application\\chrome.exe',
+            'C:\\Program Files\\imput\\Helium\\Application\\chrome.exe',
+            'C:\\Program Files (x86)\\imput\\Helium\\Application\\chrome.exe',
+        ]);
+        expect(candidates.slice(18)).toEqual([
+            'C:\\Users\\某人\\AppData\\Local\\Google\\Chrome Beta\\Application\\chrome.exe',
+            'C:\\Users\\某人\\AppData\\Local\\Google\\Chrome Dev\\Application\\chrome.exe',
+            'C:\\Users\\某人\\AppData\\Local\\Google\\Chrome SxS\\Application\\chrome.exe',
+            'C:\\Users\\某人\\AppData\\Local\\imput\\Helium\\Application\\chrome.exe',
+        ]);
+        expect(candidates.filter((candidate: string) => candidate.includes('Chrome SxS'))).toHaveLength(1);
     });
 
     it('takes Chrome before Edge, any browser of the computer before a person\'s own Chrome, and that one when it is all there is', () => {
@@ -131,21 +151,54 @@ describe('where a browser is looked for', () => {
         expect(finder('win32', windows, [])).toBeNull();
     });
 
+    it('takes a stable browser before Chrome\'s other channels and Helium, and one of those when it is all there is', () => {
+        const beta = 'C:\\Program Files\\Google\\Chrome Beta\\Application\\chrome.exe';
+        const helium = 'C:\\Program Files\\imput\\Helium\\Application\\chrome.exe';
+        const canary = 'C:\\Users\\某人\\AppData\\Local\\Google\\Chrome SxS\\Application\\chrome.exe';
+        const brave = 'C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe';
+        expect(finder('win32', windows, [helium, beta, brave])).toBe(brave);
+        expect(finder('win32', windows, [helium, beta])).toBe(beta);
+        expect(finder('win32', windows, [canary, helium])).toBe(helium);
+        expect(finder('win32', windows, [canary])).toBe(canary);
+    });
+
+    it('names the browser it found in the log, also where the file is chrome.exe for several', () => {
+        const lines: string[] = [];
+        createBrowserSignIn({
+            platform: 'win32', env: windows, exists: (candidate: string) => candidate.includes('imput'), log: (line: string) => lines.push(line), warn: () => {},
+        }).findBrowser();
+        expect(lines).toEqual(['[Ytm] Sign-in can use Helium (chrome.exe)']);
+    });
+
     it('skips a programs folder the computer does not name', () => {
-        expect(browserCandidates({ platform: 'win32', env: { ProgramFiles: 'C:\\Program Files' } })).toHaveLength(4);
+        expect(browserCandidates({ platform: 'win32', env: { ProgramFiles: 'C:\\Program Files' } })).toHaveLength(7);
     });
 
     it('looks in the computer\'s applications folder on macOS, then in the person\'s own', () => {
         const candidates = browserCandidates({ platform: 'darwin', env: { HOME: '/Users/someone' } });
-        expect(candidates.slice(0, 5)).toEqual([
+        expect(candidates).toHaveLength(16);
+        expect(candidates.slice(0, 4)).toEqual([
             '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
             '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
             '/Applications/Chromium.app/Contents/MacOS/Chromium',
             '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
-            '/Users/someone/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
         ]);
+        expect(candidates[8]).toBe('/Users/someone/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
         expect(finder('darwin', {}, ['/Applications/Brave Browser.app/Contents/MacOS/Brave Browser']))
             .toBe('/Applications/Brave Browser.app/Contents/MacOS/Brave Browser');
+    });
+
+    it('looks for Chrome\'s other channels and Helium on macOS after the four, under their own application names', () => {
+        const candidates = browserCandidates({ platform: 'darwin', env: { HOME: '/Users/someone' } });
+        expect(candidates.slice(4, 8)).toEqual([
+            '/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta',
+            '/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev',
+            '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+            '/Applications/Helium.app/Contents/MacOS/Helium',
+        ]);
+        expect(candidates[15]).toBe('/Users/someone/Applications/Helium.app/Contents/MacOS/Helium');
+        expect(finder('darwin', { HOME: '/Users/someone' }, ['/Users/someone/Applications/Helium.app/Contents/MacOS/Helium', '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary']))
+            .toBe('/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary');
     });
 
     it('looks for the usual names on PATH on Linux, in its absolute folders only', () => {
@@ -158,6 +211,18 @@ describe('where a browser is looked for', () => {
         // A folder named from wherever the app was started is not looked in.
         expect(browserCandidates({ platform: 'linux', env: { PATH: '.:bin::../tools:/usr/bin' } }).every((candidate: string) => candidate.startsWith('/usr/bin/'))).toBe(true);
         expect(finder('linux', { PATH: '.:bin' }, ['google-chrome', 'bin/google-chrome'])).toBeNull();
+    });
+
+    it('looks for Chrome\'s other channels and Helium on Linux by their command names, after the stable four', () => {
+        const env = { PATH: '/usr/bin' };
+        expect(browserCandidates({ platform: 'linux', env }).slice(8)).toEqual([
+            '/usr/bin/google-chrome-beta', '/usr/bin/google-chrome-unstable', '/usr/bin/google-chrome-canary', '/usr/bin/helium', '/usr/bin/helium-browser',
+        ]);
+        // The reporter of issue 812: Chrome Beta and Dev from the AUR, and helium-browser-bin.
+        expect(finder('linux', env, ['/usr/bin/helium-browser', '/usr/bin/google-chrome-unstable', '/usr/bin/google-chrome-beta'])).toBe('/usr/bin/google-chrome-beta');
+        expect(finder('linux', env, ['/usr/bin/helium-browser', '/usr/bin/google-chrome-unstable'])).toBe('/usr/bin/google-chrome-unstable');
+        expect(finder('linux', env, ['/usr/bin/helium-browser'])).toBe('/usr/bin/helium-browser');
+        expect(finder('linux', env, ['/usr/bin/helium-browser', '/usr/bin/chromium'])).toBe('/usr/bin/chromium');
     });
 });
 

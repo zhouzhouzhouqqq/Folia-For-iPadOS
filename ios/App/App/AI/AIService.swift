@@ -45,24 +45,28 @@ actor AIService {
             if cancelledBeforeStart.count < 64 { cancelledBeforeStart[id] = Date() }
         }
     }
-    func request(id: String, revision: String, url: String, body: String, timeoutMs: Double) async throws -> AIHTTPReply {
+    func request(id: String, revision: String, url: String, body: String, timeoutMs: Double, method: String = "POST") async throws -> AIHTTPReply {
         if cancelledBeforeStart.removeValue(forKey: id) != nil { throw CancellationError() }
         guard !id.isEmpty, id.count <= 80, tasks[id] == nil, tasks.count < 4 else { throw AIError.message("AI request already active or busy") }
         guard !config.apiKey.isEmpty, revision == config.revision, !revision.isEmpty else { throw AIError.message("AI settings changed or no key saved; retry after saving settings") }
-        let expected = try AIConfiguration.endpoint(provider: config.provider, raw: config.apiUrl)
-        guard URL(string: url) == expected, body.utf8.count <= 1_000_000,
-              let data = body.data(using: .utf8), (try JSONSerialization.jsonObject(with: data)) is [String: Any] else {
+        let expected = try config.permittedRequest(url: url, method: method)
+        let data = body.data(using: .utf8) ?? Data()
+        guard body.utf8.count <= 1_000_000,
+              method == "GET" ? body.isEmpty : (try JSONSerialization.jsonObject(with: data)) is [String: Any] else {
             throw AIError.message("AI request does not match the saved endpoint or JSON contract")
         }
         let snapshot = config
         let session = self.session
         let task = Task<AIHTTPReply, Error> {
             var request = URLRequest(url: expected)
-            request.httpMethod = "POST"; request.httpBody = data
+            request.httpMethod = method; request.httpBody = method == "POST" ? data : nil
             request.timeoutInterval = max(1, min(timeoutMs.isFinite ? timeoutMs / 1000 : 120, 120))
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.setValue(snapshot.provider == "gemini" ? snapshot.apiKey : "Bearer \(snapshot.apiKey)",
-                             forHTTPHeaderField: snapshot.provider == "gemini" ? "x-goog-api-key" : "Authorization")
+            if snapshot.provider == "gemini" { request.setValue(snapshot.apiKey, forHTTPHeaderField: "x-goog-api-key") }
+            else if expected.host?.lowercased() == "api.anthropic.com" {
+                request.setValue(snapshot.apiKey, forHTTPHeaderField: "x-api-key")
+                request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+            } else { request.setValue("Bearer \(snapshot.apiKey)", forHTTPHeaderField: "Authorization") }
             let (bytes, response) = try await session.bytes(for: request, delegate: AIRedirectGuard())
             guard let http = response as? HTTPURLResponse else { throw AIError.message("AI server returned no HTTP response") }
             guard !(300...399).contains(http.statusCode) else { throw AIError.message("AI redirects are blocked; enter the final HTTPS endpoint") }

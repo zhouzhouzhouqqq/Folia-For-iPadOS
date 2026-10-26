@@ -10,10 +10,17 @@ import { useOnlineProviderAccountStore } from '@/stores/useOnlineProviderAccount
 // for letter; NetEase itself is `fetch`, answered by the test.
 
 const stored = vi.hoisted(() => new Map<string, string>());
+// Keys that cannot be read: db.ts answers null for a read that failed, as for a key that is not there.
+const unreadable = vi.hoisted(() => new Set<string>());
+// Keys that cannot be written: the save rejects.
+const unwritable = vi.hoisted(() => new Set<string>());
 vi.mock('@/services/db', async importOriginal => ({
     ...(await importOriginal<typeof import('@/services/db')>()),
-    saveToCache: async (key: string, data: unknown) => { stored.set(key, JSON.stringify(data)); },
-    getFromCache: async (key: string) => (stored.has(key) ? JSON.parse(stored.get(key)!) : null),
+    saveToCache: async (key: string, data: unknown) => {
+        if (unwritable.has(key)) throw new Error('quota');
+        stored.set(key, JSON.stringify(data));
+    },
+    getFromCache: async (key: string) => (stored.has(key) && !unreadable.has(key) ? JSON.parse(stored.get(key)!) : null),
     removeFromCache: async (key: string) => { stored.delete(key); },
     removeCacheEntries: async (keys: string[]) => { keys.forEach(key => stored.delete(key)); },
 }));
@@ -45,6 +52,8 @@ const held = () => {
 
 beforeEach(() => {
     stored.clear();
+    unreadable.clear();
+    unwritable.clear();
     page.clear();
     fetchMock.mockReset();
     vi.stubEnv('VITE_NETEASE_API_BASE', 'http://netease.test');
@@ -90,13 +99,13 @@ describe('what NetEase keeps of a sign-in', () => {
             + '"likedSongIds":[11,12]}');
         status.refuse(new Error('offline'));
 
-        // NetEase could not be asked: the account stays, and so does everything kept.
+        // NetEase could not be asked: the account stays, and so does the snapshot; the old caches, made into it, are gone.
         await expect(read).resolves.toBe('unknown');
         expect(account()).toMatchObject({ status: 'authenticated', user: { id: 7 }, freshness: 'error' });
-        expect(stored.get(OLD_KEYS.user)).toBe(OLD_USER);
+        expect([...stored.keys()]).toEqual([SNAPSHOT_KEY]);
     });
 
-    it('reads a cache from under the key it had before the caches were named by platform; nothing where no user was kept', async () => {
+    it('reads a cache from under the key it had before the caches were named by platform, and removes them when told they are the snapshot; nothing where no user was kept', async () => {
         await expect(neteaseProvider.auth!.oldKeptAccount!()).resolves.toBeNull();
 
         stored.set('user_profile', OLD_USER);
@@ -106,7 +115,39 @@ describe('what NetEase keeps of a sign-in', () => {
             collections: [],
             likedSongIds: [11, 12],
         });
+        // Read, not removed: the read moves them under their names by platform (`getProviderCacheWithLegacyMigration`).
+        expect(stored.size).toBeGreaterThan(0);
+        await neteaseProvider.auth!.forgetOldKeptAccount!();
+        expect(stored.size).toBe(0);
+    });
+
+    // 快照没存上：旧版本的缓存留着，下次启动再拿它存一次，不会两处都没了。
+    it('keeps the caches of an older build where the snapshot made of them cannot be saved', async () => {
+        stored.set(OLD_KEYS.user, OLD_USER);
+        stored.set(OLD_KEYS.playlists, OLD_PLAYLISTS);
+        unwritable.add(SNAPSHOT_KEY);
+        fetchMock.mockRejectedValue(new Error('offline'));
+
+        await expect(omni.readAccount('netease', 'start')).resolves.toBe('unknown');
+
         expect(stored.get(OLD_KEYS.user)).toBe(OLD_USER);
+        expect(stored.get(OLD_KEYS.playlists)).toBe(OLD_PLAYLISTS);
+        expect(stored.has(SNAPSHOT_KEY)).toBe(false);
+    });
+
+    it('at a start where the snapshot cannot be read, brings nothing an older build kept back over it', async () => {
+        stored.set(OLD_KEYS.user, OLD_USER);
+        stored.set(OLD_KEYS.playlists, OLD_PLAYLISTS);
+        fetchMock.mockRejectedValue(new Error('offline'));
+        await expect(omni.readAccount('netease', 'start')).resolves.toBe('unknown');
+        // A later read kept a newer snapshot, which the next start cannot read.
+        const newer = '{"version":1,"savedAt":5,"user":{"id":7,"nickname":"Listener"},'
+            + '"collections":[{"providerId":"netease","id":2,"name":"Newer","type":"playlist"}],"likedSongIds":[13]}';
+        stored.set(SNAPSHOT_KEY, newer);
+        unreadable.add(SNAPSHOT_KEY);
+
+        await expect(omni.readAccount('netease', 'start')).resolves.toBe('unknown');
+        expect(stored.get(SNAPSHOT_KEY)).toBe(newer);
     });
 
     it('signs out: NetEase is told with the cookie, which has left the page before the first wait; the old caches go whatever NetEase answers', async () => {
@@ -150,16 +191,45 @@ describe('what NetEase keeps of a sign-in', () => {
         expect(stored.size).toBe(0);
     });
 
-    it('a sign-in that ran out: the cookie and the old caches go, and NetEase is asked nothing', async () => {
+    it('a sign-in that ran out: the cookie it was asked with and the old caches go, and NetEase is asked nothing more', async () => {
         page.set(COOKIE_KEY, 'MUSIC_U=abc');
         page.set('netease_cookie', 'MUSIC_U=older');
         Object.values(OLD_KEYS).forEach(key => stored.set(key, '[]'));
         stored.set('user_profile', OLD_USER);
+        // NetEase says the cookie signs nobody in.
+        fetchMock.mockImplementation(async () => Response.json({ code: 301 }));
+        await expect(neteaseProvider.auth!.getLoginStatus()).resolves.toBeNull();
 
         await neteaseProvider.auth!.signInRanOut!();
 
         expect(page.size).toBe(0);
         expect(stored.size).toBe(0);
-        expect(fetchMock).not.toHaveBeenCalled();
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    // A cookie the login status came with would be that request's own, maybe without MUSIC_U.
+    it('keeps the cookie of the sign-in where the login status comes with a cookie of its own', async () => {
+        page.set(COOKIE_KEY, 'MUSIC_U=abc');
+        const profile = { userId: 7, nickname: 'Listener' };
+        fetchMock.mockImplementation(async (url: unknown) => Response.json(String(url).includes('/login/status')
+            ? { data: { code: 200, account: { id: 7 }, profile }, cookie: '__csrf=x' }
+            : { code: 200, account: { id: 7 }, profile }));
+
+        await expect(neteaseProvider.auth!.getLoginStatus()).resolves.toMatchObject({ id: 7, nickname: 'Listener' });
+        expect(page.get(COOKIE_KEY)).toBe('MUSIC_U=abc');
+    });
+
+    it('a sign-in that ran out while a sign-in by QR code wrote a new cookie: the new cookie stays', async () => {
+        let answer!: (response: Response) => void;
+        fetchMock.mockReturnValue(new Promise<Response>(resolve => { answer = resolve; }));
+
+        const read = omni.readAccount('netease', 'start');
+        await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+        // The sign-in is confirmed (checkLogin writes the cookie) before the answer to the start comes.
+        page.set(COOKIE_KEY, 'MUSIC_U=new');
+        answer(Response.json({ data: { code: 200, account: null, profile: null } }));
+
+        await expect(read).resolves.toBe('nobody');
+        expect(page.get(COOKIE_KEY)).toBe('MUSIC_U=new');
     });
 });

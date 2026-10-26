@@ -25,13 +25,14 @@
 //   zipInstall.cjs   the user's mods folder and installing a .zip into it
 //   netFetch.cjs     folium.net.fetch
 //   pickedFiles.cjs  folium.ui.pickFile / restoreFile / releaseFile
+//   modSecrets.cjs   the values of `secret` settings fields (folium.secrets / api.secrets)
 //   safeStart.cjs    the start note and the two questions about starting without mods
 
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
-const { dialog, ipcMain, protocol, shell } = require('electron');
+const { dialog, ipcMain, protocol, safeStorage, shell } = require('electron');
 const Store = require('electron-store').default || require('electron-store');
 
 const { FOLIUM_VERSION, resolveLoadPlan, satisfiesHostRange, parseDependency, permissionGuarding } = require('./manifest.cjs');
@@ -50,6 +51,7 @@ const { createNetFetch } = require('./netFetch.cjs');
 const { createPickedFiles } = require('./pickedFiles.cjs');
 const { createModApproval } = require('./approval.cjs');
 const { createNodeEntryRuntime } = require('./nodeEntry.cjs');
+const { createModSecrets } = require('./modSecrets.cjs');
 const { oldNameWarnings, onOldNameWarning } = require('./deprecated.cjs');
 
 const SETTINGS_NAMESPACE = 'mods';
@@ -191,11 +193,19 @@ const createModSystem = ({ app, BrowserWindow, getMainWindow, getLocaleKey, isFe
         return snapshot;
     };
 
+    // The values of `secret` settings fields (modSecrets.cjs). A change, whoever made it, reaches
+    // the main window as the key alone; the main entry's subscribers hear it in the store.
+    const secrets = createModSecrets({
+        userDataDir: app.getPath('userData'),
+        safeStorage,
+        onChange: (modId, key) => sendToRenderer(IPC.fSecretChanged, { modId, key }),
+    });
+
     // One mod's Node entry: what it is given, loading it and releasing it (nodeEntry.cjs).
     // The export service is made further down and the snapshot changes while the app runs,
     // so both are asked for at the moment a mod's code needs them.
     const { buildModRuntime } = createNodeEntryRuntime({
-        app, guard, RETHROW, emitLog, hostInfo, getPublicSnapshot, sendToRenderer,
+        app, guard, RETHROW, emitLog, hostInfo, getPublicSnapshot, sendToRenderer, secrets,
         getExportService: () => exportService,
         getRuntimeSnapshot: () => runtimeSnapshot,
     });
@@ -542,6 +552,30 @@ const createModSystem = ({ app, BrowserWindow, getMainWindow, getLocaleKey, isFe
     };
 
     /*
+     * folium.secrets from the client, and the settings form drawing a section's `secret` fields.
+     * Like folium.storage, the mod is the one the window names, and only a loaded mod is served: its
+     * map key is then its validated manifest id, which is all the store makes a path of. `declare`
+     * passes the keys of a settings section's `secret` fields; `state` says which keys hold a value.
+     */
+    const SECRET_OPERATIONS = new Set(['get', 'has', 'set', 'declare', 'state']);
+
+    const invokeModSecrets = async (modId, operation, key, value) => {
+        requireLoadedMod(modId);
+        if (!SECRET_OPERATIONS.has(operation)) {
+            return { ok: false, error: `secrets-unknown-operation:${operation}` };
+        }
+        let result;
+        if (operation === 'declare') {
+            result = secrets.declare(modId, key);
+        } else if (operation === 'state') {
+            result = await secrets.state(modId);
+        } else {
+            result = await secrets[operation](modId, key, value);
+        }
+        return { ok: true, result: result === undefined ? null : result };
+    };
+
+    /*
      * The mods panel's file actions work on any mod the loader discovered, loaded or not (a
      * disabled mod's files still take space), but never on a broken entry: its map key is a
      * directory name, so only a validated manifest id that is also its own key becomes a path.
@@ -681,6 +715,7 @@ const createModSystem = ({ app, BrowserWindow, getMainWindow, getLocaleKey, isFe
         handle(IPC.exportCancel, () => ({ ok: exportService.cancelActiveExport() }));
         handle(IPC.rpc, (_event, modId, name, args) => invokeModRpc(modId, name, args));
         handle(IPC.storage, (_event, modId, operation, key, value) => invokeModStorage(modId, operation, key, value));
+        handle(IPC.secrets, (_event, modId, operation, key, value) => invokeModSecrets(modId, operation, key, value));
         handle(IPC.netFetch, (_event, modId, url, init) => invokeModNetFetch(modId, url, init));
         handle(IPC.pickFile, (_event, modId, accept, persist) => invokeModPickFile(modId, accept, persist));
         handle(IPC.restoreFile, (_event, modId, grantId) => invokeModRestoreFile(modId, grantId));

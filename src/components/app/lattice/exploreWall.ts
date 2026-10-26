@@ -10,7 +10,9 @@ import type { LatticeTile, WallEntryKind } from './latticeModel';
 // The wall's second source. Opened from the explore tab, the wall shows what the explore page
 // holds in place of the play queue: the sections of useExploreFeedStore, section after section
 // in the page's order, so albums, playlists, artists, mixes and songs. The app's own sections
-// (recently played, play again) are not in that store and not on the wall.
+// (recently played, play again) are not in that store: a wall that shows them is handed them
+// (useExploreWall's `ownSections`; Bravais' explore tab does, the grid's wall does not), and they
+// stand before the page's.
 // The wall is laid out by those sections (exploreLayout.ts): each tile says which section it
 // stands in and what it is, and `sectionsOfTiles` hands the sections out.
 // Also here: when the wall asks for the page's further sections, and when it is handed them.
@@ -32,6 +34,8 @@ const kindOf = (item: OmniExploreItem): WallEntryKind => {
     return item.isMix ? 'mix' : 'playlist';
 };
 
+const NO_IDS: ReadonlySet<string> = new Set();
+
 /** The word for each kind of entry, as an i18n key: the explore page's words. A song the page never names: the locale file has the word. */
 export const KIND_LABEL_KEYS: Record<WallEntryKind, string> = {
     album: 'home.exploreAlbum',
@@ -46,17 +50,27 @@ export const KIND_LABEL_KEYS: Record<WallEntryKind, string> = {
  * the explore page's (`faceOf`). A song's id is its playback key, by which the wall knows the
  * song on the player; a collection's cannot be taken for one. An entry that comes in several
  * sections is kept once, where it first stands.
+ * The app's own sections (`ownSectionIds`) are each a list of their own, as on the explore page:
+ * a song of one is kept there whatever other section has it, and its id is its playback key
+ * under the section's (`<section id>:<playback key>`), which the wall does not take for the song
+ * on the player.
  */
-export const buildExploreTiles = (sections: OmniExploreSection[], t: (key: string) => string): LatticeTile[] => {
+export const buildExploreTiles = (
+    sections: OmniExploreSection[],
+    t: (key: string) => string,
+    ownSectionIds: ReadonlySet<string> = NO_IDS,
+): LatticeTile[] => {
     const tiles: LatticeTile[] = [];
     const seen = new Set<string>();
     for (const section of sections) {
         // What the page plays with a song of the section (`select` in ExploreSections): the section's songs, in its order.
         const queue = section.items.flatMap(entry => (entry.kind === 'song' ? [entry.song] : []));
+        const isOwn = ownSectionIds.has(section.id);
         for (const item of section.items) {
-            const id = item.kind === 'song'
+            const entryKey = item.kind === 'song'
                 ? getPlaybackSongKey(item.song)
                 : `collection:${item.collection.type}:${item.collection.id}`;
+            const id = isOwn ? `${section.id}:${entryKey}` : entryKey;
             if (seen.has(id)) continue;
             seen.add(id);
             const face = faceOf(item, t);
@@ -142,6 +156,14 @@ export const furtherReadsAsked = (counted: FurtherReadCount | null, read: number
 /** The count after one more further read was asked of `read`. */
 export const withOneMoreRead = (counted: FurtherReadCount | null, read: number): FurtherReadCount => (
     { read, count: furtherReadsAsked(counted, read) + 1 }
+);
+
+/**
+ * How many of the tiles are the page's entries, those of the app's own sections left out: what
+ * `furtherReadsOf` is handed. What the app keeps itself fills no gap of the page.
+ */
+export const pageEntryCountOf = (tiles: LatticeTile[], ownSectionIds: ReadonlySet<string>): number => (
+    tiles.reduce((count, tile) => count + (ownSectionIds.has(tile.sectionKey ?? '') ? 0 : 1), 0)
 );
 
 export type FurtherReads = 'ask' | 'wait' | 'over';

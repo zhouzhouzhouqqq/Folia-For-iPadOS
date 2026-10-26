@@ -54,7 +54,7 @@ async function main() {
 
     let started = performance.now();
     const model = await BeatThisWgsl.create(device, weights, manifest, { f16: config.f16 });
-    log(`create: ${(performance.now() - started).toFixed(0)} ms`);
+    log(`create: ${(performance.now() - started).toFixed(0)} ms, ${(model.bytes / 1048576).toFixed(0)} MB on the GPU`);
 
     const T = BEAT_THIS_WGSL_FRAMES;
     const logits = new Float32Array(2 * count * T);

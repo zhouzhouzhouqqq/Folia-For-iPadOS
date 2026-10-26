@@ -88,7 +88,8 @@ prefetchService
 
         [ 准备阶段，当前曲目开始播放时 ]
 useAutomixDecks
-  └─ ensureStems({ song, role })       stems.ts      → utilityProcess → htdemucs
+  └─ ensureStems({ song, role })       stems.ts      → 默认 GPU：analysis 调度层 → stemRange.ts（与智能动感共用分段）
+       │                                             没有 GPU、GPU 失败或赶不上截止时间 → utilityProcess → MNN htdemucs（调度层定线程档）
        └─ TrackStems { drums, bass, other, vocals }  首尾各 30 秒
 
         [ 排程阶段，距歌尾 AUTOMIX_ARM_LEAD_SEC 秒 ]
@@ -285,6 +286,11 @@ automix 关着时，子进程闲置两分钟后整体退出（比释放 session 
 automix 开着时不按闲置退出，htdemucs 常驻；关掉 automix（或切到 crossfade）时主进程发 `release`，
 worker 在自己进程里释放模型。
 
+更正（PR #750 复审，2026-10-19）：htdemucs 在哪台机器上都不再常驻，没有 GPU 的也一样。worker 每次分完
+1 分钟没有新请求就在自己进程里释放它（`worker.cjs` 的 `STEMS_IDLE_MS`），automix 开着时子进程也闲置两分钟后退出；
+关掉 automix 时主进程照旧发 `release`，立刻释放。重新加载约 0.5 秒（实测 2 线程 516 ms、3 线程 500 ms），
+释放让 worker 的 rss 从 487 MB 降到 137 MB。
+
 **`intraOpNumThreads` 必须显式设置，默认值是错的。**
 onnxruntime 默认每逻辑核一线程，24 核机器实测每段 3547 ms——比 12 线程的 1438 ms **慢 2.5 倍**。
 取核数的四分之一：真正要守的是**留给渲染帧和音频线程的机器比例**，该比例不应随机器大小变化。
@@ -450,7 +456,7 @@ build-up 占据 `swap` 之前的若干小节，**结束于 `swap`**。所谓的 
 | `src/services/prefetchService.ts` | `ensureTrackProfile` | 预取下几首时顺带分析 |
 | `src/components/app/overlays/AutomixTransitionAnimation.tsx` / `src/components/app/playback/bridges/useElectronPlaybackBridge.ts` | `subscribeToTransitionCue` | 主窗口绘制与实际音频跨度一致的 AutoMix 过渡环；Electron 桥把 AutoMix 或 Crossfade 的同一个实际 cue 投影进 Remote 快照，使封面、标题与背景交接对齐音频 crossover。设置页 preview cue 带 `preview` 标记，不会发布到 Remote。每次排上日程的交接都会广播，纯淡化带 `plain` 标记：两个动画走 `shouldDrawCue` 拒掉它，Remote 故意不问，它对的是音频而不是混音 |
 | `electron/analysis/worker.cjs` | `mnn.cjs`（MNN）+ 安装包里的 `models/htdemucs-wgsl.bin`、`models/beat_this-wgsl.bin`（与 GPU 共用的同两个文件） | htdemucs 与 beat_this 的 CPU 退路都在此，运行于不拥有窗口的进程（见 §6.4） |
-| `electron/analysis/host.cjs` | `utilityProcess` | 主进程侧：拉起 worker、匹配请求与回复、automix 关着时闲置两分钟终止、关掉 automix 时让 worker 释放 htdemucs、崩溃自动重试一次 |
+| `electron/analysis/host.cjs` | `utilityProcess` | 主进程侧：拉起 worker、匹配请求与回复、automix 关着时闲置两分钟终止（更正，PR #750 复审，2026-10-19：开着时也是）、关掉 automix 时让 worker 释放 htdemucs、崩溃自动重试一次 |
 | `electron/preload.cjs` / `electron/main.cjs` | `automix-beat-this`、`automix-htdemucs`、`automix-enabled`、`automix-beat-this-gpu-weights` | IPC 通道，主进程仅转发 |
 | `src/stores/useSettingsUiStore.ts` | `automixEnabled`、`transitionMode`、`crossfadeMaxSec`、`transitionPerformance` | 总开关 + 策略选择 + 交叉淡化长度 + 表现模式。开关同时挂在 `components/panelTab/controls/VolumeRow.tsx`，完整设置区在 `components/modal/settings/TransitionSettingsSection.tsx` |
 

@@ -68,6 +68,8 @@ const MAX_VARIABLES_LENGTH = 4096;
 const RENEW_AHEAD_MS = 60 * 1000;
 // A request that is not answered in this time has failed; without a limit it could wait for ever.
 const REQUEST_LIMIT_MS = 30 * 1000;
+// A quit waits this long at most for a token renewal under way (`shutdown`).
+const SHUTDOWN_LIMIT_MS = 3000;
 // The account (its name, and whether it pays) is read again at most this often.
 const ACCOUNT_MAX_AGE_MS = 10 * 60 * 1000;
 // After Spotify approved a sign-in, a read of its account that failed on the line is made again
@@ -87,7 +89,7 @@ const TRACK_ID = /^[0-9A-Za-z]{22}$/;
 function createSpotifyApiBridge({
   store, safeStorage, fetch, openExternal, language = () => 'zh-CN', now = Date.now,
   log = (...args) => console.log(...args), warn = (...args) => console.warn(...args), signIn: givenSignIn, openSession,
-  audioDirectory, onAudioKept,
+  audioDirectory, onAudioKept, wait = ms => new Promise(resolve => { setTimeout(resolve, ms); }),
 }) {
   const repo = createSpotifySessionRepository({ store, safeStorage, log, warn });
   const signIn = givenSignIn ?? createSpotifySignIn({ fetch, openExternal, language, now, log, warn });
@@ -307,9 +309,14 @@ function createSpotifyApiBridge({
     },
 
     // Answered from the stored session: called on every app start, before anything needs the network.
+    // A sign-in stored that this run cannot read is not answered as nobody: the renderer would
+    // take the account for gone.
     async login_status() {
       const user = repo.get()?.user;
-      if (!user) return null;
+      if (!user) {
+        if (repo.unreadable()) throw spotifyError('unavailable', 'The stored Spotify sign-in cannot be read now');
+        return null;
+      }
       refreshAccount();
       return { id: user.id, nickname: user.nickname, avatarUrl: user.avatarUrl, vipType: user.premium ? 1 : 0 };
     },
@@ -467,6 +474,13 @@ function createSpotifyApiBridge({
         warn(`[Spotify] ${operation}${operation === 'query' ? ` ${String(params.name).slice(0, 40)}` : ''} failed: ${describeError(error)}`);
         return toErrorResult(error);
       }
+    },
+    // The app is quitting. A token renewal under way is waited for: its answer is stored only
+    // once it has come, and the refresh token it replaces may not be taken by the next run.
+    // Answers null when there is nothing to wait for. Else the quit is to be held for the promise
+    // answered: it resolves once the renewal was stored, or failed, or after SHUTDOWN_LIMIT_MS.
+    shutdown() {
+      return renewing && Promise.race([renewing.answer.then(() => {}, () => {}), wait(SHUTDOWN_LIMIT_MS)]);
     },
   };
 }

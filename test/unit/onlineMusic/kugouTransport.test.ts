@@ -307,6 +307,15 @@ describe('KuGou Web transport', () => {
         });
     });
 
+    it('answers a stored session the main process cannot load now as unavailable, not as a logout signal', async () => {
+        const ipcError = new Error("Error invoking remote method 'kugou-api-request': KuGouApiError: "
+            + 'KuGouApi[operation=user_detail session=unreadable]: The stored KuGou session cannot be read now');
+        vi.stubGlobal('window', { electron: { kugouRequest: vi.fn().mockRejectedValue(ipcError) } });
+        const { requestKugou } = await import('@/services/onlineMusic/kugou/kugouTransport');
+
+        await expect(requestKugou('user_detail', {})).rejects.toMatchObject({ code: 'unavailable', providerId: 'kugou' });
+    });
+
     it('classifies a raw answer-object rejection from an unpatched main process', async () => {
         vi.stubGlobal('window', {
             electron: {

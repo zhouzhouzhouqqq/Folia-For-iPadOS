@@ -1,16 +1,28 @@
 // Copyright (c) 2026 chthollyphile
-import type { Line } from '../../../types';
-import { getLineRenderEndTime } from '../../../utils/lyrics/renderHints';
-import { segmentLyricWords } from '../../../utils/lyrics/wordSegmentation';
-import type { ParagraphBoundary, ParagraphKind, StructureLine } from './lumiereKernel';
+import type { Line } from '../../types';
+import { getLineRenderEndTime } from '../../utils/lyrics/renderHints';
+import { segmentLyricWords } from '../../utils/lyrics/wordSegmentation';
 
-// src/components/visualizer/lumiere/lumiereStructure.ts
-// 绘光的分段：与 tempera / sonnet 的分段规则相同（空隙中位数 × 2.5 定阈值、元数据变化切段、超限段落在
+// src/components/visualizer/paragraphStructure.ts
+// 歌词分段（绘光、花火共用）：与 tempera / sonnet 的分段规则相同（空隙中位数 × 2.5 定阈值、元数据变化切段、超限段落在
 // 最大空隙处切开、按副歌标记 / 时长 / 词数 / 标点分类），取自 lumisynth 编译器的 structure 步骤。
 // 唯一的差别是超限段落的左半部分也继续切（lumisynth 的 recursiveSplit，folia 原版只切右半部分）。
 // tempera / sonnet 的分段函数是模块私有的，所以这里带一份。
 
-export interface LumiereStructureParams {
+/** 段落性质（与 tempera / sonnet 的分段分类相同）。 */
+export type ParagraphKind = 'breath' | 'verse' | 'lift' | 'chorus' | 'break' | 'outro';
+
+/** 段落从哪里切开：歌曲开头、时间空隙、歌词元数据（blockIndex / songPart）变化、超出时长或行数上限；intro / instrumental 为各模式自己补的间奏段。 */
+export type ParagraphBoundary = 'song-start' | 'time-gap' | 'metadata' | 'duration-cap' | 'line-cap' | 'intro' | 'instrumental';
+
+/** 编译时的一行：全曲行序号、行本身、视觉结束时间（不越过下一行开始）。 */
+export interface StructureLine {
+    sourceIndex: number;
+    line: Line;
+    renderEndTime: number;
+}
+
+export interface ParagraphStructureParams {
     /** 段落切分阈值 = 相邻行空隙中位数 × multiplier，钳在 [min, max] 秒。 */
     gapMultiplier: number;
     gapMin: number;
@@ -22,7 +34,7 @@ export interface LumiereStructureParams {
     recursiveSplit: boolean;
 }
 
-export const DEFAULT_LUMIERE_STRUCTURE_PARAMS: LumiereStructureParams = {
+export const DEFAULT_PARAGRAPH_STRUCTURE_PARAMS: ParagraphStructureParams = {
     gapMultiplier: 2.5, gapMin: 1.25, gapMax: 3.5, maxLines: 6, maxDuration: 18, recursiveSplit: true,
 };
 
@@ -52,7 +64,7 @@ export const buildStructureLines = (lines: readonly Line[]): StructureLine[] => 
     ),
 }));
 
-export const resolveParagraphGapThreshold = (lines: readonly Line[], params: LumiereStructureParams = DEFAULT_LUMIERE_STRUCTURE_PARAMS) => {
+export const resolveParagraphGapThreshold = (lines: readonly Line[], params: ParagraphStructureParams = DEFAULT_PARAGRAPH_STRUCTURE_PARAMS) => {
     const gaps = lines.slice(1).map((line, index) => (
         line.startTime - Math.min(getLineRenderEndTime(lines[index]), line.startTime)
     )).filter(gap => gap > 0);
@@ -65,7 +77,7 @@ export const metadataChanged = (previous: Line, next: Line) => (
 );
 
 /** 超过行数或时长的段落在最大空隙处切开；recursiveSplit 时左半部分也继续切。 */
-export const splitOversizedDraft = (draft: ParagraphDraft, params: LumiereStructureParams): ParagraphDraft[] => {
+export const splitOversizedDraft = (draft: ParagraphDraft, params: ParagraphStructureParams): ParagraphDraft[] => {
     const output: ParagraphDraft[] = [];
     let remaining = draft.lines;
     let boundary = draft.boundary;
@@ -92,7 +104,7 @@ export const splitOversizedDraft = (draft: ParagraphDraft, params: LumiereStruct
 export const draftParagraphs = (
     lines: readonly StructureLine[],
     threshold: number,
-    params: LumiereStructureParams = DEFAULT_LUMIERE_STRUCTURE_PARAMS,
+    params: ParagraphStructureParams = DEFAULT_PARAGRAPH_STRUCTURE_PARAMS,
 ): ParagraphDraft[] => {
     const drafts: ParagraphDraft[] = [];
     let current: ParagraphDraft = { lines: [], boundary: 'song-start' };

@@ -27,6 +27,11 @@ import i18n from '../../../i18n/config';
 const WEB_LOGIN_TTL_MS = 12 * 60 * 1000;
 
 const searchPager = createYtmPager<UnifiedSong>();
+// The searches of callers beside the host's own screen (a mod, through Folium's `folium.omni`),
+// which name themselves with a `session`: walked in a pager of their own, by session and text, so
+// that such a search never starts the listener's search over, and the walks it keeps (the pager
+// holds as many as `searchPager`) only ever make room among themselves.
+const sessionSearchPager = createYtmPager<UnifiedSong>();
 // A letter of any script but Latin.
 const NON_LATIN_LETTER = /[^\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}]/u;
 // The key of the sign-in in progress.
@@ -38,6 +43,7 @@ let loginStarts = 0;
 
 const forgetPages = (): void => {
     searchPager.clear();
+    sessionSearchPager.clear();
     clearYtmCatalogCache();
     clearYtmLibraryCache();
     forgetYtmMusicPage();
@@ -64,10 +70,13 @@ export const ytmProvider: OnlineMusicProvider = {
     normalizeSong: normalizeYtmSong, normalizeUser: normalizeYtmUser, normalizeCollection: normalizeYtmCollection,
     songMetadata: { getSongMetadata: createProviderSongMetadata },
     search: {
-        async searchSongs(query, limit, offset) {
+        async searchSongs(query, limit, offset, context) {
             const text = query.trim();
             if (!text) return { items: [], total: 0, nextOffset: offset, hasMore: false };
-            return searchPager.page(`search:${text}`, offset, limit, async continuation => {
+            const session = context?.session;
+            const pager = session === undefined ? searchPager : sessionSearchPager;
+            const key = session === undefined ? `search:${text}` : `search:${session}\n${text}`;
+            return pager.page(key, offset, limit, async continuation => {
                 const page = await requestYtm<YtmWirePage<YtmWireSong>>('search_songs', continuation ? { continuation } : { query: text });
                 return { items: page.items.map(normalizeYtmSong), continuation: page.continuation };
             });

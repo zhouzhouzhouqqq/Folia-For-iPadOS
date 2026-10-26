@@ -116,13 +116,14 @@ test('steps lyric modes with the arrows and opens the full list from the name', 
     await lyricRow.getByRole('button', { name: '歌词样式', exact: true }).click();
     const list = page.getByRole('radiogroup', { name: '歌词样式' });
     await expect(list).toBeVisible();
-    // 有几种样式由注册表决定，在页面里现数：加一种新样式时这条用例应当继续有效。
+    // 注册表中的样式之外，还有一个随机选择入口。
     const modeCount = await page.evaluate(async () => {
         const registryModulePath = '/src/components/visualizer/registry.tsx';
         const { VISUALIZER_REGISTRY } = await import(registryModulePath);
         return (VISUALIZER_REGISTRY as unknown[]).length;
     });
-    await expect(list.getByRole('radio')).toHaveCount(modeCount);
+    await expect(list.getByRole('radio')).toHaveCount(modeCount + 1);
+    await expect(list.getByRole('radio', { name: '随机', exact: true })).toBeVisible();
     await expect(list.getByRole('radio', { name: '静止' })).toBeVisible();
     await expect(page.getByText('更多设置', { exact: true })).toBeVisible();
 

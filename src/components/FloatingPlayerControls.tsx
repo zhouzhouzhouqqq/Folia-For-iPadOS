@@ -18,6 +18,9 @@ import { isNativeIOS } from '../platform/capabilities';
 import { PLAYER_BOTTOM_BAR_BASE_OFFSET_PX, clampPlayerBottomBarOffset, resolvePlayerBottomBarMaxOffset } from '../utils/playerBottomBarLayout';
 import type { PlayerControlSlotActionId, PlayerControlSlotContext } from './floating-player/playerControlSlotActions';
 import { usePlayerOverlayObstacle } from '../hooks/usePlayerOverlayLayout';
+import { resolveLyricSeekMediaTime } from '../utils/lyrics/lyricSeekTime';
+import { usePlayerBarPresentationStore } from '../stores/usePlayerBarPresentationStore';
+import PlayerBarDisclosure, { PlayerBarRestoreButton } from './floating-player/PlayerBarDisclosure';
 
 export interface TrackNavigation {
     /** 当前曲目的稳定身份，用于识别「确实换歌了」；相邻两首同名时标题字符串不变，不能拿标题判断 */
@@ -123,7 +126,9 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
     onCommitBottomBarOffset,
 }) => {
     const { t } = useTranslation();
-    const { ref: layoutRef, invalidate: invalidateLayout } = usePlayerOverlayObstacle('player-controls', 'playback', !isHidden);
+    const presentation = usePlayerBarPresentationStore(state => state.presentation);
+    const manuallyHidden = presentation === 'hidden' || hideControlBar;
+    const { ref: layoutRef, invalidate: invalidateLayout } = usePlayerOverlayObstacle('player-controls', 'playback', !isHidden && !manuallyHidden);
     // const isDaylight = theme?.name === 'Daylight Default'; // Deprecated, passed as prop
     const glassBgExpanded = isDaylight ? 'bg-white/60 border border-white/20 shadow-xl' : 'bg-black/40 border border-white/5';
     const glassBgCollapsed = isDaylight ? 'bg-white/40 border border-white/20 shadow-lg hover:bg-white/50' : 'bg-black/20 border border-white/5 hover:bg-black/30';
@@ -157,7 +162,9 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
     // Keep transport reachable by touch, including an iPad with a connected mouse/trackpad.
     const touchControls = isNativeIOS() || !supportsFinePointer;
     // 定位模式强制展开：用户要看到的是最终形态的胶囊，而不是一条细进度条。
-    const showExpanded = isPositioning || (touchControls && !!currentSong) || isHovered || (canAutoExpand && playerState !== PlayerState.PLAYING && currentView !== 'home');
+    const showExpanded = isPositioning || presentation === 'expanded' || (presentation === 'automatic' && (
+        (touchControls && !!currentSong) || isHovered || (canAutoExpand && playerState !== PlayerState.PLAYING && currentView !== 'home')
+    ));
 
     // 上限依赖视口高度，窗口变矮时要跟着收，否则虚线框会画到屏幕外。
     useEffect(() => {
@@ -315,6 +322,10 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
         if (isPositioning) {
             return;
         }
+        if (presentation === 'collapsed') {
+            usePlayerBarPresentationStore.getState().setPresentation('expanded');
+            return;
+        }
         if (currentView !== 'lattice') {
             onNavigateToPlayer();
         } else {
@@ -322,8 +333,13 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
         }
     };
 
-    if (hideControlBar) {
-        return null;
+    if (manuallyHidden) {
+        return (
+            <div className="absolute inset-x-0 z-60 flex justify-center pointer-events-none"
+                style={{ bottom: 'max(12px, env(safe-area-inset-bottom, 0px))' }}>
+                <div className="pointer-events-auto" style={{ color: primaryColor }}><PlayerBarRestoreButton /></div>
+            </div>
+        );
     }
 
     return (
@@ -354,6 +370,7 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                 }}
                 transition={{ duration: 0.26, ease: 'easeOut' }}
                 style={{ pointerEvents: isHidden ? 'none' : 'auto' }}
+                inert={isHidden}
                 onClick={(e) => e.stopPropagation()}
             >
                 <div
@@ -385,7 +402,7 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                         style={{ touchAction: isPositioning ? 'none' : undefined }}
                         className={`backdrop-blur-xl shadow-2xl overflow-hidden ${touchControls ? 'rounded-3xl sm:rounded-full' : 'rounded-full'} relative transition-colors duration-300
                             ${isPositioning ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
-                            ${showExpanded ? `p-3 ${glassBgExpanded} w-full` : `px-4 py-2 ${glassBgCollapsed} ${COLLAPSED_WIDTH_CLASS}`}`}
+                            ${showExpanded ? `p-3 ${glassBgExpanded} w-full` : `px-3 py-2 ${glassBgCollapsed} ${COLLAPSED_WIDTH_CLASS}`}`}
                     >
                         <motion.div
                             layout
@@ -411,6 +428,7 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                                     controlsDisabled={controlsDisabled || isPositioning}
                                     trackNavigation={trackNavigation}
                                     touchControls={touchControls}
+                                    showDisclosure={!isPositioning}
                                     slotPrimary={slotPrimary}
                                     slotSecondary={slotSecondary}
                                     slotContext={resolvedSlotContext}
@@ -424,6 +442,7 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                                     secondaryColor={secondaryColor}
                                     trackColor={trackColor}
                                     controlsDisabled={controlsDisabled}
+                                    showDisclosure={presentation === 'collapsed'}
                                 />
                             )}
                         </motion.div>
@@ -452,8 +471,12 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
                 duration={duration}
                 currentTime={lyricCurrentTime ?? currentTime}
                 onSeek={(time) => {
-                    const offset = currentTime.get() - (lyricCurrentTime?.get() ?? currentTime.get());
-                    onSeek(Math.max(0, time + offset));
+                    const target = resolveLyricSeekMediaTime(time, {
+                        mediaTimeSec: currentTime.get(),
+                        lyricTimeSec: lyricCurrentTime?.get() ?? currentTime.get(),
+                        durationSec: duration,
+                    });
+                    if (target !== null) onSeek(target);
                 }}
                 primaryColor={primaryColor}
                 secondaryColor={secondaryColor}
@@ -469,6 +492,7 @@ const FloatingPlayerControls: React.FC<FloatingPlayerControlsProps> = ({
 // 展开视图组件
 interface ExpandedViewProps {
     touchControls: boolean;
+    showDisclosure: boolean;
     currentSong: { name: string; } | null;
     playerState: PlayerState;
     currentTime: MotionValue<number>;
@@ -509,13 +533,15 @@ const ExpandedView: React.FC<ExpandedViewProps> = ({
     slotSecondary,
     slotContext,
     touchControls,
+    showDisclosure,
 }) => {
     return (
         <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-x-4 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
             {/* Desktop Layout - responsive grid positions apply from the sm breakpoint */}
             {/* Mobile Layout - base grid positions apply below the sm breakpoint */}
             {/* Row 1: Centered Title */}
-            <div className="col-span-3 row-start-1 min-w-0 px-2 sm:col-start-2 sm:col-span-1">
+            <div className="col-span-3 row-start-1 flex min-w-0 items-center sm:col-start-2 sm:col-span-1">
+                <div className="min-w-0 flex-1 px-2">
                 {trackNavigation ? (
                     <TrackTitleNavigator
                         title={currentSong?.name || noTrackText}
@@ -538,6 +564,8 @@ const ExpandedView: React.FC<ExpandedViewProps> = ({
                         {currentSong?.name || noTrackText}
                     </div>
                 )}
+                </div>
+                {showDisclosure && <div style={{ color: primaryColor }}><PlayerBarDisclosure touchControls={touchControls} /></div>}
             </div>
 
             {/* Row 3: Loop Button, Play Button, Lyrics Button */}
@@ -606,6 +634,7 @@ interface CollapsedViewProps {
     secondaryColor: string;
     trackColor?: string;
     controlsDisabled?: boolean;
+    showDisclosure?: boolean;
 }
 
 const CollapsedView: React.FC<CollapsedViewProps> = ({
@@ -616,9 +645,11 @@ const CollapsedView: React.FC<CollapsedViewProps> = ({
     secondaryColor,
     trackColor,
     controlsDisabled = false,
+    showDisclosure = false,
 }) => {
     return (
-        <div className="flex items-center w-full justify-center h-8 px-4">
+        <div className="flex items-center w-full justify-center h-8 gap-1" style={{ color: primaryColor }}>
+            <div className="min-w-0 flex-1">
             <ProgressBar
                 currentTime={currentTime}
                 duration={duration}
@@ -629,6 +660,8 @@ const CollapsedView: React.FC<CollapsedViewProps> = ({
                 disabled={controlsDisabled}
                 collapsed
             />
+            </div>
+            {showDisclosure && <PlayerBarDisclosure compact />}
         </div>
     );
 };

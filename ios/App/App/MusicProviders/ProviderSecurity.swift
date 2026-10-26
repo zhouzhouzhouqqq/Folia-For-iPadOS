@@ -3,11 +3,11 @@ import Security
 
 // Provider-specific HTTPS boundary and installation-scoped Keychain records.
 enum ProviderSecurity {
-    static func valid(_ provider: String) -> Bool { ["qq", "kugou"].contains(provider) }
+    static func valid(_ provider: String) -> Bool { ["qq", "kugou", "qishui", "mod-secrets"].contains(provider) }
     static func permits(_ url: URL, provider: String) -> Bool {
-        guard valid(provider), url.scheme == "https", url.user == nil, url.password == nil,
+        guard valid(provider), provider != "mod-secrets", url.scheme == "https", url.user == nil, url.password == nil,
               url.port == nil || url.port == 443, let host = url.host?.lowercased() else { return false }
-        let roots = provider == "qq" ? ["qq.com", "tencentmusic.com", "weixin.qq.com", "gtimg.cn", "qpic.cn"] : ["kugou.com", "kugou.net"]
+        let roots = provider == "qishui" ? ["qishui.com", "douyin.com", "douyinpic.com", "365yg.com", "douyinvod.com", "douyinscdn.com", "bytefcdn.com", "bytecdn.cn", "byteicdn.com", "ibytedtos.com", "pstatp.com", "snssdk.com", "bytedance.com", "bytetos.com", "volcvideo.com", "volccdn.com", "volces.com", "volcengineapi.com", "zijieapi.com", "zjcdn.com"] : provider == "qq" ? ["qq.com", "tencentmusic.com", "weixin.qq.com", "gtimg.cn", "qpic.cn"] : ["kugou.com", "kugou.net"]
         return roots.contains { host == $0 || host.hasSuffix("." + $0) }
     }
     static func query(_ provider: String) throws -> [String: Any] {

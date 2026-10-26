@@ -3,6 +3,7 @@ import vercelGenerateGeminiTheme from '../../../api-ts/generate-theme';
 import vercelGenerateOpenAITheme from '../../../api-ts/generate-theme_openai';
 import builtGenerateGeminiTheme from '../../../api/generate-theme.js';
 import builtGenerateOpenAITheme from '../../../api/generate-theme_openai.js';
+import { resetLearnedAttempts } from '../../../shared/ai/attemptRunner.mjs';
 import { segmentLyricLines } from '../../../shared/lyricSegmentationService.mjs';
 import {
     SEGMENTATION_GEMINI_GENERATION_CONFIG,
@@ -44,23 +45,46 @@ const recordOpenAi = (content: string) => {
     return { requests, fetchImpl: fetchImpl as unknown as typeof fetch };
 };
 
-// One row per deployment setting: the address and model it leads to, and how the body is shaped
-// for that kind of host.
-const DEPLOYMENTS: Array<[string, Deployment, { url: string; model: string; temperature: number; official: boolean; deepseek?: boolean }]> = [
-    ['only a key', {}, { url: OPENAI_ADDRESS, model: 'gpt-5.6-luna', temperature: 0.7, official: true }],
+// One row per deployment setting: the address and model it leads to, and the rest of the body each
+// ask sends there (the adapter the host picks, shared/ai/; messages and response_format are checked
+// apart). `schema`: the ask is constrained by its JSON schema rather than plain JSON mode.
+type Expected = { url: string; model: string; schema?: boolean; theme: Record<string, unknown>; segmentation: Record<string, unknown> };
+const DEEPSEEK_OFF = { temperature: 0.7, max_tokens: 8192, thinking: { type: 'disabled' }, reasoning_effort: 'none' };
+const DEPLOYMENTS: Array<[string, Deployment, Expected]> = [
+    // OpenAI is never sent a temperature; the theme thinks a little (low) with room for it on top.
+    ['only a key', {}, { url: OPENAI_ADDRESS, model: 'gpt-5.6-luna', schema: true,
+        theme: { max_completion_tokens: 24576, reasoning_effort: 'low' },
+        segmentation: { max_completion_tokens: 8192, reasoning_effort: 'none' } }],
     ['DeepSeek\'s address', { OPENAI_API_URL: 'https://api.deepseek.com' },
-        { url: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-v4-flash', temperature: 0.7, official: false, deepseek: true }],
+        { url: 'https://api.deepseek.com/v1/chat/completions', model: 'deepseek-flash', theme: DEEPSEEK_OFF, segmentation: DEEPSEEK_OFF }],
     ['another DeepSeek host', { OPENAI_API_URL: 'https://eu.deepseek.com/v1/' },
-        { url: 'https://eu.deepseek.com/v1/chat/completions', model: 'deepseek-v4-flash', temperature: 0.7, official: false, deepseek: true }],
+        { url: 'https://eu.deepseek.com/v1/chat/completions', model: 'deepseek-flash', theme: DEEPSEEK_OFF, segmentation: DEEPSEEK_OFF }],
     ['DeepSeek\'s address and a model', { OPENAI_API_URL: 'https://api.deepseek.com/v1', OPENAI_API_MODEL: ' my-model ' },
-        { url: 'https://api.deepseek.com/v1/chat/completions', model: 'my-model', temperature: 0.7, official: false, deepseek: true }],
+        { url: 'https://api.deepseek.com/v1/chat/completions', model: 'my-model', theme: DEEPSEEK_OFF, segmentation: DEEPSEEK_OFF }],
+    // Kimi's models fix their own sampling, so no temperature; k2.6 can switch thinking off.
+    ['Kimi\'s address', { OPENAI_API_URL: 'https://api.moonshot.cn/v1' },
+        { url: 'https://api.moonshot.cn/v1/chat/completions', model: 'kimi-k2.6',
+            theme: { max_completion_tokens: 8192, thinking: { type: 'disabled' } },
+            segmentation: { max_completion_tokens: 8192, thinking: { type: 'disabled' } } }],
+    // GLM takes temperatures up to 1 only; glm-5.2 switches thinking off with 'none'.
+    ['GLM\'s address and a high temperature', { OPENAI_API_URL: 'https://open.bigmodel.cn/api/paas/v4', OPENAI_API_TEMPERATURE: '1.5' },
+        { url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions', model: 'glm-5.2',
+            theme: { temperature: 1, max_tokens: 8192, reasoning_effort: 'none' },
+            segmentation: { temperature: 1, max_tokens: 8192, reasoning_effort: 'none' } }],
+    // Any other host is the custom adapter: the theme as before, segmentation from the generic ladder.
     ['another host and a temperature', { OPENAI_API_URL: 'https://relay.example.com/v1', OPENAI_API_TEMPERATURE: '0.2' },
-        { url: 'https://relay.example.com/v1/chat/completions', model: 'gpt-5.6-luna', temperature: 0.2, official: false }],
+        { url: 'https://relay.example.com/v1/chat/completions', model: 'gpt-5.6-luna',
+            theme: { temperature: 0.2, max_tokens: 8192 },
+            segmentation: { temperature: 0.2, max_tokens: 8192, reasoning_effort: 'none' } }],
     ['an address that is not a URL', { OPENAI_API_URL: 'relay.example.com/v1/' },
-        { url: 'relay.example.com/v1', model: 'gpt-5.6-luna', temperature: 0.7, official: false }],
+        { url: 'relay.example.com/v1', model: 'gpt-5.6-luna',
+            theme: { temperature: 0.7, max_tokens: 8192 },
+            segmentation: { temperature: 0.7, max_tokens: 8192, reasoning_effort: 'none' } }],
 ];
 
 afterEach(() => {
+    // The runner remembers the attempt that worked per endpoint and model, across these routes too.
+    resetLearnedAttempts();
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
@@ -94,12 +118,8 @@ describe.each([
         expect(requests).toHaveLength(1);
         const { body: { messages, response_format: responseFormat, ...body }, ...request } = requests[0];
         expect(request).toEqual({ url: expected.url, method: 'POST', headers: OPENAI_HEADERS });
-        expect(body).toEqual({
-            model: expected.model,
-            temperature: expected.temperature,
-            ...(expected.official ? { max_completion_tokens: 4096 } : { max_tokens: 8192 }),
-        });
-        if (expected.official) {
+        expect(body).toEqual({ model: expected.model, ...expected.theme });
+        if (expected.schema) {
             expect(responseFormat).toMatchObject({ type: 'json_schema', json_schema: { name: 'dual_theme', strict: true } });
         } else {
             expect(responseFormat).toEqual({ type: 'json_object' });
@@ -138,6 +158,45 @@ describe.each([
 
         expect(response.status).toBe(500);
         expect(await response.json()).toEqual({ error: 'Failed to generate theme JSON' });
+    });
+
+    it('moves to the next attempt when the service rejects the reasoning switch by name, and remembers it', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.spyOn(console, 'log').mockImplementation(() => {});
+        const bodies: any[] = [];
+        vi.stubGlobal('fetch', (async (_url: string, init: any) => {
+            const body = JSON.parse(init.body);
+            bodies.push(body);
+            return body.reasoning_effort
+                ? Response.json({ error: { message: 'Bad request', param: 'reasoning_effort', code: 'invalid_value' } }, { status: 400 })
+                : Response.json({ choices: [{ finish_reason: 'stop', message: { content: '{"light":{"name":"Dawn"},"dark":{"name":"Night"}}' } }] });
+        }) as unknown as typeof fetch);
+        // DeepSeek's attempts: both switches, then thinking alone, then neither.
+        const deployment = { OPENAI_API_KEY: KEY, OPENAI_API_URL: 'https://api.deepseek.com' };
+
+        const response = await handle(ask(), deployment);
+
+        expect(response.status).toBe(200);
+        expect(bodies.map(body => [body.thinking, body.reasoning_effort])).toEqual([
+            [{ type: 'disabled' }, 'none'],
+            [{ type: 'disabled' }, undefined],
+        ]);
+        await handle(ask(), deployment);
+        expect(bodies).toHaveLength(3);
+        expect(bodies[2].reasoning_effort).toBeUndefined();
+    });
+
+    it('says when reasoning used up the whole budget on the last attempt', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        vi.stubGlobal('fetch', (async () => Response.json({
+            choices: [{ finish_reason: 'length', message: { content: '' } }],
+            usage: { completion_tokens_details: { reasoning_tokens: 24576 } },
+        })) as unknown as typeof fetch);
+
+        const response = await handle(ask(), { OPENAI_API_KEY: KEY });
+
+        expect(response.status).toBe(500);
+        expect((await response.json()).error).toBe('Model "gpt-5.6-luna" used its entire output budget on reasoning and returned no theme.');
     });
 });
 
@@ -191,11 +250,8 @@ describe('a lyric segmentation from the service both /api/segment-lyrics routes 
             body: {
                 model: expected.model,
                 messages: MESSAGES,
-                temperature: expected.temperature,
-                ...(expected.official ? { max_completion_tokens: 8192 } : { max_tokens: 8192 }),
-                ...(expected.deepseek ? { thinking: { type: 'disabled' } } : {}),
-                reasoning_effort: 'none',
-                response_format: expected.official
+                ...expected.segmentation,
+                response_format: expected.schema
                     ? { type: 'json_schema', json_schema: { name: 'lyric_word_segmentation', strict: true, schema: SEGMENTATION_JSON_SCHEMA } }
                     : { type: 'json_object' },
             },

@@ -62,9 +62,14 @@ export interface LyricSourceAccess {
 }
 
 // A source that needs an account is a source only while one is signed in.
-export const isLyricMatchSourceOffered = (source: LyricProviderSource): boolean => (
-    !getLyricSource(source).needsAccount || Boolean(useOnlineProviderAccountStore.getState().accounts[source]?.user)
-);
+export const isLyricMatchSourceOffered = (source: LyricProviderSource): boolean => {
+    const entry = getLyricSource(source);
+    if (entry.needsConfiguredProvider) {
+        const provider = getOnlineMusicProvider(source);
+        if (!provider || provider.getAvailability?.().configured === false) return false;
+    }
+    return !entry.needsAccount || Boolean(useOnlineProviderAccountStore.getState().accounts[source]?.user);
+};
 
 const sortByMatchScore = (songs: SongResult[], target: LyricMatchSearchTarget) => (
     [...songs].sort((a, b) => calculateMatchScore(target, b) - calculateMatchScore(target, a))
@@ -147,6 +152,11 @@ const OWN_ACCESS: Partial<Record<LyricProviderSource, Partial<LyricSourceAccess>
     },
     kugou: {
         songKey: song => String(song.kgHash ?? song.id).toUpperCase(),
+    },
+    // Its track ids are 1-30 digits, past what a number holds exactly: kept as text, never made a number.
+    qishui: {
+        knownById: songId => (typeof songId === 'string' ? /^\d{1,30}$/.test(songId) ? songId : null
+            : Number.isSafeInteger(songId) && songId >= 0 ? String(songId) : null),
     },
 };
 

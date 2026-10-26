@@ -24,9 +24,11 @@ type AudioEffectGridProps = {
     effects: AudioEffectSettings;
     onEffectChange: (id: AudioEffectId, value: number) => void;
     onCommit: () => void;
+    /** The sliders are out of reach (inert); the names, the values and the noise tag's hint still read. */
+    readOnly?: boolean;
 };
 
-const AudioEffectGrid: React.FC<AudioEffectGridProps> = ({ effects, onEffectChange, onCommit }) => {
+const AudioEffectGrid: React.FC<AudioEffectGridProps> = ({ effects, onEffectChange, onCommit, readOnly = false }) => {
     const { t } = useTranslation();
 
     return (
@@ -57,7 +59,7 @@ const AudioEffectGrid: React.FC<AudioEffectGridProps> = ({ effects, onEffectChan
                                 <span className="ml-auto shrink-0 font-mono text-xs text-[color:var(--st-t2)]">{valueText}</span>
                             </div>
                             {/* The gap keeps the slider's focus ring clear of the name above it. */}
-                            <div className="mt-1 flex">
+                            <div inert={readOnly} className="mt-1 flex">
                                 <PanelSlider
                                     value={audioEffectToSliderPosition(control, value) / SLIDER_POSITIONS}
                                     label={name}

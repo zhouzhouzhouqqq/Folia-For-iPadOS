@@ -176,6 +176,35 @@ describe('QQ backend lifecycle', () => {
         expect(close).toHaveBeenCalledOnce();
     });
 
+    it('tells the renderer when the encrypted sign-in store could not be read at start', async () => {
+        const fake = createFakePackage();
+        const { createQqAuthSessionRepository } = require('../../../electron/qq/qqAuthSessionRepository.cjs');
+        const authSessionRepository = createQqAuthSessionRepository({
+            store: { get: () => 'ciphertext', set: vi.fn(), delete: vi.fn() },
+            safeStorage: { isEncryptionAvailable: () => false },
+        });
+        // 包加载时就读仓库，读不出只记一行日志（sessionState.js restore），照常监听。
+        const startServer = vi.fn(async ({ authSessionRepository: repository }: { authSessionRepository: { load: () => unknown } }) => {
+            try { repository.load(); } catch { /* the package logs qq-auth.auth-session.load-failed */ }
+            return { close: vi.fn() };
+        });
+        const backend = createQqBackend({
+            broadcast: vi.fn(),
+            authSessionRepository,
+            logger: quietLogger,
+            resolvePackageRoot: () => PACKAGE_ROOT,
+            startServer,
+            loadFile: fake.loadFile,
+        });
+
+        await backend.start();
+
+        expect(backend.getStatus()).toMatchObject({ status: 'running', sessionStoreUnreadable: true });
+        // 这次运行里扫码登录：仓库把读不出的那份删掉，之后问到的状态就是读得出。
+        try { authSessionRepository.save([{ token: 'this-run' }]); } catch { /* the package logs qq-auth.auth-session.save-failed */ }
+        expect(backend.getStatus()).toMatchObject({ status: 'running', sessionStoreUnreadable: false });
+    });
+
     it('names the failed step in the status error', async () => {
         const backend = createQqBackend({
             broadcast: vi.fn(),

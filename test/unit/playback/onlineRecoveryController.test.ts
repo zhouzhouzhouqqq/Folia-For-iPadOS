@@ -342,6 +342,21 @@ describe('online playback recovery results', () => {
         expect(persistLastPlaybackCache).toHaveBeenCalledWith({ ...song, replayGain }, expectedQueue);
     });
 
+    // Only the entry is refreshed: a song the queue no longer holds (removed by the user, or a mod replaced
+    // the queue whole) is not put back in front of it.
+    it('writes no queue when the song is no longer in it, and saves the queue as it is now', async () => {
+        const { controller, persistLastPlaybackCache } = createController(streamUrl('one'));
+        const editedQueue = [otherSong];
+        playbackState.playQueue = editedQueue;
+        const replayGain = { trackGain: -6 };
+        loadAudioSourceMock.mockResolvedValue({ kind: 'ok', audioSrc: streamUrl('two'), replayGain });
+
+        await expect(controller.recoverOnlinePlaybackSource({ failedSrc: streamUrl('one'), autoplay: true, force: true }))
+            .resolves.toEqual({ recovered: true });
+        expect(setPlayQueueMock).not.toHaveBeenCalled();
+        expect(persistLastPlaybackCache).toHaveBeenCalledWith({ ...song, replayGain }, editedQueue);
+    });
+
     it('does not attempt a recovery for a non-online song', async () => {
         const localSong = { ...song, id: 'local-1', sourceRef: undefined, isLocal: true, localRef: { songId: 'local-1' } } as unknown as SongResult;
         const { controller } = createController('blob:folia/local', { currentSong: localSong });

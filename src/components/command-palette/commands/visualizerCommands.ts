@@ -54,6 +54,9 @@ const LATENT_VARIANT_COMMANDS: CommandPaletteCommand[] = [
     },
 ];
 
+// What finds any of 智能动感模式's three commands (Sonnet and Diorama on the beats, Pendolo on the drums).
+const SMART_BEAT_KEYWORDS = ['smart beat', 'beat fx', 'beat this', 'sonnet beat', 'diorama beat', 'pendolo drums', '智能动感模式', '动感', '节拍', '鼓点', '推镜裂光', '水镜涟漪', '仿真鼓面', '商籁动感', '镜台涟漪', '时计'];
+
 export const visualizerCommands: CommandPaletteCommand[] = [
     lyricSegmentationCommand,
     defineCommand({
@@ -82,7 +85,13 @@ export const visualizerCommands: CommandPaletteCommand[] = [
         placeholder: context => context.shared.t('commandPalette.pickerFilterPlaceholder', 'Type to filter, then click or press Enter'),
         execute: () => false,
     }),
-    createToggleCommand('smart-beat-toggle', 'visualizer', 'Smart beat mode', 'Turn the beat effects (Sonnet and Diorama on the beats, Pendolo on the drums) on or off', ['smart beat', 'beat fx', 'beat this', 'sonnet beat', 'diorama beat', 'pendolo drums', '智能动感模式', '动感', '节拍', '鼓点', '推镜裂光', '水镜涟漪', '仿真鼓面', '商籁动感', '镜台涟漪', '时计'], context => context.visualizer.toggleSmartBeat()),
+    // 智能动感模式's on / off toggle, as v0.7.21 shipped it (from the PR #750 review): kept, and visible,
+    // so the shortcuts and pinned slots bound to its id keep working (pinned slots only resolve visible commands).
+    createToggleCommand('smart-beat-toggle', 'visualizer', 'Smart beat mode on / off', 'Turn the beat effects (Sonnet and Diorama on the beats, Pendolo on the drums) on or off', SMART_BEAT_KEYWORDS, context => context.visualizer.toggleSmartBeat()),
+    // 智能动感模式, one command per mode (SmartBeatMode), listed off -> stored only -> on as in its settings.
+    createToggleCommand('smart-beat-off', 'visualizer', 'Smart beat mode: Off', 'Turn the beat effects off; every picture as it was', [...SMART_BEAT_KEYWORDS, 'off', '关闭', '关'], context => context.visualizer.setSmartBeatMode('off')),
+    createToggleCommand('smart-beat-cached', 'visualizer', 'Smart beat mode: Analysed only', 'Play the beat effects from tracks already analysed only; smart beat itself analyses nothing new and leaves the GPU alone (automix is not affected)', [...SMART_BEAT_KEYWORDS, 'cached', 'cache only', 'analysed only', '只用已分析', '缓存', '半开'], context => context.visualizer.setSmartBeatMode('cached')),
+    createToggleCommand('smart-beat-on', 'visualizer', 'Smart beat mode: On', 'Play the beat effects, analysing a track not analysed yet on the GPU', [...SMART_BEAT_KEYWORDS, 'on', '开启', '开', '全开'], context => context.visualizer.setSmartBeatMode('on')),
     ...VISUALIZER_REGISTRY.flatMap(({ mode, command }) => (
         command ? [createVisualizerCommand(mode, command.title, command.description, command.keywords)] : []
     )),

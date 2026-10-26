@@ -11,6 +11,7 @@ import type {
     LoginDiagnosticLine,
     LoginMethod,
     LoginState,
+    OnlineFailureDetail,
 } from '../../../types/onlineMusic';
 import { OnlineProviderError } from '../../../types/onlineMusic';
 import { createProviderSongMetadata } from '../../../utils/songMetadata';
@@ -18,13 +19,13 @@ import { toSafePlaybackUrl } from '../../../utils/appPlaybackHelpers';
 import { fetchQQLyrics } from './qqLyricProvider';
 import { writeProviderSessionValue } from '../providerStorage';
 import { normalizeQqCollection, normalizeQqSong, normalizeQqUser } from './qqNormalize';
-import { clearQqSession, getQqRemoteApiBase, getQqTransportAvailability, hasQqSession, isQqDirect, requestQq } from './qqTransport';
+import { isQqDirect, clearQqSession, getQqRemoteApiBase, getQqTransportAvailability, hasQqSession, hasUsableQqSession, isQqSessionParked, requestQq } from './qqTransport';
 import { canRunLoginSelfCheck, runLoginSelfCheck } from '../loginSelfCheck';
 import { diagnosticLine, formatDiagnosticClock } from '../login/loginDiagnosticReport';
 import { collectQqLoginDiagnostics } from './qqLoginDiagnostics';
-import { getQqSongDetail, requestQqSongDetail } from './qqSongDetail';
+import { getQqSongDetailById, getQqSongDetails, QQ_SONG_DETAILS_PER_REQUEST, requestQqSongDetail } from './qqSongDetail';
 import { qqRecommendations } from './qqRecommendations';
-import { searchQqSongs } from './qqSearch';
+import { resetQqSearchFallbackMemory, searchQqSongs } from './qqSearch';
 import { getQqSubscriptionStatus, qqMutations } from './qqMutations';
 import { describeQqLoginFailure, qqAccountHintNote, qqCheckFailure, qqHintFailure } from './qqLoginFailure';
 import { describeQqFailure } from './qqFailure';
@@ -35,6 +36,7 @@ import { requestQqPreviewSource } from './qqPreview';
 import { noteQqBackendDeclaration, qqBackendSessionMode, resetQqBackendDeclaration } from './qqBackendDeclaration';
 import { keepQqSessionFresh, resetQqSessionRefresh, stopQqSessionRefresh } from './qqSessionRefresh';
 import { OnlineRequestTimeout } from '../failure/onlineRequestLimit';
+import { onlineFailureOf } from '../failure/onlineFailureCase';
 import { errorFields, errorMessage } from '../../../utils/errorText';
 
 // src/services/onlineMusic/qq/qqProvider.ts
@@ -121,6 +123,7 @@ export const resetQqProviderRuntimeCache = (): void => {
     playlistRound = null;
     resetQqVipMemory();
     resetQqSessionRefresh();
+    resetQqSearchFallbackMemory();
 };
 
 /**
@@ -344,9 +347,15 @@ const readPlayRestriction = (entry: any): QqPlayRestriction | null => {
     };
 };
 
+// 和播放那边自动重来用的是同一条规则（failure/onlineFailureCase.ts）：只有「连不上」（断网、没带拒绝码的 5xx）才值得再要一次。
+const isQqUnreachable = (error: unknown, said: OnlineFailureDetail | null): boolean => (
+    onlineFailureOf({ operation: 'audio', providerId: 'qq' }, { error, ...(said ? { detail: said } : {}) }).case === 'unreachable'
+);
+
 /**
  * 按音质降档请求 music_play，任意一档拿到 URL 就返回。登录失效、到了时限、要求稍后再试，和后端没在跑或没配好的
- * 失败马上抛出：再要下一档只会得到同样的回答。network 和别的 5xx 继续降档。
+ * 失败马上抛出：再要下一档只会得到同样的回答。network 和别的 5xx 继续降档。都没拿到时：标准音质回了空链接，
+ * 才要试听片段；有档连不上、标准音质又没回空链接，抛连不上的错，由播放那边再要。
  */
 const getAudioSource = async (song: SongResult, quality: AudioQualityPreference) => {
     const songmid = getQqSongMid(song);
@@ -370,8 +379,15 @@ const getAudioSource = async (song: SongResult, quality: AudioQualityPreference)
     let likelyCause: 'subscription' | 'region' | undefined;
     // The first request that failed: what is said when no level was answered at all.
     let firstFailure: unknown;
+    const tiers = QQ_QUALITY_FALLBACKS[quality];
+    const standardTier = tiers[tiers.length - 1];
+    // 标准音质（最后一档）回了空链接：这个账号拿不到整首，更高的档连不上也一样。后端 3.3.3 在原因没确认时
+    // 已经替这一档再要过一次（qq-music-api 的 services/auth/playback.js）。
+    let standardTierEmpty = false;
+    // 第一个连不上的档（断网、没带拒绝码的 5xx）的错。
+    let firstUnreachable: unknown;
 
-    for (const candidate of QQ_QUALITY_FALLBACKS[quality]) {
+    for (const candidate of tiers) {
         try {
             const response = await requestQq<any>('music_play', {
                 songmid,
@@ -393,6 +409,7 @@ const getAudioSource = async (song: SongResult, quality: AudioQualityPreference)
             }
             if (entry && typeof entry === 'object') {
                 sawEmptyPlayLink = true;
+                if (candidate === standardTier) standardTierEmpty = true;
                 const restriction = readPlayRestriction(entry);
                 likelyCause = restriction?.hintKey ? QQ_LIKELY_CAUSE_BY_HINT[restriction.hintKey] : undefined;
                 console.warn('[QQProvider] playback:no-play-link', {
@@ -410,14 +427,17 @@ const getAudioSource = async (song: SongResult, quality: AudioQualityPreference)
             // Not answered in time: the next level would wait as long again, on the same network.
             if (error instanceof OnlineRequestTimeout) throw error;
             firstFailure ??= error;
+            const said = describeQqFailure('audio', error);
+            const unreachable = isQqUnreachable(error, said);
             console.warn('[QQProvider] playback:quality-failed', {
                 requestedQuality: quality,
                 candidateQuality: candidate.resolvedQuality,
+                unreachable,
                 ...errorFields(error),
             });
-            const said = describeQqFailure('audio', error);
             if (said?.case === 'local-service-stopped' || said?.case === 'not-configured' || said?.httpStatus === 429
                 || (error instanceof OnlineProviderError && error.retryAfterMs !== undefined)) throw error;
+            if (unreachable) firstUnreachable ??= error;
         }
     }
 
@@ -426,16 +446,25 @@ const getAudioSource = async (song: SongResult, quality: AudioQualityPreference)
         hasMediaMid: Boolean(mediaId),
         // `true` means the upstream answered normally but issued no stream for this account.
         upstreamRefusedPlayLink: sawEmptyPlayLink,
+        standardTierEmpty,
+        unreachable: firstUnreachable !== undefined,
     });
+    // 有档连不上、标准音质又没回空链接：说不准这个账号能不能放整首，不拿试听顶上。试听一交出去，播放那边就当成功、
+    // 不再要了，预取还会把它存下来照放；会员碰上一次网络抖动就只听到一分钟。抛连不上的错，播放那边按
+    // autoRetryDelaysMs 隔一会儿再要（failure/onlineFailureCase.ts），再要之前还会看这首歌是不是仍要放。
+    // 先碰到平台拒绝、后面的档连不上时，也报连不上的那个错。
+    if (firstUnreachable !== undefined && !standardTierEmpty) throw firstUnreachable;
+    // 没有一档回过空链接：照第一次的失败报，和以前一样。
     if (firstFailure !== undefined && !sawEmptyPlayLink) throw firstFailure;
-    // 有会话、所有音质都没给链接：这个账号可能只能听试听片段，不限后端说的可能原因。没会话时后端不给试听。
-    if (sawEmptyPlayLink && hasQqSession()) {
+    // 有会话、所有音质都没给链接：这个账号可能只能听试听片段，不限后端说的可能原因。没会话时后端不给试听，停用的会话也不带
+    // （hasUsableQqSession）。
+    if (sawEmptyPlayLink && hasUsableQqSession()) {
         const preview = await requestQqPreviewSource(songmid, mediaId);
         if (preview) return preview;
     }
     // 没有会话、而后端只是没给链接：登录后可能能放（只是可能，不能当成登录失效）。形态坏掉的回答不是没给链接。
     throw new OnlineProviderError('not-playable', 'QQMusicApi gave no play link for this song', 'qq', {
-        likelyCause: likelyCause ?? (sawEmptyPlayLink && !hasQqSession() ? 'sign-in' : undefined),
+        likelyCause: likelyCause ?? (sawEmptyPlayLink && !hasUsableQqSession() ? 'sign-in' : undefined),
     });
 };
 
@@ -463,6 +492,16 @@ const noteLoginStatusCheck = (summary: LoginDiagnosticLine): void => {
     lastLoginStatusCheck = diagnosticLine`${formatDiagnosticClock(Date.now())} ${summary}`;
 };
 
+// 后端不认这个 session 就是登录没了，只有一种例外：主进程这次启动没能读出加密的登录仓库，这次运行里也还没有新登录替掉它，
+// 存着的 session 就是停用的（isQqSessionParked），请求没带它。那时是「查不到」：报 unavailable，accountRead 只记这次读失败、留着
+// session；回 null 会让它删掉 session，下次能读出仓库时也找不回来。这次运行里扫码登录过，后端不认了就照常是登录没了。
+const signedOutUnlessStoreUnreadable = async (): Promise<null> => {
+    if (!await isQqSessionParked()) return null;
+    noteLoginStatusCheck(diagnosticLine`login_status: the sign-in store could not be read at this start`);
+    console.warn('[QQProvider] login-status:store-unreadable');
+    throw new OnlineProviderError('unavailable', 'QQ sign-in store could not be read at this start', 'qq');
+};
+
 const getLoginStatus = async (): Promise<ProviderUser | null> => {
     // No opaque backend session means the account cannot be authenticated, so the startup request is skipped.
     if (!hasQqSession() && !isQqDirect()) {
@@ -476,10 +515,10 @@ const getLoginStatus = async (): Promise<ProviderUser | null> => {
         if (!profile) {
             noteLoginStatusCheck(diagnosticLine`login_status: the backend does not recognize the stored session`);
             console.info('[QQProvider] login-status:anonymous');
-            return null;
+            return signedOutUnlessStoreUnreadable();
         }
         const user = await withQqVipType(normalizeQqUser(profile));
-        // 登录还在：Serverless 后端的会话要在到期前续（qqSessionRefresh.ts），先等通道探测说出会话存法。
+        // 登录还在：会话要在到期前续（qqSessionRefresh.ts）；续期的请求排在通道探测之后。
         void refreshDeclaredChannels().then(keepQqSessionFresh);
         // The acceptance test account returned a profile without a display name, so the profile itself is the signal.
         noteLoginStatusCheck(diagnosticLine`signed in (user id ${user.id ? 'present' : 'missing'}, nickname ${user.nickname ? 'present' : 'missing'})`);
@@ -493,7 +532,7 @@ const getLoginStatus = async (): Promise<ProviderUser | null> => {
         // Missing, expired, rejected, or non-persisted backend sessions all arrive as 401.
         if (error instanceof OnlineProviderError && error.code === 'auth-required') {
             console.info('[QQProvider] login-status:auth-required');
-            return null;
+            return signedOutUnlessStoreUnreadable();
         }
         console.warn('[QQProvider] login-status:error', error);
         throw error;
@@ -1037,7 +1076,7 @@ export const qqProvider: OnlineMusicProvider = {
         return songmid ? `https://y.qq.com/n/ryqq/songDetail/${encodeURIComponent(songmid)}` : null;
     },
     search: { searchSongs: searchQqSongs },
-    playback: { getSongDetail: getQqSongDetail, getAudioSource },
+    playback: { getSongDetail: getQqSongDetailById, getSongDetails: getQqSongDetails, songDetailsPerRequest: QQ_SONG_DETAILS_PER_REQUEST, getAudioSource },
     lyrics: { getLyrics },
     auth: {
         getLoginTexts: () => ({

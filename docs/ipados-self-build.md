@@ -4,7 +4,7 @@ QQ 音乐和酷狗音乐已接入设备直连扫码登录，API 地址留空即�
 
 自定义 AI 已支持原版歌词主题分析，无需部署 Folia 后端。新增原生插件后需 Xcode ⌘R 覆盖安装；配置步骤与范围见 [iPad AI 指南](ipados-ai.md)。
 
-本工程已合入 Folia 0.7.21 的前端、内置视觉模式和 Web Audio 链路，以 Capacitor 8.5.3 打包本地资源。你需要在自己的 Xcode 中选择个人 Team 并运行到 iPad。**本仓库没有签名证书、个人 Team ID、已签名 IPA 或账号。无签名编译通过不是完整移植验收。**
+本工程当前工作树已合入 Folia 0.7.22 的前端、内置视觉模式和 Web Audio 链路，以 Capacitor 8.5.3 打包本地资源。你需要在自己的 Xcode 中选择个人 Team 并运行到 iPad。**本仓库没有签名证书、个人 Team ID、已签名 IPA 或账号。无签名编译通过不是完整移植验收。**
 
 先读 [当前功能状态](ipados-feature-matrix.md) 与 [实际验证报告](ipados-test-report.md)。当前后台连续播放尚未通过实体 iPad 验收；所有效果 WebKit 运行和设备性能未完成实体 iPad 验证；AutoMix 两模型已接通设备内推理并通过合成数据对照，需用户安装模型及真机验收，详见 [AutoMix 指南](ipados-automix.md)。任意 Node/native 模组和桌面离线/透明导出尚未完成。
 
@@ -26,7 +26,7 @@ xcodebuild -showsdks
 git status --short
 ```
 
-保留当前 `codex/upstream-0.7.21` 分支的未提交修改，不执行 `git reset --hard`、清理未跟踪文件或重新克隆覆盖。不需要将 .dmg/.app 转成 .ipa，也不需要在 iPad 运行 Electron。
+保留当前 `codex/upstream-0.7.22` 分支的未提交修改，不执行 `git reset --hard`、清理未跟踪文件或重新克隆覆盖。不需要将 .dmg/.app 转成 .ipa，也不需要在 iPad 运行 Electron。
 
 ## 安装依赖与构建
 
@@ -146,3 +146,9 @@ xcodebuild -project ios/App/App.xcodeproj \
 Preview 3 的发布版本为 0.7.21 / build 5，包含上述合入及本轮性能、触控布局修改，并已完成 arm64 Release 无签名归档。预编译 IPA、自行签名与版本对应关系见 [Preview 3 说明](ipados-preview3.md) 和 [下载包说明](ipados-release-downloads.md)。本机已签名安装覆盖更新时保持自己的 Team / Bundle ID。
 
 原生模型清单为 shared/ipadosModelManifest.json，生成/核对命令是 python3 dev/ipados/automix/sync-manifest.py --check。shared/modelManifest.json 是新版桌面/GPU .bin 权重，两者不能交换。模型不是音乐，不包含用户数据；下载/导入只安装公开权重，不上传本地音频。
+
+## 0.7.22 工作树
+
+当前本机源码在 `/Users/macbookpro/Developer/Folia-For-iPadOS`（不在 iCloud），Xcode 从 `ios/App/App.xcodeproj` 打开。先执行 `npm install`、`npm run ios:sync`，再打开 Xcode；确认 General 显示 **0.7.22 / build 6**。前端或插件变更后必须重新 sync / Run，旧 Preview 3 的 IPA 不会自动更新。本轮没有自动发布到 GitHub。
+
+新增花火、随机歌词池和服务商模型选择的使用状态见 [0.7.22 记录](ipados-upstream-0.7.22.md)。汽水使用抖音扫码，在统一账号窗口中选择；当前已接入设备内协议，无需自建 API，真实登录/播放仍待验收。自定义 AI 先保存连接再读取模型，也可手动输入模型名；修改 API 地址须重新输入该地址的密钥。不要把其他服务的 key 复用到不可信地址。

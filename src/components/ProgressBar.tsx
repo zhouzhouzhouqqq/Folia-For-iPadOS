@@ -202,7 +202,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                     onInput={handleInput}
                     onChange={() => { }} // React requires this
                     onClick={(e) => e.stopPropagation()}
-                    className={`absolute inset-0 w-full h-full opacity-0 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                    className={`absolute left-0 w-full opacity-0 ${collapsed ? 'top-1/2 -translate-y-1/2 h-11' : 'inset-y-0 h-full'} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                 />
                 <FoliumProgressLayers ctx={foliumCtx} />
             </div>

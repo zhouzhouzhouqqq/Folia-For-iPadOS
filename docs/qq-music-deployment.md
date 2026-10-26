@@ -339,6 +339,7 @@ QQ 扫码失败后，登录界面与其它平台一样在二维码旁边给出�
 | 关闭二维码后仍担心计费 | 查看日志是否出现取消请求，以及 Durable Object 的 `/open`、`/close` 是否成对出现 |
 | 探索页读不出 QQ 的内容，歌单里没有音乐云盘，会员账号没有皇冠 | 后端低于 3.3.3，缺少 `/recommend/radar`、`/user/cloud`、`/user/vip` 等接口；升级到 3.3.3 或更高版本 |
 | 网页版搜歌有时一首都搜不到，换个时间又好了 | serverless 由平台机房向 QQ 搜，QQ 对机房来的请求有时只回空结果；见下面「Serverless 部署的网络」 |
+| QQ 的歌词、未登录时的搜歌、模组按 id 找回 QQ 的歌都失败 | 前端没有 `/api/lyric-proxy`：这三样不经 QQ 后端，经前端同源的这个中转。Vercel、Cloudflare、Docker 都带着它，只托管静态文件的部署没有 |
 
 ## Serverless 部署的网络
 

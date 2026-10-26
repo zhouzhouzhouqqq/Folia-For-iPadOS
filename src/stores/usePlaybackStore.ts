@@ -95,6 +95,8 @@ type PlaybackStoreState = {
     setTransitionDisplay: SetState<TransitionDisplay | null>;
     /** Lets go of the frozen picture, saying how the blend ended - one update, so a subscriber sees both. */
     releaseTransitionDisplay: (end: AutomixTransitionEnd) => void;
+    /** Puts a whole new queue in and sets Personal FM in the same update, so a subscriber sees both at once. */
+    replacePlayQueue: (queue: SongResult[], isFmMode: boolean) => void;
 };
 
 const resolve = <T,>(next: React.SetStateAction<T>, previous: T): T => (
@@ -146,6 +148,7 @@ export const usePlaybackStore = create<PlaybackStoreState>((set, get) => ({
     setLyricTimelineOffsetMs: (next) => set({ lyricTimelineOffsetMs: resolve(next, get().lyricTimelineOffsetMs) }),
     setTransitionDisplay: (next) => set({ transitionDisplay: resolve(next, get().transitionDisplay) }),
     releaseTransitionDisplay: (end) => set({ transitionDisplay: null, transitionEnd: end }),
+    replacePlayQueue: (queue, isFmMode) => set({ playQueue: queue, isFmMode }),
 }));
 
 // ---- module-level setters ----
@@ -171,6 +174,7 @@ export const setIsFmMode: SetState<boolean> = (next) => usePlaybackStore.getStat
 export const setReplayGainMode: SetState<ReplayGainMode> = (next) => usePlaybackStore.getState().setReplayGainMode(next);
 export const setLyricTimelineOffsetMs: SetState<number> = (next) => usePlaybackStore.getState().setLyricTimelineOffsetMs(next);
 export const setTransitionDisplay: SetState<TransitionDisplay | null> = (next) => usePlaybackStore.getState().setTransitionDisplay(next);
+export const replacePlayQueue = (queue: SongResult[], isFmMode: boolean) => usePlaybackStore.getState().replacePlayQueue(queue, isFmMode);
 
 // ---- derived: the cover, and the display layer ----
 

@@ -668,4 +668,12 @@ describe('buildImportPlan', () => {
         expect(p.groups).toEqual(['libraryWall']);
         expect(keys(plan({ libraryWallSeamStyle: '' }, { libraryWallSeamStyle: 'dots' }, unpinned))).toEqual([]);
     });
+
+    // The info strip direction joins the same group; an empty value is "the exporter had none".
+    it('plans the info strip direction under the library wall group', () => {
+        const p = plan({ libraryWallSeamDirection: 'horizontal' }, { libraryWallSeamDirection: 'auto' }, unpinned);
+        expect(keys(p)).toEqual(['libraryWallSeamDirection']);
+        expect(p.groups).toEqual(['libraryWall']);
+        expect(keys(plan({ libraryWallSeamDirection: '' }, { libraryWallSeamDirection: 'auto' }, unpinned))).toEqual([]);
+    });
 });

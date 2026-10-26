@@ -7,7 +7,7 @@ const getLyricsMock = vi.hoisted(() => vi.fn(async () => ({ lyrics: null, isPure
 const setStatusMsgMock = vi.hoisted(() => vi.fn());
 const setAudioSrcMock = vi.hoisted(() => vi.fn());
 const setCurrentSongMock = vi.hoisted(() => vi.fn());
-const playbackState = vi.hoisted(() => ({ currentSong: null as unknown }));
+const playbackState = vi.hoisted(() => ({ currentSong: null as unknown, playQueue: [] as unknown[] }));
 const toastState = vi.hoisted(() => ({ current: null as unknown }));
 
 vi.mock('@/i18n/config', () => ({ default: { t: translateMock, on: () => {}, language: 'en' } }));
@@ -57,7 +57,10 @@ vi.mock('@/services/localMusicService', () => ({
     getAudioFromLocalSong: vi.fn(),
 }));
 vi.mock('@/services/localLibraryEntityRepository', () => ({ getLocalLibraryCatalogSnapshot: vi.fn() }));
-vi.mock('@/services/navidromeService', () => ({ getNavidromeConfig: vi.fn(() => null), navidromeApi: {} }));
+vi.mock('@/services/navidromeService', () => ({
+    getNavidromeConfig: vi.fn(() => null),
+    navidromeApi: { getStreamUrl: () => 'https://navi.test/stream/n1', getSong: async () => null },
+}));
 vi.mock('@/services/playbackAdapters', () => ({
     applyLocalLibraryEntityDisplay: vi.fn(),
     buildUnifiedLocalSong: vi.fn(),
@@ -76,6 +79,10 @@ import { installPlaybackFailedListener } from '@/services/hostExtensionHooks';
 import { getLocalSongs } from '@/services/db';
 import { ensureLocalSongCoverAsset, getAudioFromLocalSong } from '@/services/localMusicService';
 import { getLocalLibraryCatalogSnapshot } from '@/services/localLibraryEntityRepository';
+import { getNavidromeConfig } from '@/services/navidromeService';
+import { applyLocalLibraryEntityDisplay, buildUnifiedLocalSong } from '@/services/playbackAdapters';
+import { resolveLocalSongLyrics } from '@/utils/lyrics/localSongLyrics';
+import { noteWholeQueueWrite, wholeQueueWritesSoFar } from '@/services/wholeQueueWrites';
 import type { LocalSong, SongResult } from '@/types';
 
 // test/unit/playback/restorePlaybackSource.test.ts
@@ -451,5 +458,178 @@ describe('restorePlaybackSourceForSong (local)', () => {
         await expect(restoreLocal()).resolves.toBe('failed');
         expect(toastState.current).toBe(newerToast);
         expect(listener).not.toHaveBeenCalled();
+    });
+});
+
+// 调用方给了开始恢复时的整表写入计数（queueWritesAtStart）、恢复期间模组整表替换过队列：三处写回都按 store 此刻的队列，
+// 只换掉同一首、不前插；没给时照旧按传进来的队列。
+describe('restorePlaybackSourceForSong after a whole-queue write', () => {
+    const other = { ...song, id: 'other', sourceRef: { kind: 'online', providerId: 'bodian', mediaId: 'other' } } as SongResult;
+    const restoreOf = (restored: SongResult, queueWritesAtStart?: number) => {
+        const setPlayQueue = vi.fn();
+        const persistLastPlaybackCache = vi.fn(async () => undefined);
+        const result = restorePlaybackSourceForSong(restored, {
+            audioQuality: 'high',
+            blobUrlRef: { current: null },
+            currentOnlineAudioUrlFetchedAtRef: { current: null },
+            setLyrics: vi.fn(),
+            setPlayQueue,
+            persistLastPlaybackCache,
+            queue: [restored],
+            stillWanted: startRestore(),
+            ...(queueWritesAtStart === undefined ? {} : { queueWritesAtStart }),
+        });
+        return { result, setPlayQueue, persistLastPlaybackCache };
+    };
+    /** Makes `restored` the song asked for, and counts a whole-queue write that left `live` in the store. */
+    const afterAWrite = (restored: SongResult, live: SongResult[]) => {
+        playbackState.currentSong = restored;
+        askForSong(restored);
+        const before = wholeQueueWritesSoFar();
+        noteWholeQueueWrite();
+        playbackState.playQueue = live;
+        return before;
+    };
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        loadAudioSourceMock.mockReset();
+        canPlaySongMock.mockReturnValue(true);
+        toastState.current = null;
+        vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    });
+    afterEach(() => {
+        playbackState.playQueue = [];
+        vi.restoreAllMocks();
+    });
+
+    describe('online, with replay gain', () => {
+        // The loader's metadata stand-in hands the song back as it is: one that has a gain already.
+        const gained = { ...song, replayGain: { trackGain: -3 } } as SongResult;
+
+        it('swaps the song into the store\'s queue of now where it is there', async () => {
+            const live = [other, { ...gained }];
+            const before = afterAWrite(gained, live);
+            loadAudioSourceMock.mockResolvedValue({ kind: 'ok', audioSrc: 'https://cdn.example/song.mp3' });
+
+            const { result, setPlayQueue, persistLastPlaybackCache } = restoreOf(gained, before);
+            await expect(result).resolves.toBe('restored');
+
+            expect(setPlayQueue).toHaveBeenCalledWith([other, gained]);
+            expect(persistLastPlaybackCache).toHaveBeenCalledWith(gained, [other, gained]);
+        });
+
+        it('writes no queue, and saves the store\'s queue of now, where the song is not in it', async () => {
+            const live = [other];
+            const before = afterAWrite(gained, live);
+            loadAudioSourceMock.mockResolvedValue({ kind: 'ok', audioSrc: 'https://cdn.example/song.mp3' });
+
+            const { result, setPlayQueue, persistLastPlaybackCache } = restoreOf(gained, before);
+            await expect(result).resolves.toBe('restored');
+
+            expect(setPlayQueue).not.toHaveBeenCalled();
+            expect(persistLastPlaybackCache).toHaveBeenCalledWith(gained, live);
+        });
+
+        it('without the count, writes the queue it was given, as before', async () => {
+            afterAWrite(gained, [other]);
+            loadAudioSourceMock.mockResolvedValue({ kind: 'ok', audioSrc: 'https://cdn.example/song.mp3' });
+
+            const { result, setPlayQueue, persistLastPlaybackCache } = restoreOf(gained);
+            await expect(result).resolves.toBe('restored');
+
+            expect(setPlayQueue).toHaveBeenCalledWith([gained]);
+            expect(persistLastPlaybackCache).toHaveBeenCalledWith(gained, [gained]);
+        });
+    });
+
+    describe('Navidrome', () => {
+        const navidromeSong = {
+            ...song, id: 'n1', name: 'N', isNavidrome: true, sourceRef: { kind: 'navidrome', mediaId: 'n1' },
+            navidromeData: { id: 'n1', name: 'N', navidromeData: { id: 'n1' } },
+        } as unknown as SongResult;
+        const saved = (persist: ReturnType<typeof vi.fn>) => persist.mock.calls[0]?.[1] as SongResult[];
+
+        beforeEach(() => {
+            vi.mocked(getNavidromeConfig).mockReturnValue({ serverUrl: 'https://navi.test' } as never);
+        });
+
+        it('saves the store\'s queue of now with the restored song in its place, and none put in front', async () => {
+            const live = [other, { ...navidromeSong }];
+            const before = afterAWrite(navidromeSong, live);
+
+            const { result, persistLastPlaybackCache } = restoreOf(navidromeSong, before);
+            await expect(result).resolves.toBe('restored');
+
+            expect(saved(persistLastPlaybackCache).map(entry => entry.id)).toEqual(['other', 'n1']);
+            expect(saved(persistLastPlaybackCache)[0]).toBe(other);
+            expect(saved(persistLastPlaybackCache)[1]).toHaveProperty('playbackSourceRevision');
+        });
+
+        it('saves the store\'s queue of now as it is where the song is not in it', async () => {
+            const live = [other];
+            const before = afterAWrite(navidromeSong, live);
+
+            const { result, persistLastPlaybackCache } = restoreOf(navidromeSong, before);
+            await expect(result).resolves.toBe('restored');
+
+            expect(saved(persistLastPlaybackCache)).toBe(live);
+        });
+
+        it('without the count, saves the queue it was given', async () => {
+            afterAWrite(navidromeSong, [other]);
+
+            const { result, persistLastPlaybackCache } = restoreOf(navidromeSong);
+            await expect(result).resolves.toBe('restored');
+
+            expect(saved(persistLastPlaybackCache)).toEqual([navidromeSong]);
+        });
+    });
+
+    describe('a local file', () => {
+        const localSong = { ...song, id: 'local-1', sourceRef: undefined, isLocal: true, localRef: { songId: 'local-1' } } as unknown as SongResult;
+        const localRecord = { id: 'local-1', title: 'Song', fileName: 'song.mp3', duration: 1000 } as unknown as LocalSong;
+        const rebuilt = { ...localSong, name: 'Song (rebuilt)' } as SongResult;
+        const saved = (persist: ReturnType<typeof vi.fn>) => persist.mock.calls[0]?.[1] as SongResult[];
+
+        beforeEach(() => {
+            vi.mocked(getLocalSongs).mockResolvedValue([localRecord]);
+            vi.mocked(getAudioFromLocalSong).mockResolvedValue('blob:folia/local');
+            vi.mocked(ensureLocalSongCoverAsset).mockResolvedValue(localRecord);
+            vi.mocked(getLocalLibraryCatalogSnapshot).mockResolvedValue({} as never);
+            vi.mocked(buildUnifiedLocalSong).mockReturnValue(rebuilt as never);
+            vi.mocked(applyLocalLibraryEntityDisplay).mockImplementation(entry => entry as never);
+            vi.mocked(resolveLocalSongLyrics).mockResolvedValue({ lyrics: null, source: null } as never);
+        });
+
+        it('saves the store\'s queue of now with the rebuilt song in its place', async () => {
+            const live = [other, { ...localSong }];
+            const before = afterAWrite(localSong, live);
+
+            const { result, persistLastPlaybackCache } = restoreOf(localSong, before);
+            await expect(result).resolves.toBe('restored');
+
+            expect(saved(persistLastPlaybackCache)).toEqual([other, rebuilt]);
+            expect(saved(persistLastPlaybackCache)[0]).toBe(other);
+        });
+
+        it('saves the store\'s queue of now as it is where the song is not in it', async () => {
+            const live = [other];
+            const before = afterAWrite(localSong, live);
+
+            const { result, persistLastPlaybackCache } = restoreOf(localSong, before);
+            await expect(result).resolves.toBe('restored');
+
+            expect(saved(persistLastPlaybackCache)).toBe(live);
+        });
+
+        it('without the count, saves the queue it was given with the rebuilt song', async () => {
+            afterAWrite(localSong, [other]);
+
+            const { result, persistLastPlaybackCache } = restoreOf(localSong);
+            await expect(result).resolves.toBe('restored');
+
+            expect(saved(persistLastPlaybackCache)).toEqual([rebuilt]);
+        });
     });
 });

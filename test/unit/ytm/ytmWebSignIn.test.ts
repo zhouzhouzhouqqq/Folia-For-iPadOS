@@ -168,6 +168,30 @@ describe('YouTube Music stored web sign-in', () => {
         }
     });
 
+    it('replaces what is stored where a new sign-in cannot be sealed, and leaves it where it cannot be written', () => {
+        const store = createStore();
+        createYtmWebSessionRepository({ store, safeStorage: cipher(), log: vi.fn() }).set({ cookie: COOKIE, userAgent: AGENT, user });
+        const sealed = store.get(WEB_SESSION_KEY);
+        const warn = vi.fn();
+        const unsealed = createYtmWebSessionRepository({ store, safeStorage: { isEncryptionAvailable: () => false }, warn });
+        unsealed.set({ cookie: 'SAPISID=other', userAgent: AGENT, user });
+        unsealed.setPremium(true);
+        expect(store.get(WEB_SESSION_KEY)).toBeUndefined();
+        store.set(WEB_SESSION_KEY, sealed);
+        expect(unsealed.get()).toMatchObject({ cookie: 'SAPISID=other' });
+        expect(warn).toHaveBeenCalledTimes(1);
+        const locked = { ...store, set: () => { throw Object.assign(new Error('locked'), { code: 'EPERM' }); } };
+        const lockedWarn = vi.fn();
+        createYtmWebSessionRepository({ store: locked, safeStorage: cipher(), log: vi.fn(), warn: lockedWarn }).set({ cookie: 'SAPISID=other', userAgent: AGENT, user });
+        expect(store.get(WEB_SESSION_KEY)).toBe(sealed);
+        expect(lockedWarn).toHaveBeenLastCalledWith('[Ytm] Web sign-in could not be stored; what is stored stays as it was', expect.objectContaining({ code: 'EPERM' }));
+        // Another account's sign-in that cannot be written: the one stored before goes, so it does not come back at a later start.
+        createYtmWebSessionRepository({ store: locked, safeStorage: cipher(), log: vi.fn(), warn: lockedWarn })
+            .set({ cookie: 'SAPISID=another', userAgent: AGENT, user: { ...user, id: publicAccountId('another-gaia-id') } });
+        expect(store.get(WEB_SESSION_KEY)).toBeUndefined();
+        expect(lockedWarn).toHaveBeenLastCalledWith('[Ytm] Web sign-in could not be stored; the one of another account stored before was removed', expect.objectContaining({ code: 'EPERM' }));
+    });
+
     it('refuses what it cannot unseal, damaged data and an incomplete sign-in', () => {
         const store = createStore();
         const safeStorage = cipher();
@@ -597,9 +621,10 @@ describe('YouTube Music desktop bridge with a web sign-in', () => {
         return { created, libraries, MusicPlaylistShelf, of: (kind: string) => created.filter(client => client.kind === kind) };
     };
     const signedInAnswer = (_kind: string, endpoint: string, _body?: any): unknown => ({ data: endpoint === '/account/accounts_list' ? webAccounts : marked('1') });
-    // `wait` is the bridge's timer: by default one that never runs out.
-    const setup = ({ web = false, found = BROWSER as string | null, answer = signedInAnswer, signInFolder = () => FOLDER, wait = () => new Promise<void>(() => {}) }:
-        { web?: boolean; found?: string | null; answer?: typeof signedInAnswer; signInFolder?: (() => string) | null; wait?: (ms: number) => Promise<void> } = {}) => {
+    // `wait` is the bridge's timer: by default one that never runs out. `keychain` is what the
+    // bridge's run unseals with: by default the one the stored sign-in was sealed with.
+    const setup = ({ web = false, found = BROWSER as string | null, answer = signedInAnswer, signInFolder = () => FOLDER, wait = () => new Promise<void>(() => {}), keychain }:
+        { web?: boolean; found?: string | null; answer?: typeof signedInAnswer; signInFolder?: (() => string) | null; wait?: (ms: number) => Promise<void>; keychain?: object } = {}) => {
         const store = createStore();
         const safeStorage = cipher();
         const time = 1_700_000_000_000;
@@ -608,11 +633,28 @@ describe('YouTube Music desktop bridge with a web sign-in', () => {
         const yt = fakeYoutube(answer);
         const browser = fakeBrowser(found);
         const [log, warn, fetch] = [vi.fn(), vi.fn(), vi.fn()];
-        const bridge = createYtmApiBridge({ store, safeStorage, fetch, evaluate: vi.fn(), loadLibraries: async () => yt.libraries, log, warn, wait,
+        const bridge = createYtmApiBridge({ store, safeStorage: keychain ?? safeStorage, fetch, evaluate: vi.fn(), loadLibraries: async () => yt.libraries, log, warn, wait,
             mintToken: vi.fn(), now: () => clock.ms, browserSignIn: browser, browserName: () => AGENT, ...(signInFolder ? { signInFolder } : {}) });
         return { bridge, store, yt, browser, log, warn, fetch, time, clock };
     };
     const account = { id: user.id, nickname: 'Fixture', avatarUrl: 'https://yt3.ggpht.com/a', vipType: 0 };
+
+    it.each([
+        ['without OS encryption', { ...cipher(), isEncryptionAvailable: (): boolean => false }],
+        ['on the plaintext Linux backend', { ...cipher(), getSelectedStorageBackend: (): string => 'basic_text' }],
+    ])('does not answer a stored sign-in it cannot read %s as nobody, and nobody once signed out', async (_case, keychain) => {
+        const { bridge, store } = setup({ web: true, keychain });
+        expect(await bridge.request('login_status')).toEqual({ ok: false, error: { code: 'unavailable', message: 'The stored YouTube Music sign-in cannot be read now' } });
+        expect(store.get(WEB_SESSION_KEY)).toEqual(expect.any(String));
+        await bridge.request('logout');
+        expect(await bridge.request('login_status')).toEqual({ ok: true, data: null });
+        await expect(setup().bridge.request('login_status')).resolves.toEqual({ ok: true, data: null });
+    });
+
+    it('answers nobody for a stored sign-in the keychain will not unseal while encryption works', async () => {
+        const { bridge } = setup({ web: true, keychain: { ...cipher(), decryptString: () => { throw new Error('refused'); } } });
+        expect(await bridge.request('login_status')).toEqual({ ok: true, data: null });
+    });
 
     it('signs in through the browser, tells the renderer the account and keeps the cookies to itself', async () => {
         const { bridge, store, yt, browser, log, warn, fetch, time } = setup();

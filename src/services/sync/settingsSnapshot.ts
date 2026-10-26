@@ -1,4 +1,5 @@
 import { useVisualizerSettingsStore, type VisualizerSettingsState } from '../../stores/useVisualizerSettingsStore';
+import { toStoredSmartBeat } from '../../stores/visualizerSettingsPersistence';
 import { useTypographySettingsStore, type TypographySettingsState } from '../../stores/useTypographySettingsStore';
 import { useLyricSettingsStore, type LyricSettingsState } from '../../stores/useLyricSettingsStore';
 import { useHomeLayoutSettingsStore, type HomeLayoutSettingsState } from '../../stores/useHomeLayoutSettingsStore';
@@ -33,6 +34,7 @@ export const buildSyncedVisualSettings = (state: SyncableSettingsState): SyncedV
     followSystemTheme: state.followSystemTheme,
     visualizerMode: state.visualizerMode,
     randomVisualizerModePerSong: state.randomVisualizerModePerSong,
+    randomVisualizerModes: state.randomVisualizerModes,
     visualizerBackgroundMode: state.visualizerBackgroundMode,
     backgroundOpacity: state.backgroundOpacity,
     visualizerOpacity: state.visualizerOpacity,
@@ -68,7 +70,8 @@ export const buildSyncedVisualSettings = (state: SyncableSettingsState): SyncedV
     monetTuning: state.monetTuning,
     pendoloTuning: state.pendoloTuning,
     sonnetTuning: state.sonnetTuning,
-    smartBeat: state.smartBeat,
+    // With the one switch an older build reads (toStoredSmartBeat).
+    smartBeat: toStoredSmartBeat(state.smartBeat),
     temperaTuning: state.temperaTuning,
     lumiereTuning: state.lumiereTuning,
     urlBackgroundList: state.urlBackgroundList,
@@ -95,7 +98,8 @@ export const applySyncedVisualSettings = (
     settings: SyncedVisualSettings,
 ) => {
     if (settings.followSystemTheme !== undefined) state.setFollowSystemTheme(Boolean(settings.followSystemTheme));
-    if (settings.visualizerMode !== undefined) state.handleSetVisualizerMode(settings.visualizerMode);
+    if (settings.visualizerMode !== undefined) state.handleSetVisualizerMode(settings.visualizerMode, { preserveRandom: true });
+    if (settings.randomVisualizerModes !== undefined) state.handleSetRandomVisualizerModes(settings.randomVisualizerModes);
     if (settings.randomVisualizerModePerSong !== undefined) state.handleToggleRandomVisualizerModePerSong(Boolean(settings.randomVisualizerModePerSong));
     if (settings.visualizerBackgroundMode === null) {
         state.handleResetVisualizerBackgroundMode();

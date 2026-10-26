@@ -15,6 +15,10 @@ import {
 //
 // Of the decoders' four sources only `source` is turned back into audio (the iSTFT and the
 // overlap-add are per source); the network itself has to run whole either way.
+// @note Since the analysis service's phase 3 (docs/analysis-service-plan.md) `sources` asks for
+// several - automix wants all four, the drum hits the drums - each through the same iSTFT and
+// overlap-add in turn into its own stretch of the output, the first of them returned as left/right
+// as before. A few dispatches more than one source, against the whole network that runs either way.
 //
 // `f16` (a device opened with shader-f16) runs every GEMM in kernels.ts' 'f16' mode: f16 tiles and
 // f16 multiplies over each 16-deep K step, f32 accumulation and f32 activations in memory - about a
@@ -50,6 +54,8 @@ export interface HtdemucsWgslResult {
     wallMs: number;
     /** Command buffers submitted. */
     slices: number;
+    /** Every source the model was built for (`sources`), in that order, the first one's the same as left/right. */
+    stems: { left: Float32Array; right: Float32Array }[];
     /** Intermediate activations by stage name, only when asked for (channel-major, as computed). */
     stages?: Record<string, Float32Array>;
     /** With slice 'dispatch' and `timings`: each dispatch's submit-to-done time, in order. */
@@ -79,19 +85,26 @@ export class HtdemucsWgsl {
     private readonly fineStages = new Set<number>();
     private autoRuns = 0;
 
+    /** GPU memory this model holds (weights, activations, uniforms), bytes: for a residency budget. */
+    get bytes(): number {
+        return this.owned.reduce((sum, buffer) => sum + buffer.size, 0);
+    }
+
     /**
      * Uploads the weights (the .bin as written, f32 or --f16) and builds the whole graph. `source` is
-     * which stem a run returns (an index into HTDEMUCS_SOURCES).
+     * which stem a run returns (an index into HTDEMUCS_SOURCES); `sources`, which several (all four
+     * for automix), the first returned as left/right.
      */
     static async create(
         device: GPUDevice,
         weights: Uint8Array,
         manifest: HtdemucsWgslManifest,
-        options: { source?: number; f16?: boolean } = {},
+        options: { source?: number; sources?: number[]; f16?: boolean } = {},
     ): Promise<HtdemucsWgsl> {
         if (manifest.segment !== HTDEMUCS_SEGMENT) throw new Error(`htdemucs weights are for a ${manifest.segment}-sample segment, not ${HTDEMUCS_SEGMENT}`);
         if (options.f16 && !device.features.has('shader-f16')) throw new Error('htdemucs f16 needs a device opened with shader-f16');
-        const source = options.source ?? 0;
+        const sources = options.sources ?? [options.source ?? 0];
+        if (sources.length === 0 || sources.some(source => !(source >= 0 && source < HTDEMUCS_SOURCES.length))) throw new Error(`htdemucs sources must be indices into ${HTDEMUCS_SOURCES.join(', ')}, got ${sources.join(', ')}`);
         const mode: GemmMode = options.f16 ? 'f16' : 'f32';
         const ATTN_SCORES = attnScoresSource(mode);
         const ATTN_OUT = attnOutSource(mode);
@@ -135,7 +148,7 @@ export class HtdemucsWgsl {
         // branch [48 * 2^i, 1, 172032 / 4^(i+1)]. The scratch buffers are sized for the widest layer.
         const top = 48 * (BINS / 4) * FRAMES;                  // [48, 512, 168]
         const mixBuffer = storage(2 * L);
-        const outBuffer = storage(2 * L);
+        const outBuffer = storage(2 * L * sources.length);
         const mixStats = storage(4);
         const specStats = storage(4);
         const scratchStats = storage(4 * BINS);
@@ -410,10 +423,15 @@ export class HtdemucsWgsl {
 
         // The chosen source back to audio: iSTFT of its four spectral channels, plus its time-branch half.
         scope = 'output';
-        dispatch(ISTFT_A, [freqOut, specStats, tw, dft], [FRAMES, source], [1, 64, 2 * FRAMES]);
-        dispatch(ISTFT_B, [dft, tw, tensor('istft.window'), frames], [FRAMES], [1, 64, 2 * FRAMES]);
-        dispatch(OVERLAP_ADD, [frames, tensor('istft.env'), timeOut, mixStats, outBuffer], [FRAMES, L, source], flat(2 * L));
-        stage('out', outBuffer, 2 * L);
+        sources.forEach((source, index) => {
+            dispatch(ISTFT_A, [freqOut, specStats, tw, dft], [FRAMES, source], [1, 64, 2 * FRAMES], HTDEMUCS_SOURCES[source]);
+            dispatch(ISTFT_B, [dft, tw, tensor('istft.window'), frames], [FRAMES], [1, 64, 2 * FRAMES], HTDEMUCS_SOURCES[source]);
+            dispatch(OVERLAP_ADD, [frames, tensor('istft.env'), timeOut, mixStats, outBuffer], [FRAMES, L, source, index * 2 * L], flat(2 * L), HTDEMUCS_SOURCES[source]);
+            // A stage boundary between sources (found by review): the last stage is never cut, and
+            // four sources' iSTFTs in it are ~8.5 ms on an M4 - a 120 Hz frame - where one was ~2.
+            if (index < sources.length - 1) stage(`out_${HTDEMUCS_SOURCES[source]}`, outBuffer, 2 * L * (index + 1));
+        });
+        stage('out', outBuffer, 2 * L * sources.length);
 
         const invalid = await device.popErrorScope();
         if (invalid) {
@@ -509,9 +527,14 @@ export class HtdemucsWgsl {
         }
         const out = stages.out;
         if (!options.stages) delete stages.out;
+        const stems = Array.from({ length: out.length / (2 * L) }, (_, index) => ({
+            left: out.subarray(index * 2 * L, index * 2 * L + L),
+            right: out.subarray(index * 2 * L + L, (index + 1) * 2 * L),
+        }));
         return {
-            left: out.subarray(0, L),
-            right: out.subarray(L, 2 * L),
+            left: stems[0].left,
+            right: stems[0].right,
+            stems,
             gpuMs,
             wallMs,
             slices,

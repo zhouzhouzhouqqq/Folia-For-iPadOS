@@ -2,7 +2,7 @@
 
 # Folium API 参考
 
-当前契约版本：**Folium 1.6**。
+当前契约版本：**Folium 1.7**。
 
 本文列出模组能用到的全部公开类型，内容直接来自契约文件 [`src/mods/folium/contract.ts`](../../src/mods/folium/contract.ts)
 （client 入口）与 [`src/mods/folium/mainContract.ts`](../../src/mods/folium/mainContract.ts)（main 入口），
@@ -11,39 +11,44 @@
 
 ## 目录
 
-- **客户端入口**：[权限一览](#权限一览) · [FoliumContextKind](#foliumcontextkind) · [FoliumHostInfo](#foliumhostinfo) · [FoliumStorage](#foliumstorage) · [FoliumRpc](#foliumrpc) · [FoliumLogger](#foliumlogger) · [FoliumClientApi](#foliumclientapi) · [FoliumClientModule](#foliumclientmodule)
+- **客户端入口**：[权限一览](#权限一览) · [FoliumContextKind](#foliumcontextkind) · [FoliumHostInfo](#foliumhostinfo) · [FoliumStorage](#foliumstorage) · [FoliumSecretAccess](#foliumsecretaccess) · [FoliumRpc](#foliumrpc) · [FoliumLogger](#foliumlogger) · [FoliumClientApi](#foliumclientapi) · [FoliumClientModule](#foliumclientmodule)
 - **注册表与条目**：[注册表一览](#注册表一览) · [FoliumVisualizerDef](#foliumvisualizerdef) · [FoliumTuningDef](#foliumtuningdef) · [FoliumCommandContext](#foliumcommandcontext) · [FoliumCommandDef](#foliumcommanddef) · [FoliumBackgroundContext](#foliumbackgroundcontext) · [FoliumBackgroundDef](#foliumbackgrounddef) · [FoliumStageSlot](#foliumstageslot) · [FoliumStageLayerDef](#foliumstagelayerdef) · [FoliumSettingsSectionDef](#foliumsettingssectiondef) · [FoliumPlayerPanelTabDef](#foliumplayerpaneltabdef) · [FoliumHomeTabDef](#foliumhometabdef) · [FoliumProgressContext](#foliumprogresscontext) · [FoliumProgressButtonSlot](#foliumprogressbuttonslot) · [FoliumProgressButtonDef](#foliumprogressbuttondef) · [FoliumProgressLayerDef](#foliumprogresslayerdef) · [FoliumStyleDef](#foliumstyledef) · [FoliumRegistryHandle](#foliumregistryhandle) · [FoliumSettingsSectionHandle](#foliumsettingssectionhandle) · [FoliumRegistry](#foliumregistry) · [FoliumRegistries](#foliumregistries)
 - **宿主容器与上下文**：[FoliumMount](#foliummount) · [FoliumSize](#foliumsize) · [FoliumMountHelpers](#foliummounthelpers) · [FoliumPanelContext](#foliumpanelcontext) · [FoliumSettingsPanelContext](#foliumsettingspanelcontext) · [FoliumClock](#foliumclock) · [FoliumSurface](#foliumsurface) · [FoliumAudioBands](#foliumaudiobands) · [FoliumAudio](#foliumaudio) · [FoliumDisplay](#foliumdisplay) · [FoliumStageContext](#foliumstagecontext)
 - **事件**：[事件一览](#事件一览) · [FoliumEventPriority](#foliumeventpriority) · [FoliumPlaybackFailureReason](#foliumplaybackfailurereason) · [FoliumNotificationEvents](#foliumnotificationevents) · [FoliumLyricsTransformEvent](#foliumlyricstransformevent) · [FoliumBeforePlayEvent](#foliumbeforeplayevent) · [FoliumOmniLyricsEvent](#foliumomnilyricsevent) · [FoliumOmniAudioEvent](#foliumomniaudioevent) · [FoliumHookEvents](#foliumhookevents) · [FoliumEventMap](#foliumeventmap) · [FoliumEvents](#foliumevents)
-- **服务**：[FoliumPlaybackService](#foliumplaybackservice) · [FoliumFileHandle](#foliumfilehandle) · [FoliumIconOptions](#foliumiconoptions) · [FoliumUiService](#foliumuiservice) · [FoliumFetchInit](#foliumfetchinit) · [FoliumFetchResponse](#foliumfetchresponse) · [FoliumLyricsService](#foliumlyricsservice) · [FoliumNetService](#foliumnetservice)
+- **服务**：[FoliumPlaybackService](#foliumplaybackservice) · [FoliumFileHandle](#foliumfilehandle) · [FoliumIconOptions](#foliumiconoptions) · [FoliumUiService](#foliumuiservice) · [FoliumFetchInit](#foliumfetchinit) · [FoliumFetchResponse](#foliumfetchresponse) · [FoliumLyricsService](#foliumlyricsservice) · [FoliumNetService](#foliumnetservice) · [FoliumAccountState](#foliumaccountstate) · [FoliumAccountService](#foliumaccountservice) · [FoliumSongKey](#foliumsongkey) · [FoliumOmniProviderInfo](#foliumomniproviderinfo) · [FoliumOmniPage](#foliumomnipage) · [FoliumSongResolution](#foliumsongresolution) · [FoliumSongDetails](#foliumsongdetails) · [FoliumOmniLyrics](#foliumomnilyrics) · [FoliumCollectionKey](#foliumcollectionkey) · [FoliumCollection](#foliumcollection) · [FoliumOmniErrorCode](#foliumomnierrorcode) · [FoliumOmniService](#foliumomniservice) · [FoliumEqualizerBand](#foliumequalizerband) · [FoliumEqualizerPresetId](#foliumequalizerpresetid) · [FoliumEqualizerCustomId](#foliumequalizercustomid) · [FoliumEqualizerUserMode](#foliumequalizerusermode) · [FoliumEqualizerMode](#foliumequalizermode) · [FoliumEqualizerState](#foliumequalizerstate) · [FoliumEqualizerChangeOrigin](#foliumequalizerchangeorigin) · [FoliumEqualizerRefusal](#foliumequalizerrefusal) · [FoliumEqualizerWriteResult](#foliumequalizerwriteresult) · [FoliumEqualizerService](#foliumequalizerservice)
 - **共享工具**：[FoliumWordSegment](#foliumwordsegment) · [FoliumWordColorRange](#foliumwordcolorrange) · [FoliumLyricsHelpers](#foliumlyricshelpers) · [FoliumThemeHelpers](#foliumthemehelpers)
 - **设置 schema**：[FoliumSettingType](#foliumsettingtype) · [FoliumSettingOption](#foliumsettingoption) · [FoliumSetting](#foliumsetting) · [FoliumSettingValues](#foliumsettingvalues) · [FoliumSettingAccess](#foliumsettingaccess)
-- **数据结构**：[FoliumLyricRuby](#foliumlyricruby) · [FoliumLyricSyllable](#foliumlyricsyllable) · [FoliumLyricAlternateText](#foliumlyricalternatetext) · [FoliumWord](#foliumword) · [FoliumBackgroundVocal](#foliumbackgroundvocal) · [FoliumLineTimingClass](#foliumlinetimingclass) · [FoliumLineTransitionMode](#foliumlinetransitionmode) · [FoliumWordRevealMode](#foliumwordrevealmode) · [FoliumLineRenderHints](#foliumlinerenderhints) · [FoliumLine](#foliumline) · [FoliumTheme](#foliumtheme) · [FoliumSong](#foliumsong) · [FoliumPlaybackState](#foliumplaybackstate) · [FoliumLoopMode](#foliumloopmode) · [FoliumQueueItem](#foliumqueueitem) · [FoliumQueueSnapshot](#foliumqueuesnapshot) · [FoliumPlaybackSnapshot](#foliumplaybacksnapshot) · [FoliumLyricFormat](#foliumlyricformat) · [FoliumLyricsTrack](#foliumlyricstrack) · [FoliumLyricsResult](#foliumlyricsresult) · [FoliumLegacyLyricsResult](#foliumlegacylyricsresult) · [FoliumParsedLyrics](#foliumparsedlyrics)
-- **实验接口**：[FoliumLayoutRect](#foliumlayoutrect) · [FoliumPlayerObstacle](#foliumplayerobstacle) · [FoliumPlayerLayout](#foliumplayerlayout) · [FoliumRemoteActionDef](#foliumremoteactiondef) · [FoliumRemoteActionsContext](#foliumremoteactionscontext) · [FoliumRemoteActionsDef](#foliumremoteactionsdef) · [FoliumRemoteActionsHandle](#foliumremoteactionshandle) · [FoliumProviderSong](#foliumprovidersong) · [FoliumAudioQuality](#foliumaudioquality) · [FoliumOmniProviderDef](#foliumomniproviderdef)
+- **数据结构**：[FoliumLyricRuby](#foliumlyricruby) · [FoliumLyricSyllable](#foliumlyricsyllable) · [FoliumLyricAlternateText](#foliumlyricalternatetext) · [FoliumWord](#foliumword) · [FoliumBackgroundVocal](#foliumbackgroundvocal) · [FoliumLineTimingClass](#foliumlinetimingclass) · [FoliumLineTransitionMode](#foliumlinetransitionmode) · [FoliumWordRevealMode](#foliumwordrevealmode) · [FoliumLineRenderHints](#foliumlinerenderhints) · [FoliumLine](#foliumline) · [FoliumTheme](#foliumtheme) · [FoliumSong](#foliumsong) · [FoliumPlaybackState](#foliumplaybackstate) · [FoliumLoopMode](#foliumloopmode) · [FoliumQueueItem](#foliumqueueitem) · [FoliumQueueSnapshot](#foliumqueuesnapshot) · [FoliumQueueChange](#foliumqueuechange) · [FoliumQueueReplaceRefusal](#foliumqueuereplacerefusal) · [FoliumQueueReplaced](#foliumqueuereplaced) · [FoliumQueueReplaceRefused](#foliumqueuereplacerefused) · [FoliumQueueReplaceResult](#foliumqueuereplaceresult) · [FoliumPlaybackSnapshot](#foliumplaybacksnapshot) · [FoliumLyricFormat](#foliumlyricformat) · [FoliumLyricsTrack](#foliumlyricstrack) · [FoliumLyricsResult](#foliumlyricsresult) · [FoliumLegacyLyricsResult](#foliumlegacylyricsresult) · [FoliumParsedLyrics](#foliumparsedlyrics)
+- **实验接口**：[FoliumLayoutRect](#foliumlayoutrect) · [FoliumPlayerObstacle](#foliumplayerobstacle) · [FoliumPlayerLayout](#foliumplayerlayout) · [FoliumRemoteActionDef](#foliumremoteactiondef) · [FoliumRemoteActionsContext](#foliumremoteactionscontext) · [FoliumRemoteActionsDef](#foliumremoteactionsdef) · [FoliumRemoteActionsHandle](#foliumremoteactionshandle) · [FoliumProviderSong](#foliumprovidersong) · [FoliumAudioQuality](#foliumaudioquality) · [FoliumOmniProviderDef](#foliumomniproviderdef) · [FoliumJsonValue](#foliumjsonvalue) · [FoliumPlatformBackend](#foliumplatformbackend) · [FoliumPlatformDescription](#foliumplatformdescription) · [FoliumPlatformResponse](#foliumplatformresponse) · [FoliumPlatformErrorCode](#foliumplatformerrorcode) · [FoliumPlatformService](#foliumplatformservice)
 - **main 入口（Node）**：[FoliumMainModule](#foliummainmodule) · [FoliumMainApi](#foliummainapi) · [FoliumManifest](#foliummanifest) · [FoliumMainStorage](#foliummainstorage) · [FoliumModPaths](#foliummodpaths) · [FoliumMainPaths](#foliummainpaths) · [FoliumMainRuntime](#foliummainruntime) · [FoliumMainRpc](#foliummainrpc) · [FoliumMainRender](#foliummainrender) · [FoliumExportSpec](#foliumexportspec) · [FoliumExportResult](#foliumexportresult)
 - **基础类型**：[FOLIUM_VERSION](#folium_version) · [FoliumId](#foliumid) · [FoliumLabel](#foliumlabel) · [FoliumDisposer](#foliumdisposer)
 - **[仍可用的旧名字](#仍可用的旧名字)**
 
 ## 客户端入口
 
-模组的 `client` 入口默认导出 `activate(folium)`，参数就是 [FoliumClientApi](#foliumclientapi)，所有能力都从这里取。
+模组的 `client` 入口默认导出 `activate(folium)`，参数就是 [FoliumClientApi](#foliumclientapi)，所有能力都从这里取。数据文件 `folium.storage`、密钥字段的值 `folium.secrets`（Folium 1.7）和通往 main 入口的 `folium.rpc` 也在这一节。
 
 ### 权限一览
 
-本表由 `electron/modSystem/foliumShared.json` 里每个权限的 `guards` 生成，`npm run folium:check` 用同一张表查模组用到的成员。
+本表由 `electron/modSystem/foliumShared.json` 里每个权限的 `guards` 生成，`npm run folium:check` 用同一张表查模组用到的成员。`platform.*` 两行例外：模组只能写成 `folium.experimental['platform.raw']`，表里的成员名只是说明；`folium:check` 改为按代码里 `request('<平台>', …)` 写出的平台 id 查 `platform.<平台>.read`，`.write` 要看调的是哪个接口，查不到。
 
 | 权限 | 解锁的成员 |
 | --- | --- |
 | `filesystem.data` | `folium.storage`、`api.storage` |
 | `playback.read` | `api.runtime.getPlaybackSnapshot` |
 | `playback.control` | `folium.playback.play`、`folium.playback.pause`、`folium.playback.toggle`、`folium.playback.seek`、`folium.playback.seekToLyricTime`、`folium.playback.next`、`folium.playback.previous`、`folium.playback.playSong`、`folium.playback.enqueue`、`folium.playback.shuffleQueue`、`folium.playback.toggleLike`、`folium.playback.setVolume`、`folium.playback.setMuted`、`folium.playback.setLoopMode`、`folium.playback.playQueueItem` |
+| `playback.queue` | `folium.playback.replaceQueue` |
+| `equalizer.control` | `folium.equalizer.setMode`、`folium.equalizer.applyCurve`、`folium.equalizer.releaseCurve` |
 | `render.export` | `api.render.exportVideo` |
 | `net.fetch` | `folium.net.fetch` |
 | `net.embed` | `folium.ui.embed` |
 | `stageLayers` | `folium.registries.stageLayers` |
+| `platform.netease.read` | `folium.experimental.platform.raw.request` |
+| `platform.netease.write` | `folium.experimental.platform.raw.request.write` |
 
 `folium.*` 是 client 入口的成员，`api.*` 是 main 入口的成员；写到哪一级就管到哪一级，`folium.storage` 管它下面的全部方法。
 模组没有在 `mod.json` 的 `permissions` 里声明这个权限就调用时，同步的成员抛 `permission-denied:<权限>`，异步的成员返回的 promise 以同一个错误拒绝。
+`platform.<平台>.read` / `.write` 管的是实验接口 `platform.raw` 的 `request` 能调这个平台的哪一类接口：读接口要 read，改动账号的接口还要 write（表里的 `request.write` 指这一类接口，不是一个成员）；两者都要在 `experimental` 里选用 `platform.raw`，声明 write 也要同时声明 read。
 
 ### FoliumContextKind
 
@@ -56,7 +61,7 @@ type FoliumContextKind = 'main' | 'export'
 ### FoliumHostInfo
 
 The host's versions (`folium.host`), for display and logs. Every member of this contract is there from
-Folium 1.6 on; an older 1.x host lacks some of them.
+Folium 1.7 on; an older 1.x host lacks some of them.
 
 | 成员 | 类型 | 说明 |
 | --- | --- | --- |
@@ -76,13 +81,45 @@ permission; values must be JSON-serializable.
 | `delete()` | `(key: string): Promise<void>` | Removes the key. |
 | `keys()` | `(): Promise<string[]>` | All keys. |
 
+### FoliumSecretAccess
+
+Folium 1.7: `folium.secrets` (client) and `api.secrets` (main entry), the values of this mod's `secret`
+settings fields. One store per mod, shared by both entries and the settings form, keyed by the field's
+`key`; a mod reaches only its own. A key that no settings section of this mod declares as `secret` is
+refused with `secret-undeclared:<key>`. The host learns the keys when the client registers the section,
+and on every start of Folia the main entry runs before that: until the client has registered, `get` and
+`has` of a key with no value give null and false (a key that holds a value works as usual), and `set` of
+a key with no value is refused with `secret-undeclared:<key>`. Reloading the mod keeps what the host
+learned in this run. A value is a string of at most 8 KB (UTF-8); a longer one is refused with
+`secret-too-large:8192`.
+
+The host keeps the values in the main process, encrypted with the system's credential store (DPAPI on
+Windows, Keychain on macOS, libsecret or kwallet on Linux), in a file of its own beside the mod's data
+file, and never logs them. Where the system has no such store (Linux falling back to `basic_text`), it
+keeps them in memory only, for this run, and the settings form says so. No permission is needed.
+
+In the export window `get`, `has` and `set` reject with `secrets-unavailable-in-export-context`, and
+`subscribe` never fires.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `get()` | `(key: string): Promise<string \| null>` | The stored value, or null when none is set (or the credential store cannot decrypt it right now). |
+| `has()` | `(key: string): Promise<boolean>` | Whether a value is stored, without handing it over. |
+| `set()` | `(key: string, value: string \| null): Promise<void>` | Stores `value`; null or an empty string clears it. |
+| `subscribe()` | `(listener: (key: string) => void): FoliumDisposer` | Calls `listener` with the key, never the value, after a value is saved or cleared, whoever did it (the settings form, the client or the main entry). The host stops it when the mod stops. |
+
+相关：[FoliumDisposer](#foliumdisposer)
+
 ### FoliumRpc
 
-`folium.rpc`: calls into this mod's main entry.
+`folium.rpc`: calls into this mod's main entry, and (Folium 1.7) hears the messages it sends.
 
 | 成员 | 类型 | 说明 |
 | --- | --- | --- |
 | `call()` | `<T = unknown>(name: string, ...args: unknown[]): Promise<T>` | Calls the function the main entry registered with `api.rpc.handle(name, fn)`; arguments and result must be JSON-serializable. |
+| `on()` | `(name: string, listener: (payload: unknown) => void): FoliumDisposer` | Folium 1.7: receives the main entry's `api.rpc.send(name, payload)`. Several listeners per name are fine; each gets its own copy of the payload (`null` when the main entry sent none), and one that throws is logged under the mod without stopping the others. Only messages from this mod's own main entry arrive, and nothing sent before the listener was added is replayed: fetch the current state once with `rpc.call` after adding it. `name` must match `/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/`, and `listener` must be a function, or this throws. The listener is removed when the mod stops. In the export window nothing is ever sent: the listener is accepted and never called. Older 1.x hosts lack it: check `folium.host.folium.minor >= 7`. |
+
+相关：[FoliumDisposer](#foliumdisposer)
 
 ### FoliumLogger
 
@@ -110,14 +147,18 @@ The object a client entry's `activate(folium)` receives.
 | `readonly ui` | `FoliumUiService` | Toasts, panels, files, embeds, icons. |
 | `readonly net` | `FoliumNetService` | Network access through the host. |
 | `readonly storage` | `FoliumStorage` | This mod's data file. |
+| `readonly secrets` | `FoliumSecretAccess` | Folium 1.7: the values of this mod's `secret` settings fields. |
 | `readonly rpc` | `FoliumRpc` | Calls into this mod's main entry. |
 | `readonly lyrics` | `FoliumLyricsService` | The lyric helpers builtin modes use, and the displayed song's lyrics. |
 | `readonly theme` | `FoliumThemeHelpers` | The theme helpers builtin modes use. |
+| `readonly account` | `FoliumAccountService` | Folium 1.7: who is signed in to the online sources. |
+| `readonly omni` | `FoliumOmniService` | Folium 1.7: the host's online music sources, read only: search, songs by id, lyrics, albums, artists. |
+| `readonly equalizer` | `FoliumEqualizerService` | Folium 1.7: the host's graphic equalizer: read it, switch the user's sound, put a curve of your own in place. |
 | `every()` | `(ms: number, listener: () => void): FoliumDisposer` | Calls `listener` every `ms` milliseconds (at least 16) until the mod stops; the host stops it then. |
 | `onDispose()` | `(disposer: FoliumDisposer): void` | Runs `disposer` when the mod stops, after the disposer `activate` returned; at once when the mod has already stopped. |
 | `readonly experimental` | `Readonly<Record<string, unknown>>` | Unfrozen surfaces; each requires the matching manifest `experimental` opt-in. |
 
-相关：[FoliumHostInfo](#foliumhostinfo) · [FoliumContextKind](#foliumcontextkind) · [FoliumLogger](#foliumlogger) · [FoliumRegistries](#foliumregistries) · [FoliumEvents](#foliumevents) · [FoliumPlaybackService](#foliumplaybackservice) · [FoliumUiService](#foliumuiservice) · [FoliumNetService](#foliumnetservice) · [FoliumStorage](#foliumstorage) · [FoliumRpc](#foliumrpc) · [FoliumLyricsService](#foliumlyricsservice) · [FoliumThemeHelpers](#foliumthemehelpers) · [FoliumDisposer](#foliumdisposer)
+相关：[FoliumHostInfo](#foliumhostinfo) · [FoliumContextKind](#foliumcontextkind) · [FoliumLogger](#foliumlogger) · [FoliumRegistries](#foliumregistries) · [FoliumEvents](#foliumevents) · [FoliumPlaybackService](#foliumplaybackservice) · [FoliumUiService](#foliumuiservice) · [FoliumNetService](#foliumnetservice) · [FoliumStorage](#foliumstorage) · [FoliumSecretAccess](#foliumsecretaccess) · [FoliumRpc](#foliumrpc) · [FoliumLyricsService](#foliumlyricsservice) · [FoliumThemeHelpers](#foliumthemehelpers) · [FoliumAccountService](#foliumaccountservice) · [FoliumOmniService](#foliumomniservice) · [FoliumEqualizerService](#foliumequalizerservice) · [FoliumDisposer](#foliumdisposer)
 
 ### FoliumClientModule
 
@@ -206,6 +247,7 @@ main entry through `folium.rpc`.
 | `description?` | `FoliumLabel` | Shown under the name. |
 | `keywords?` | `string[]` | Extra search terms for the command palette (label texts are always included). |
 | `params?` | `FoliumSetting[]` | The command's parameters, asked for in a form before it runs (the mods panel's card, or the command palette, which opens the form for a command that has any). |
+| `globalShortcut?` | `boolean` | Folium 1.7: offer this command in Settings → Global shortcuts (desktop app), listed after the host's playback commands under the mod's name. The user picks the key there (the host's fixed modifiers plus a letter or digit); the mod never sees or chooses one. Only for commands without `params`, since a key press cannot fill a form: the host ignores the flag on a command that has any. A press runs `run` with an empty `values` object and shows no result, so use `folium.ui.toast` when the press needs feedback; a throw is recorded against the mod like any failed command. While the mod is stopped or disabled the binding is kept but its key is not registered, and it comes back when the command is registered again. Not offered on native Wayland, where the desktop's shortcut portal takes a fixed list of the host's playback commands. Needs no permission: binding a key in Settings is the user's consent. |
 | `run()` | `(ctx: FoliumCommandContext): unknown \| Promise<unknown>` | Runs the command; the result is shown as a summary (a string, `{ outputPath }` or `{ message }`). |
 
 相关：[FoliumLabel](#foliumlabel) · [FoliumSetting](#foliumsetting) · [FoliumCommandContext](#foliumcommandcontext)
@@ -222,7 +264,7 @@ interface FoliumBackgroundContext extends FoliumMountHelpers
 | 成员 | 类型 | 说明 |
 | --- | --- | --- |
 | `readonly staticMode` | `boolean` | A still preview: draw one frame, do not animate. |
-| `isPaused()` | `(): boolean` | Playback is paused. |
+| `isPaused()` | `(): boolean` | Playback is paused, or the host holds the picture still while it plays (the background throttling setting, while the window is minimised or hidden). Either way, settle and stop animating. |
 | `getTheme()` | `(): FoliumTheme` | The current theme. |
 | `getSettings()` | `(): FoliumSettingValues` | This background's settings values (defaults merged). |
 | `getCoverUrl()` | `(): string \| null` | Cover image URL of the displayed song. |
@@ -286,7 +328,7 @@ every context.
 | `id` | `string` | Local id. |
 | `label` | `FoliumLabel` | Section title. |
 | `description?` | `FoliumLabel` | Shown under the title. |
-| `settings` | `FoliumSetting[]` | The fields. |
+| `settings` | `FoliumSetting[]` | The fields. Folium 1.7: only here may a field be a `secret`. |
 | `settingsPanel?` | `FoliumMount<FoliumSettingsPanelContext>` | Replaces the host-rendered form; values still follow `settings`. |
 
 相关：[FoliumLabel](#foliumlabel) · [FoliumSetting](#foliumsetting) · [FoliumMount](#foliummount) · [FoliumSettingsPanelContext](#foliumsettingspanelcontext)
@@ -635,7 +677,7 @@ interface FoliumStageContext extends FoliumMountHelpers
 | `readonly lyricTime` | `FoliumClock` | The lyric clock: the time lyric lines are timed in (`line.startTime`), seconds. It can differ from the playback position (the user's lyric offset, Stage sources); in previews it is the preview's own clock. |
 | `getDuration()` | `(): number` | The song's length, seconds; 0 while unknown (`onChange` fires when it becomes known). In a settings preview it is the preview's length, in the export window the exported song's. Progress through the song is `lyricTime.get() / getDuration()` when the duration is above 0; it can be off by the user's lyric offset, since the lyric clock is not the playback position. |
 | `getLineIndex()` | `(): number` | Index into `lines` of the active line; -1 between lines. |
-| `isPaused()` | `(): boolean` | Playback is paused. |
+| `isPaused()` | `(): boolean` | Playback is paused, or the host holds the picture still while it plays (the background throttling setting, while the window is minimised or hidden; the lyric clock and the line stand still too). Either way, settle and stop animating. |
 | `getTheme()` | `(): FoliumTheme` | The current theme. |
 | `getSubtitleTheme()` | `(): FoliumTheme` | The theme the host's subtitles use; equals getTheme() where there is none. |
 | `getCoverUrl()` | `(): string \| null` | Cover image URL of the displayed song, or null. |
@@ -675,6 +717,8 @@ interface FoliumStageContext extends FoliumMountHelpers
 | `playback.loopModeChanged` | 通知 | — |
 | `playback.queueChanged` | 通知 | — |
 | `playback.failed` | 通知 | — |
+| `account.changed` | 通知 | — |
+| `equalizer.changed` | 通知 | — |
 | `lyrics.transform` | 钩子 | — |
 | `playback.beforePlay` | 钩子 | — |
 | `omni.lyricsResolved` | 钩子 | `omni.hooks` |
@@ -718,10 +762,12 @@ Read-only notifications, emitted after the fact.
 | `playback.likeChanged` | `{ readonly liked: boolean }` | `playback.getState().liked` changed (a like or unlike, or a new song). |
 | `playback.volumeChanged` | `{ readonly volume: number; readonly muted: boolean }` | The volume or the mute switch changed, whoever changed it. |
 | `playback.loopModeChanged` | `{ readonly mode: FoliumLoopMode }` | The repeat mode changed. |
-| `playback.queueChanged` | `{ readonly length: number; readonly currentIndex: number }` | The queue changed, or the displayed song moved within it. Only the outline: call `playback.getQueue()` for the songs. Changes made in one task arrive as one event. |
+| `playback.queueChanged` | `FoliumQueueChange` | The queue changed, or the displayed song moved within it. Only the outline: call `playback.getQueue()` for the songs. Changes made in one task arrive as one event. Folium 1.7: also fired when an automix blend ends, so a replaceQueue refused `transition` can try again. |
 | `playback.failed` | `{ readonly song: FoliumSong \| null; readonly reason: FoliumPlaybackFailureReason; readonly phase: 'play' \| 'restore' \| 'mid-playback'; readonly willAutoSkip: boolean; }` | A song failed to play; reported once, after the host's own retries. `phase` says where it failed: `play`, the host got no playable source for the song just picked (sign-in, membership, taken down, the address lookup failed, a missing local file); `restore`, the same while restoring the last session; `mid-playback`, the player failed on the media itself (it would not load, decode or keep streaming). Every media error is `mid-playback`, so a song just picked or restored that fails before any sound is reported as `mid-playback` too. `willAutoSkip`: the host is counting down to skip it (its policy or the user's "skip unplayable songs" setting), so do not call `next()` yourself. Not emitted in the export window. |
+| `account.changed` | `FoliumAccountState` | Folium 1.7: someone signed in to an online source, signed out, or another account took the place of the one there (`accountKey` changed); the payload is the source's new state, as `folium.account.getState(providerId)` reads it. One event per source for all the changes of one task; a source whose status and key end where they began fires none, and a new nickname or avatar alone fires none either. A status that settles from `unknown` (the host finished asking the platform, usually soon after start) fires too, for the same account as before: compare `accountKey` before dropping data. Not emitted in the export window. |
+| `equalizer.changed` | `{ readonly state: FoliumEqualizerState; readonly origin: FoliumEqualizerChangeOrigin }` | Folium 1.7: the equalizer changed: anything `folium.equalizer.getState()` reports (the switch, the mode, the gains, `hostPlaysAudio`, `writable`). One event for all the changes of one task; its origin is the last of them that was not `host`, or `host` when all of them were. Changes that end where they began fire none. Not emitted in the export window. |
 
-相关：[FoliumSong](#foliumsong) · [FoliumPlaybackState](#foliumplaybackstate) · [FoliumLine](#foliumline) · [FoliumTheme](#foliumtheme) · [FoliumLoopMode](#foliumloopmode) · [FoliumPlaybackFailureReason](#foliumplaybackfailurereason)
+相关：[FoliumSong](#foliumsong) · [FoliumPlaybackState](#foliumplaybackstate) · [FoliumLine](#foliumline) · [FoliumTheme](#foliumtheme) · [FoliumLoopMode](#foliumloopmode) · [FoliumQueueChange](#foliumqueuechange) · [FoliumPlaybackFailureReason](#foliumplaybackfailurereason) · [FoliumAccountState](#foliumaccountstate) · [FoliumEqualizerState](#foliumequalizerstate) · [FoliumEqualizerChangeOrigin](#foliumequalizerchangeorigin)
 
 ### FoliumLyricsTransformEvent
 
@@ -823,13 +869,13 @@ The event bus, as `folium.events`.
 
 ## 服务
 
-`folium.playback` / `folium.ui` / `folium.net`。需要权限的方法见[权限一览](#权限一览)；导出窗口里调用会抛 `*-unavailable-in-export-context`（`ui.icon` 除外）。
+`folium.playback` / `folium.ui` / `folium.net`，以及 Folium 1.7 的登录状态 `folium.account` 和经 Omni 只读在线音源的 `folium.omni`（两者都不需要权限；`folium.omni` 以用户在 Folia 登录的平台账号发请求），以及宿主均衡器 `folium.equalizer`（读不需要权限，写需 `equalizer.control`）。需要权限的方法见[权限一览](#权限一览)；导出窗口里调用会抛 `*-unavailable-in-export-context`（`ui.icon` 除外）。
 
 ### FoliumPlaybackService
 
 `folium.playback`. The readers (`getState`, `getVolume`, `getLoopMode` and `getQueue`)
-need no permission; every other method needs the `playback.control` permission. All of it is unavailable
-in the export window.
+need no permission; every other method needs the `playback.control` permission, except `replaceQueue`,
+which needs `playback.queue`. All of it is unavailable in the export window.
 
 | 成员 | 类型 | 说明 |
 | --- | --- | --- |
@@ -842,7 +888,7 @@ in the export window.
 | `next()` | `(): void` | Next track. Needs `playback.control`. |
 | `previous()` | `(): void` | Previous track. Needs `playback.control`. |
 | `playSong()` | `(song: FoliumSong): Promise<boolean>` | Plays a song by its host `ref`. Resolves false when the ref is unknown. Needs `playback.control`. |
-| `enqueue()` | `(song: FoliumSong): boolean` | Appends a song (by `ref`) to the queue. Needs `playback.control`. |
+| `enqueue()` | `(song: FoliumSong): boolean` | Adds a song (by `ref`) to the queue the way the user's queue-add setting says (next or last), as the host's own add does: a song already queued moves there; the song playing now, and a song its source marks unavailable, are not added; the host shows its own notice. False when the ref is unknown; true otherwise, also when the queue did not change. Needs `playback.control`. |
 | `shuffleQueue()` | `(): boolean` | Shuffles the play queue, keeping the current song first. False when there is nothing to shuffle (Personal FM, a queue of one, external Stage playback). Needs `playback.control`. |
 | `toggleLike()` | `(): boolean` | Likes or unlikes the displayed song, like the host's like button, which also reports the result. False when `canLike` is false. Needs `playback.control`. |
 | `getVolume()` | `(): { volume: number; muted: boolean }` | Output volume (0–1) and the mute switch, which is separate from it. |
@@ -850,10 +896,11 @@ in the export window.
 | `setMuted()` | `(muted: boolean): void` | Mutes or unmutes. A set rather than a toggle, so two windows acting at once cannot cancel each other out. Needs `playback.control`. |
 | `getLoopMode()` | `(): FoliumLoopMode` | The repeat mode. |
 | `setLoopMode()` | `(mode: FoliumLoopMode): void` | Sets the repeat mode; the host reports the change like its own repeat button does. Setting the mode already in effect does nothing. Needs `playback.control`. |
-| `getQueue()` | `(options?: { offset?: number; limit?: number }): FoliumQueueSnapshot` | A page of the play queue. `limit` defaults to 500, the most one call returns; without `offset` the page is centred on the displayed song. Song refs come from a pool of 2,000 shared with every other song DTO, the least recently handed out dropped first: every ref of the page you just read resolves, so read the pages you show rather than the whole queue. |
+| `getQueue()` | `(options?: { offset?: number; limit?: number }): FoliumQueueSnapshot` | A page of the play queue. `limit` defaults to 500, the most one call returns; without `offset` the page is centred on the displayed song. Song refs come from a pool of 5,000 shared with every other song DTO, the least recently handed out dropped first: every ref of the page you just read resolves, so read the pages you show rather than the whole queue. To read a long queue whole, page it while `version` stays the same; a page with another version means the queue changed: start again. |
 | `playQueueItem()` | `(index: number, expectedRef?: string): Promise<boolean>` | Plays queue entry `index`, with the same playback and navigation as clicking it in the host's queue panel; if it fails to play, the retry and skip buttons follow the queue as it is when pressed. In Personal FM, where the panel lists no queue, it plays the entry and FM stays on. With `expectedRef`, resolves false without acting when that position no longer holds that song (the queue changed between your calls). False for an index out of range and during external Stage playback. Needs `playback.control`. |
+| `replaceQueue()` | `(songs: readonly FoliumSong[], options: { expectedVersion: string }): Promise<FoliumQueueReplaceResult>` | Folium 1.7: replaces the whole play queue with `songs` (by `ref`) in one step, if the queue is still the one you read: `expectedVersion` is the `version` of your last `getQueue` page or `playback.queueChanged` event. Either the whole queue is replaced or nothing changes (see FoliumQueueReplaceRefusal). Nothing starts playing and the song playing now plays on; when it is not in `songs`, `currentIndex` becomes -1 and the next track is the first of `songs`. Should that song be played again while it is not in the queue (the user retries it after a failure, or the host reloads it), the host may put it back at the front, which reaches you as a `playback.queueChanged` with `byThisMod` false. Songs stay exactly as given, in order: a song listed twice stays twice (the host finds the current song at its first position), and songs their source marks unavailable stay too (the host deals with those when it comes to them, as in any queue). The user's queue-add setting plays no part. Personal FM ends, as when a list is played: the queue becomes `kind: 'queue'`. An empty array empties the queue. A list with the same songs in the same order, outside Personal FM, changes nothing and resolves `replaced` with the same version. At most 5,000 songs, the size of the shared ref pool (see `getQueue`): every ref must still resolve, so collect the songs just before you replace, and mirror a window around the current song rather than a very long queue. A replacement is saved like the host's own edits. The host tells the user which mod replaced the queue and lets them undo it until the queue changes again; an undo reaches you as a `playback.queueChanged` with `byThisMod` false. Your own replacement reaches you once, with `byThisMod` true, if you listen at the time. Rejects with a TypeError (`invalid-arguments: …`) for malformed arguments: `songs` not an array or longer than 5,000, an entry that is not a song DTO from the host (no `ref`, or a DTO that is not a song's, such as a `folium.omni` album), or no `expectedVersion` string. Needs `playback.queue`. |
 
-相关：[FoliumSong](#foliumsong) · [FoliumPlaybackState](#foliumplaybackstate) · [FoliumLoopMode](#foliumloopmode) · [FoliumQueueSnapshot](#foliumqueuesnapshot)
+相关：[FoliumSong](#foliumsong) · [FoliumPlaybackState](#foliumplaybackstate) · [FoliumLoopMode](#foliumloopmode) · [FoliumQueueSnapshot](#foliumqueuesnapshot) · [FoliumQueueReplaceResult](#foliumqueuereplaceresult)
 
 ### FoliumFileHandle
 
@@ -954,6 +1001,357 @@ interface FoliumLyricsService extends FoliumLyricsHelpers
 
 相关：[FoliumFetchInit](#foliumfetchinit) · [FoliumFetchResponse](#foliumfetchresponse)
 
+### FoliumAccountState
+
+Folium 1.7: who is signed in to one online source, as `folium.account.getState()` and the
+`account.changed` event give it. Frozen.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly providerId` | `string` | The source: an Omni provider id, as `FoliumSong.source` names it. |
+| `readonly status` | `'signed-in' \| 'signed-out' \| 'unknown'` | `signed-in`: an account is signed in. `signed-out`: nobody is, or the source has no accounts at all (a mod's own source). `unknown`: the host has not found out yet, e.g. at start while it asks the platform, or the platform could not be asked. |
+| `readonly user` | `{ readonly nickname: string; readonly avatarUrl?: string } \| null` | What the host shows of the account: its nickname and avatar, nothing else. Null unless signed in. |
+| `readonly accountKey` | `string \| null` | An opaque key of the signed-in account, null unless signed in. The same account always has the same key on this installation, across restarts; another account has another key. Key data of your own on it, and drop what was kept under another key. It is no user id: it cannot be turned back into one. |
+
+### FoliumAccountService
+
+Folium 1.7: `folium.account`, the sign-in state of the online sources. Needs no permission; it carries
+no user id, cookie or token. Unavailable in the export window: `getState` throws
+`account-unavailable-in-export-context`. An older host has no `folium.account`: check
+`folium.host.folium.minor >= 7` first.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `getState()` | `(providerId?: string): FoliumAccountState \| null` | The state of one source; without `providerId`, of the source the host has selected now. Null for a provider id the host does not know. Follow changes with the `account.changed` event. |
+
+相关：[FoliumAccountState](#foliumaccountstate)
+
+### FoliumSongKey
+
+Folium 1.7: a song's portable identity, as `FoliumSong.source` and `FoliumSong.id` give it.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly source` | `string` | An Omni provider id (`FoliumSong.source`). |
+| `readonly id` | `string` | The song id within that source (`FoliumSong.id`), as a string. |
+
+### FoliumOmniProviderInfo
+
+Folium 1.7: one online source of the host, as `folium.omni.listProviders()` lists it. Frozen.
+More `supports` flags may come in later minors; a flag that is absent reads as false.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly providerId` | `string` | The Omni provider id, as `FoliumSong.source` and `FoliumAccountState.providerId` name it. |
+| `readonly displayName` | `string` | Full name, as the host's source switcher shows it. |
+| `readonly shortName` | `string` | Short name, as the search overlay's source chip shows it. |
+| `readonly origin` | `'host' \| 'mod'` | `host`: built into Folia. `mod`: registered by a mod (`omni.providers`); gone while that mod is off. |
+| `readonly selected` | `boolean` | Whether this is the source the host has selected now (what `searchSongs` uses without `providerId`). |
+| `readonly configured` | `boolean` | False when the source is not set up in this host. True does not promise that a request succeeds. |
+| `readonly supports` | `{ readonly search: boolean; readonly resolve: boolean; readonly lyrics: boolean; readonly albums: boolean; readonly artists: boolean; }` | What of `folium.omni` this source answers; a method on a source without its flag rejects `unsupported`. |
+| `readonly supports.search` | `boolean` | `searchSongs` can search it. |
+| `readonly supports.resolve` | `boolean` | `resolveSongs` can look its songs up by id. |
+| `readonly supports.lyrics` | `boolean` | `getLyrics` can read its songs' lyrics. |
+| `readonly supports.albums` | `boolean` | `getAlbum`, and albums in `resolveCollection` / `getTracks`. |
+| `readonly supports.artists` | `boolean` | `getArtists`, and artists in `resolveCollection` / `getTracks` / `getArtistAlbums`. |
+
+### FoliumOmniPage
+
+Folium 1.7: one page of a list `folium.omni` reads. Frozen. Ask for the next page with `nextCursor`;
+sources page differently, so there is no offset to compute.
+
+```ts
+interface FoliumOmniPage<T>
+```
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly items` | `readonly T[]` | The page, in the source's order; never more items than the `limit` asked for. |
+| `readonly nextCursor` | `string \| null` | Pass it as `cursor` for the next page of the same list; null when the source has no more. Opaque, valid for this session only, and a cursor not used for a while stops resolving (`stale-ref`): start again without one. An album or an artist is the same list by its `source`, `kind` and `id`, whichever DTO of it comes with the cursor (one read again by its key, say). |
+| `readonly total` | `number \| null` | The whole list's length when the source says it; null otherwise. |
+
+### FoliumSongResolution
+
+Folium 1.7: what `resolveSongs` found for one key, in the order of the keys.
+`found`: the song, with a `ref` for playSong and enqueue.
+`not-found`: the source answered and has no such song.
+`unsupported`: this host cannot look it up now: no source by that id (a mod's source while that mod is
+off, a source of another Folia build), a source that is not online (`local`, `navidrome`, `stage`), or one
+that cannot look songs up by id. This may change as sources come and go: keep the key.
+`failed`: the lookup did not get an answer; `code` says why (never `unsupported`), and a later try may work.
+Later minors may add statuses: treat one you do not know as `failed`.
+
+```ts
+type FoliumSongResolution = | { readonly status: 'found'; readonly song: FoliumSong } | { readonly status: 'not-found' } | { readonly status: 'unsupported' } | { readonly status: 'failed'; readonly code: FoliumOmniErrorCode }
+```
+
+相关：[FoliumSong](#foliumsong) · [FoliumOmniErrorCode](#foliumomnierrorcode)
+
+### FoliumSongDetails
+
+Folium 1.7: what `describeSong` knows of an online song without asking its source. Frozen.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly durationMs` | `number \| null` | Duration in milliseconds; null when the source did not give it. |
+| `readonly coverUrl` | `string \| null` | Cover image URL; null when there is none. |
+| `readonly availability` | `'playable' \| 'taken-down' \| 'restricted' \| 'unknown'` | `playable`: the source marks nothing against it. `taken-down`: the source took it down. `restricted`: the source marks it as limited (paying accounts, regions); whether it plays is found out when it is played. `unknown`: the source says nothing either way. It is what the source told the account signed in to it, so it may change with that account. Later minors may add values: treat one you do not know as `unknown`. |
+| `readonly pageUrl` | `string \| null` | The song's public web page at its source; null when the source has none. |
+
+### FoliumOmniLyrics
+
+Folium 1.7: an online song's lyrics, as `folium.omni.getLyrics` reads them. Frozen. `lines` and
+`isWordByWord` mean what they mean for `folium.lyrics.parse`; a line's `isChorus` is the source's marking
+or the host's detection from repeated lines.
+
+```ts
+interface FoliumOmniLyrics extends FoliumParsedLyrics
+```
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly isPureMusic` | `boolean` | The source marks the song as instrumental. |
+| `lines` | `readonly FoliumLine[]` | 继承自 [FoliumParsedLyrics](#foliumparsedlyrics)。The parsed lines; empty when the text holds none. The host's lyric display filter is not applied. |
+| `isWordByWord` | `boolean` | 继承自 [FoliumParsedLyrics](#foliumparsedlyrics)。Whether the lines carry real word timings rather than timings the host estimated. |
+
+相关：[FoliumParsedLyrics](#foliumparsedlyrics)
+
+### FoliumCollectionKey
+
+Folium 1.7: a portable key of an album or an artist, as `FoliumCollection` carries it.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly source` | `string` | An Omni provider id (`FoliumCollection.source`). |
+| `readonly kind` | `'album' \| 'artist'` | `album` or `artist`. |
+| `readonly id` | `string` | The id within that source and kind (`FoliumCollection.id`). |
+
+### FoliumCollection
+
+Folium 1.7: an album or an artist at an online source. Frozen. Key data of your own on `source`, `kind`
+and `id` together; `ref` is valid for this session only. Later minors may add kinds: treat a kind you do
+not know as one you cannot read.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly kind` | `'album' \| 'artist'` | `album` or `artist`. |
+| `readonly source` | `string` | The Omni provider id. |
+| `readonly id` | `string` | The id within the source and kind; `resolveCollection` takes it back. |
+| `readonly name` | `string` | Its name. |
+| `readonly artist` | `string` | For an album, its artists joined with ` / `; '' for an artist or when unknown. |
+| `readonly coverUrl` | `string \| null` | Cover or portrait URL; null when there is none. |
+| `readonly description` | `string \| null` | The source's description; null when it gives none. |
+| `readonly trackCount` | `number \| null` | Songs on an album; null when unknown (a summary from a song or a list carries less). |
+| `readonly albumCount` | `number \| null` | An artist's albums; null when unknown. |
+| `readonly publishedAt` | `number \| null` | An album's release time, milliseconds since the epoch; null when unknown. |
+| `readonly ref` | `string` | Opaque handle for getTracks / getArtistAlbums; valid for the session. |
+
+### FoliumOmniErrorCode
+
+Folium 1.7: why a `folium.omni` call failed, as the rejection's `code` (and its message), or as a
+`failed` resolution's `code`.
+`unsupported`: the source does not answer this (its `supports` flag is false), or there is no such source.
+`unavailable`: the source cannot take requests now (not set up, its service not running, or it refused).
+`region-restricted`: the source does not answer from this region.
+`not-signed-in` / `session-expired`: the source needs a signed-in account for this.
+`vip-required`: only paying accounts may.
+`rate-limited`: too many requests (see FoliumOmniService), or the source says so.
+`network`: no answer in time, or a failure the source did not explain.
+`account-changed`: the selected source or its account changed while the call was under way, so the
+answer was dropped.
+`stale-ref`: the DTO's `ref`, or the `cursor`, no longer resolves; read it again.
+`aborted`: the call's `signal` aborted, or the mod stopped.
+Later minors may add codes: treat one you do not know as `network`.
+
+```ts
+type FoliumOmniErrorCode = | 'unsupported' | 'unavailable' | 'region-restricted' | 'not-signed-in' | 'session-expired' | 'vip-required' | 'rate-limited' | 'network' | 'account-changed' | 'stale-ref' | 'aborted'
+```
+
+### FoliumOmniService
+
+Folium 1.7: `folium.omni`, the host's online music sources (Omni), read only: search, songs by id,
+lyrics, albums and artists. Needs no permission. Requests are made as the account signed in to that
+source in Folia. Songs come with a `ref`, so `folium.playback.playSong` and `enqueue` take them as they
+are. Nothing here reads the signed-in account's own library, hands out audio URLs or changes anything at
+a source.
+
+A song's `ref` is not its identity: the same song read twice (from the queue and from `resolveSongs`, say)
+may come with different refs. Compare `source` and `id`.
+
+Each time the host has to ask a source for you counts once against this mod's allowance, shared with
+`platform.raw`: currently 120 a minute (past it a call rejects `rate-limited`) and 8 at a time (past it a
+call waits its turn). Looking up many songs may ask more than once; the host may answer from what it read
+recently. The host may also limit requests per source across all mods, which rejects `rate-limited` too.
+Requests to a source a mod provides (origin `mod`) count against the minute but never wait. A call that
+gets no answer in a while rejects `network`. `aborted` (the call's `signal`, or the mod stopping) only
+drops the answer: the request at the source may still run, and counts as under way until it ends.
+
+Main window only: in the export window the synchronous methods throw, and the others reject, an Error
+whose message is `omni-unavailable-in-export-context` (it has no `code`). The main entry has no `omni`; ask
+the client over `rpc`. An older host has no `folium.omni`: check `folium.host.folium.minor >= 7` first.
+Async methods reject with an Error whose `code` is a FoliumOmniErrorCode, and with a TypeError
+(`invalid-arguments: …`, no `code`) for malformed arguments, a song DTO without a `ref` included.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `listProviders()` | `(): readonly FoliumOmniProviderInfo[]` | The host's online sources, in the host's order. Synchronous; asks no source. |
+| `searchSongs()` | `(query: string, options?: { providerId?: string; cursor?: string; limit?: number; signal?: AbortSignal }): Promise<FoliumOmniPage<FoliumSong>>` | Searches songs at `providerId`, or at the source the host has selected now. `query` is 1–200 characters after trimming. Without `cursor` it reads the first page; `limit` (default 30, at most 50) is read only then, and later pages keep it. Song refs come from the host's shared pool (see `playback.getQueue`): read the pages you show. |
+| `resolveSongs()` | `(keys: readonly FoliumSongKey[], options?: { signal?: AbortSignal }): Promise<readonly FoliumSongResolution[]>` | Looks songs up by their portable identity (`FoliumSong.source` + `FoliumSong.id`), 1–50 keys a call; resolves one FoliumSongResolution per key, in order. A key that fails does not fail the call; the call rejects only for malformed arguments, the export window and `aborted`. A source without a way to look many songs up at once is asked once per key: resolve the keys you are about to show. A song that only existed on another device (a local file, a cloud upload, a source not installed here) may not resolve, or may resolve to that source's public version. `not-found` comes only from the source's own answer: a key whose request the source refused, or that this host cannot look up by that id yet, comes back `failed`, so keep it. Nothing is played, and no audio address is fetched. |
+| `describeSong()` | `(song: FoliumSong): FoliumSongDetails \| null` | What the host knows of a song (by `ref`) without asking its source. Null for a song that is not online, or whose `ref` no longer resolves. Synchronous. |
+| `getLyrics()` | `(song: FoliumSong, options?: { signal?: AbortSignal }): Promise<FoliumOmniLyrics>` | The lyrics of an online song (by `ref`), as its source gives them, parsed by the host. Mods' `omni.lyricsResolved` hooks do not run for this read. Rejects `unsupported` for a song that is not online or whose source has no lyrics. |
+| `getAlbum()` | `(song: FoliumSong, options?: { signal?: AbortSignal }): Promise<FoliumCollection \| null>` | The album of an online song (by `ref`); null when its source has no album for it. May ask the source. Rejects `unsupported` for a song that is not online or whose source has no albums. |
+| `getArtists()` | `(song: FoliumSong, options?: { signal?: AbortSignal }): Promise<readonly FoliumCollection[]>` | The artists of an online song (by `ref`) its source can open; empty when none. May ask the source. Rejects `unsupported` for a song that is not online or whose source has no artists. |
+| `resolveCollection()` | `(key: FoliumCollectionKey, options?: { signal?: AbortSignal }): Promise<FoliumCollection \| null>` | An album or artist by its key, with the details its source gives; null when the source has none. A source may also reject `unavailable` or `network` for an id it does not know. |
+| `getTracks()` | `(collection: FoliumCollection, options?: { cursor?: string; limit?: number; signal?: AbortSignal }): Promise<FoliumOmniPage<FoliumSong>>` | A page of an album's songs, or of an artist's songs (in the source's order, most popular first for most sources). Without `cursor` the first page; `limit` (default 50, at most 100) is read only then. |
+| `getArtistAlbums()` | `(artist: FoliumCollection, options?: { cursor?: string; limit?: number; signal?: AbortSignal }): Promise<FoliumOmniPage<FoliumCollection>>` | A page of an artist's albums; paged as `getTracks`. |
+
+相关：[FoliumOmniProviderInfo](#foliumomniproviderinfo) · [FoliumOmniPage](#foliumomnipage) · [FoliumSong](#foliumsong) · [FoliumSongKey](#foliumsongkey) · [FoliumSongResolution](#foliumsongresolution) · [FoliumSongDetails](#foliumsongdetails) · [FoliumOmniLyrics](#foliumomnilyrics) · [FoliumCollection](#foliumcollection) · [FoliumCollectionKey](#foliumcollectionkey)
+
+### FoliumEqualizerBand
+
+Folium 1.7: one band of the host's graphic equalizer, as `FoliumEqualizerState.bands` lists it. Frozen.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly frequency` | `number` | The band's frequency in Hz: the centre of a peaking band, the corner of a shelf. |
+| `readonly shape` | `'lowshelf' \| 'peaking' \| 'highshelf'` | `lowshelf` (the first band) lifts or cuts everything below its frequency, `highshelf` (the last band) everything above it, `peaking` (the others) the frequencies around it. Later minors may add shapes: read one you do not know as `peaking`. |
+
+### FoliumEqualizerPresetId
+
+Folium 1.7: a built-in sound of the host, as the audio effects window lists it: `flat` (Level), `lofi`,
+`radio`, `hall`, `vocal` and `bass` (Bass boost). Each is an equalizer curve together with a set of effects.
+`setMode` takes each of these ids for all of Folium 1.x; later minors may add more.
+
+```ts
+type FoliumEqualizerPresetId = 'flat' | 'lofi' | 'radio' | 'hall' | 'vocal' | 'bass'
+```
+
+### FoliumEqualizerCustomId
+
+Folium 1.7: one of the user's own saved sounds in the audio effects window (Custom 1 and Custom 2), each a
+curve and a set of effects. `setMode` takes each of these ids for all of Folium 1.x; later minors may add more.
+
+```ts
+type FoliumEqualizerCustomId = 'custom1' | 'custom2'
+```
+
+### FoliumEqualizerUserMode
+
+Folium 1.7: a sound `folium.equalizer.setMode` can switch to: a built-in one, or one of the user's own.
+
+```ts
+type FoliumEqualizerUserMode = | { readonly kind: 'preset'; readonly id: FoliumEqualizerPresetId } | { readonly kind: 'custom'; readonly id: FoliumEqualizerCustomId }
+```
+
+相关：[FoliumEqualizerPresetId](#foliumequalizerpresetid) · [FoliumEqualizerCustomId](#foliumequalizercustomid)
+
+### FoliumEqualizerMode
+
+Folium 1.7: what the equalizer plays now. `preset` / `custom`: a sound the user chose (or a mod switched
+to with `setMode`). `mod`: a curve a mod put in place with `applyCurve`, over the user's own effects;
+`modId` names the mod. While that mod is disabled or removed the user's own sound plays, and the state
+shows it; the curve comes back when the mod is enabled again. Later minors may add kinds: a mode you do
+not know is one the user chose, so leave it be.
+
+```ts
+type FoliumEqualizerMode = | FoliumEqualizerUserMode | { readonly kind: 'mod'; readonly modId: string }
+```
+
+相关：[FoliumEqualizerUserMode](#foliumequalizerusermode)
+
+### FoliumEqualizerState
+
+Folium 1.7: the host's graphic equalizer as it is heard, as `folium.equalizer.getState()` and
+`equalizer.changed` give it. Frozen. The user's custom sounds are not part of it, except the curve of the
+one playing.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly enabled` | `boolean` | The processing switch of the audio effects window. While false the gains are kept but not heard, and the effects are off too; the switch is the user's, and no `folium.equalizer` write turns it on. |
+| `readonly mode` | `FoliumEqualizerMode` | What plays now. |
+| `readonly gains` | `readonly number[]` | The gain of each band in dB, in the order of `bands`, from `minGain` to `maxGain`. Heard only while `enabled`. |
+| `readonly bands` | `readonly FoliumEqualizerBand[]` | The bands, lowest first: ten in Folium 1.7. The same frozen array on every read. |
+| `readonly minGain` | `number` | The lowest gain of a band in dB: -12 in Folium 1.7. |
+| `readonly maxGain` | `number` | The highest gain of a band in dB: 12 in Folium 1.7. |
+| `readonly hostPlaysAudio` | `boolean` | Whether what plays goes through the host's own audio, where the equalizer sits. False during external Stage playback (another player's now-playing, a Stage source with lyrics and no audio): the equalizer has nothing to act on then. Its settings still apply once the host plays again. |
+| `readonly writable` | `boolean` | False while the audio effects window is open: a write that would change something is refused `panel-open` then, and `equalizer.changed` fires when the window closes. Later minors may add other times it is false. The permission and the rate limit are not part of it. |
+
+相关：[FoliumEqualizerMode](#foliumequalizermode) · [FoliumEqualizerBand](#foliumequalizerband)
+
+### FoliumEqualizerChangeOrigin
+
+Folium 1.7: who changed the equalizer, as `equalizer.changed` reports it. `user`: the user, in the audio
+effects window. `command`: a host command (the command palette's sound commands). `mod`: a mod, through
+`folium.equalizer`; compare `modId` with your own `folium.modId`. `host`: the host itself, with nobody
+changing the sound (the sound left the host's own audio or came back to it, the audio effects window opened
+or closed, the mod of the curve in place was disabled, removed or enabled again). Later minors may add
+kinds: read one you do not know as `user`.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly kind` | `'user' \| 'command' \| 'host' \| 'mod'` | Who it was. |
+| `readonly modId` | `string \| null` | The mod, for `mod`; null for the others. |
+
+### FoliumEqualizerRefusal
+
+Folium 1.7: why the host did not take a `folium.equalizer` write. `stopped`: this mod has stopped.
+`unknown-mode`: this host has no such sound (one a later minor added). `panel-open`: the audio effects
+window is open, so the user is at it; wait for `equalizer.changed` with `state.writable` true.
+`rate-limited`: too many writes (see FoliumEqualizerService). When several apply, the first of these in
+this order is given. A write that would change nothing is never refused for `panel-open` or `rate-limited`.
+Later minors may add reasons: treat one you do not know as `rate-limited`, and try again later rather than
+in a loop.
+
+```ts
+type FoliumEqualizerRefusal = 'stopped' | 'unknown-mode' | 'panel-open' | 'rate-limited'
+```
+
+### FoliumEqualizerWriteResult
+
+Folium 1.7: the outcome of a `folium.equalizer` write; `state` is the equalizer after it.
+
+```ts
+type FoliumEqualizerWriteResult = | { readonly ok: true; readonly state: FoliumEqualizerState } | { readonly ok: false; readonly reason: FoliumEqualizerRefusal }
+```
+
+相关：[FoliumEqualizerState](#foliumequalizerstate) · [FoliumEqualizerRefusal](#foliumequalizerrefusal)
+
+### FoliumEqualizerService
+
+Folium 1.7: `folium.equalizer`, the host's graphic equalizer (the bands of the audio effects window).
+Reading needs no permission; `setMode`, `applyCurve` and `releaseCurve` need `equalizer.control`. A mod
+gets the equalizer's settings, never its audio nodes. A write lands where the user's own choices do, so the
+audio effects window and the sound follow it, and it is kept across restarts.
+
+No write changes the user's custom sounds or turns the processing switch on: while `enabled` is false a
+write is kept but not heard. The user comes first: any choice the user makes in the audio effects window
+(a sound, keeping a mod's curve as one of their own, going back to their own) ends a mod's curve, and
+while that window is open writes are refused `panel-open`. Follow `equalizer.changed`: once its `origin`
+is the user, a host command or another mod (not `host`, and not your own mod), step back: putting your
+curve back after that overrides the user. The host tells the user which mod changed the sound.
+
+Every write that changes something is saved: write what you settled on rather than animating through it.
+Currently a mod may make one such write a second and 20 a minute; past that a write is refused
+`rate-limited`. A write changes nothing when the user's settings it would leave and the curve in place
+are the same as now; such a write is accepted, does not count, and is never refused `panel-open` or
+`rate-limited`. During an automix blend the host holds a mod's change back from the sound until the blend
+has ended (`getState` reports it at once), and it glides a mod's gains in rather than switching them.
+
+Main window only: in the export window every method throws an Error whose message is
+`equalizer-unavailable-in-export-context`. The main entry has no `equalizer`; ask the client over `rpc`.
+An older host has no `folium.equalizer`: check `folium.host.folium.minor >= 7` first. Malformed arguments
+throw a TypeError (`invalid-arguments: …`); a write without the permission throws
+`permission-denied:equalizer.control`.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `getState()` | `(): FoliumEqualizerState` | The equalizer now, as it is heard. Synchronous; follow changes with `equalizer.changed`. |
+| `setMode()` | `(mode: FoliumEqualizerUserMode): FoliumEqualizerWriteResult` | Switches to a built-in sound or to one of the user's own, as the command palette's sound commands do: its curve and its effects together, and a mod's curve in place ends. Writes no custom sound and leaves the processing switch as it is. Refused `unknown-mode` for a sound this host does not have. Needs `equalizer.control`. |
+| `applyCurve()` | `(gains: readonly number[]): FoliumEqualizerWriteResult` | Puts this mod's own curve in place, as mode `{ kind: 'mod' }`: 1 to `bands.length` finite gains in dB, one per band from the lowest. Bands left out read 0; each gain is clamped to `minGain`–`maxGain` and rounded to 0.1 dB, as `state.gains` then shows. The effects and the switch stay as the user had them. The curve stays, across restarts and while this mod reloads, until the user or a mod changes the sound; while this mod is disabled or removed the user's own sound plays, and the curve comes back when it is enabled again. The user can go back to their own sound, or keep the curve as one of their own, from the audio effects window. Needs `equalizer.control`. |
+| `releaseCurve()` | `(): boolean` | Takes this mod's curve off and goes back to the user's own sound. True when this mod's curve was in place; false otherwise, and nothing changes. Never refused for the rate or the open window. Needs `equalizer.control`. |
+
+相关：[FoliumEqualizerState](#foliumequalizerstate) · [FoliumEqualizerUserMode](#foliumequalizerusermode) · [FoliumEqualizerWriteResult](#foliumequalizerwriteresult)
+
 ## 共享工具
 
 `folium.lyrics` 与 `folium.theme`：内置歌词动画使用的同一批函数，主窗口与导出窗口都可用。`folium.lyrics.parse` 是唯一的异步方法，走本地歌词文件的解析流程。
@@ -1019,8 +1417,19 @@ Field kinds: a slider (a number), a text box (a string), a switch (a boolean), a
 (the chosen option's `value`), or a colour, shown as the app's own colour picker (a `#rrggbb` string,
 in lower case).
 
+Folium 1.7: `secret`, a key or token the user types in (an API key). Settings sections only. The form shows
+a masked input that never shows a saved value, only whether one is set, and a button to clear it. The
+value is not one of the section's values (`settings.get()` leaves it out, `settings.set` ignores it, a
+`defaultValue` is ignored): the host keeps it in the main process, encrypted, and the mod reads it through
+`folium.secrets` / `api.secrets` (FoliumSecretAccess). It never enters the stored
+settings values (`folia_folium_params_v1`), the visual config export and import, the export window or the
+logs. Anywhere else (visualizer and background settings, tunings, command params) a `secret` field is
+dropped like a field of an unknown type, and the mod's row says so. A Folium 1.6 host drops it in
+settings sections too (a section left with no field then fails to register), so check
+`folium.host.folium.minor >= 7` before declaring one.
+
 ```ts
-type FoliumSettingType = 'number' | 'text' | 'boolean' | 'select' | 'color'
+type FoliumSettingType = 'number' | 'text' | 'boolean' | 'select' | 'color' | 'secret'
 ```
 
 ### FoliumSettingOption
@@ -1060,7 +1469,7 @@ shape the schema declares: a JSDoc `@type` cast in plain JS, or
 | `min?` | `number` | `number`: lower bound (values are clamped). |
 | `max?` | `number` | `number`: upper bound (values are clamped). |
 | `step?` | `number` | `number`: slider step. Default 1 when both bounds are integers, else 0.01. |
-| `placeholder?` | `string` | `text`: placeholder. |
+| `placeholder?` | `string` | `text` and `secret`: placeholder. |
 | `options?` | `FoliumSettingOption[]` | `select`: the choices; values outside them are rejected. |
 
 相关：[FoliumSettingType](#foliumsettingtype) · [FoliumLabel](#foliumlabel) · [FoliumSettingOption](#foliumsettingoption)
@@ -1079,10 +1488,10 @@ Read/write access to one schema's persisted values (defaults already merged).
 
 | 成员 | 类型 | 说明 |
 | --- | --- | --- |
-| `readonly schema` | `readonly FoliumSetting[]` | The fields, as registered (invalid declarations dropped). |
-| `get()` | `(): FoliumSettingValues` | Current values, defaults merged. The same object until a value changes. |
+| `readonly schema` | `readonly FoliumSetting[]` | The fields, as registered (invalid declarations dropped), `secret` fields included. |
+| `get()` | `(): FoliumSettingValues` | Current values, defaults merged. The same object until a value changes. `secret` fields are not in it; read them through `folium.secrets`. |
 | `set()` | `(patch: Record<string, unknown>): void` | Validated against the schema: unknown keys are dropped, numbers clamped, selects checked. |
-| `reset()` | `(): void` | Restores every default. |
+| `reset()` | `(): void` | Restores every default. Stored `secret` values stay; clear them with `folium.secrets.set(key, null)`. |
 | `onChange()` | `(listener: () => void): FoliumDisposer` | Calls `listener` after any value changes, whoever changed it (the user, `set`, `reset`, an import). |
 
 相关：[FoliumSetting](#foliumsetting) · [FoliumSettingValues](#foliumsettingvalues) · [FoliumDisposer](#foliumdisposer)
@@ -1288,7 +1697,7 @@ One entry of the play queue, as `folium.playback.getQueue()` lists it.
 | 成员 | 类型 | 说明 |
 | --- | --- | --- |
 | `readonly song` | `FoliumSong` | The song; its `ref` works with playSong, enqueue and playQueueItem. |
-| `readonly index` | `number` | Its position in the host queue; stale as soon as the queue changes (`playback.queueChanged`). |
+| `readonly index` | `number` | Its position in the host queue; stale as soon as the queue's `version` changes (`playback.queueChanged`). |
 
 相关：[FoliumSong](#foliumsong)
 
@@ -1302,8 +1711,78 @@ A page of the play queue, from `folium.playback.getQueue()`.
 | `readonly length` | `number` | Songs in the whole queue, not just this page. |
 | `readonly currentIndex` | `number` | Position of the displayed song in the queue; -1 when it is not in it. The host finds the current song by identity, so a song listed twice counts at its first position. |
 | `readonly kind` | `'queue' \| 'fm' \| 'stage'` | `queue`: the play queue. `fm`: Personal FM, whose queue is the current FM batch. `stage`: external Stage playback; the queue has nothing to do with what is playing, and playQueueItem refuses. |
+| `readonly version` | `string` | Folium 1.7: the queue's version. Equal strings mean the same songs in the same order and the same `kind`; it does not change when only the displayed song moves. Opaque and valid for this session: pass it to `replaceQueue`, never store it. Pages read with the same version belong to the same queue. |
 
 相关：[FoliumQueueItem](#foliumqueueitem)
+
+### FoliumQueueChange
+
+Folium 1.7: what a `playback.queueChanged` event carries. Frozen. Only the outline: read the songs with
+`playback.getQueue()`.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly length` | `number` | Songs in the whole queue. |
+| `readonly currentIndex` | `number` | Position of the displayed song in the queue (its first position); -1 when it is not in it. |
+| `readonly version` | `string` | Folium 1.7: the queue's version now, as `FoliumQueueSnapshot.version` gives it. The same as in the event before when only the displayed song moved. |
+| `readonly byThisMod` | `boolean` | Folium 1.7: true only in the event the host fires for this mod's own `replaceQueue`, when nothing else changed the queue in the same task; false for every other mod, for a change anyone else made (the user's undo of it included), and when only the displayed song moved. A replacement made while this mod was not listening is never reported as its own later. |
+
+### FoliumQueueReplaceRefusal
+
+Folium 1.7: why `replaceQueue` left the queue as it was.
+`stage`: external Stage playback holds the player; try again after a `playback.queueChanged` whose
+snapshot `kind` is no longer `stage`.
+`transition`: an automix blend is under way (a few seconds, rarely more than half a minute); try again
+after a `playback.queueChanged`. One is also fired when the blend ends, and one that comes during the
+blend (the arriving song landing in the queue, say) may be refused `transition` again: keep waiting.
+`stale-version`: the queue is no longer the one `expectedVersion` names (the user, the host or a mod
+changed it); read it again and decide anew rather than replacing blindly.
+`stale-ref`: the song DTO at `index` has a `ref` that no longer resolves; read that song again.
+`not-queueable`: the song at `index` cannot be in the play queue (a song of external Stage playback).
+`rate-limited`: this mod replaced the queue a moment ago; try again after `retryAfterMs`.
+Checked in this order: stage, transition, stale-version, then the songs from first to last (stale-ref or
+not-queueable for the first song that fails, with its index), then rate-limited. Later minors may add
+reasons: treat one you do not know like `transition`.
+
+```ts
+type FoliumQueueReplaceRefusal = | 'stage' | 'transition' | 'stale-version' | 'stale-ref' | 'not-queueable' | 'rate-limited'
+```
+
+### FoliumQueueReplaced
+
+Folium 1.7: `replaceQueue` replaced the queue, or found it already as asked. Frozen.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly status` | `'replaced'` | `replaced`. |
+| `readonly version` | `string` | The queue's version now; the one you passed when nothing had to change. |
+| `readonly length` | `number` | Songs in the queue now. |
+| `readonly currentIndex` | `number` | Position of the displayed song in the new queue (its first position); -1 when it is not in it. |
+
+### FoliumQueueReplaceRefused
+
+Folium 1.7: `replaceQueue` left the queue as it was. Frozen.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly status` | `'refused'` | `refused`. |
+| `readonly reason` | `FoliumQueueReplaceRefusal` | Why. |
+| `readonly version` | `string` | The queue's version now, which this call did not change. |
+| `readonly index` | `number \| null` | For `stale-ref` and `not-queueable`, the position in `songs` of the first song refused; null otherwise. |
+| `readonly retryAfterMs` | `number \| null` | For `rate-limited`, milliseconds until this mod may replace the queue again; null otherwise. |
+
+相关：[FoliumQueueReplaceRefusal](#foliumqueuereplacerefusal)
+
+### FoliumQueueReplaceResult
+
+Folium 1.7: what `replaceQueue` resolves. `status` is `replaced` or `refused`; later minors may add
+fields, not statuses.
+
+```ts
+type FoliumQueueReplaceResult = FoliumQueueReplaced | FoliumQueueReplaceRefused
+```
+
+相关：[FoliumQueueReplaced](#foliumqueuereplaced) · [FoliumQueueReplaceRefused](#foliumqueuereplacerefused)
 
 ### FoliumPlaybackSnapshot
 
@@ -1524,6 +2003,84 @@ online song. Use folium.net.fetch for network access.
 
 相关：[FoliumProviderSong](#foliumprovidersong) · [FoliumAudioQuality](#foliumaudioquality) · [FoliumLyricsResult](#foliumlyricsresult) · [FoliumLegacyLyricsResult](#foliumlegacylyricsresult)
 
+### FoliumJsonValue
+
+Folium 1.7: a JSON value, as `platform.raw` request parameters take them.
+
+```ts
+type FoliumJsonValue = string | number | boolean | null | FoliumJsonValue[] | { [key: string]: FoliumJsonValue }
+```
+
+### FoliumPlatformBackend
+
+Folium 1.7: EXPERIMENTAL (`platform.raw`): the backend library the host pins for a platform.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly name` | `string` | The library's package name. |
+| `readonly version` | `string` | Its version, as the host pins it; raw answers follow it. |
+
+### FoliumPlatformDescription
+
+Folium 1.7: EXPERIMENTAL (`platform.raw`): what `describe` says of one platform.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly supported` | `boolean` | Whether the platform's endpoints can be called through `request`. |
+| `readonly backend?` | `FoliumPlatformBackend` | The pinned backend library; only when supported. |
+
+相关：[FoliumPlatformBackend](#foliumplatformbackend)
+
+### FoliumPlatformResponse
+
+Folium 1.7: EXPERIMENTAL (`platform.raw`): what `request` resolves to.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `readonly body` | `unknown` | The platform's own JSON answer, credential fields (cookies, tokens) taken out at any depth. |
+| `readonly accountKey` | `string \| null` | The `accountKey` of the account the request was made as (`folium.account`); null when nobody is signed in. |
+
+### FoliumPlatformErrorCode
+
+Folium 1.7: EXPERIMENTAL (`platform.raw`): why a `request` failed, as the rejection's `code` (and its
+message). `permission-denied:<permission>`: mod.json lacks `platform.<id>.read` (or, for an endpoint
+that changes the account, `platform.<id>.write`). `endpoint-denied`: the platform's table of endpoints
+does not open this one (sign-in, session and credential endpoints never are, and neither is any endpoint
+the table does not list). `unsupported`: the platform has no raw endpoints in this host.
+`not-signed-in` / `session-expired`: the endpoint needs a signed-in account and there is none, or its
+session ran out. `vip-required`: the platform answers that only paying accounts may. `rate-limited`:
+too many requests, from this mod (currently 120 a minute per mod, shared with `folium.omni`; past 8 at a
+time a request waits for one of them to finish instead of failing) or as the platform says.
+`network`: the platform could not be reached or did not answer in time. `account-changed`: the account
+signed out or changed while the request was under way, so the answer was dropped. `aborted`: the
+request's `signal` aborted, or the mod stopped (a request still under way then is aborted by the host).
+
+```ts
+type FoliumPlatformErrorCode = | `permission-denied:${string}` | 'endpoint-denied' | 'unsupported' | 'not-signed-in' | 'session-expired' | 'vip-required' | 'rate-limited' | 'network' | 'account-changed' | 'aborted'
+```
+
+### FoliumPlatformService
+
+Folium 1.7: EXPERIMENTAL (manifest `experimental: ["platform.raw"]`), as
+`folium.experimental['platform.raw']`; main window only. A fallback for what Omni does not offer yet:
+it calls a platform's own backend endpoints as the account signed in to Folia, for capabilities only
+that platform has (listening records, say). Where Omni offers the same, use Omni: the host says so in
+the developer log, and where `folium.omni` offers the same, use it. Answers are the platform's raw JSON
+and follow the backend library the host pins (`describe`), so they can change with any Folia release;
+nothing about them is promised.
+
+The host never hands out the session: the request goes through Omni and the platform's adapter, which
+add it, and credential fields are taken out of the answer. Parameters the backend reads as options of the
+request (the session, a proxy, the source IP and the like) are set by the host alone. Platform ids are
+Omni provider ids; only a platform `describe` supports takes `platform.<id>.*` permissions.
+
+| 成员 | 类型 | 说明 |
+| --- | --- | --- |
+| `describe()` | `(providerId: string): FoliumPlatformDescription` | Whether a platform can be called through `request`, with its backend library's name and version. |
+| `request()` | `(providerId: string, endpoint: string, params?: Record<string, FoliumJsonValue>, options?: { signal?: AbortSignal }): Promise<FoliumPlatformResponse>` | Calls one endpoint of the platform: `endpoint` is the pinned backend's own name for it (a module name such as `user_record`). `params` are the endpoint's parameters; an endpoint about the signed-in user gets that user's id when `params` leaves it out, so a mod never needs it. Reading endpoints need the `platform.<id>.read` permission; endpoints that change the account need `platform.<id>.write` as well. Rejects with an Error whose `code` is a FoliumPlatformErrorCode, and with a TypeError for malformed arguments (`params` must be a plain object of JSON values, its names letters, digits and `_`, at most 16 KB as JSON; a parameter the platform's backend writes into the path of its own request, such as an id, takes only the format the platform's table gives it, digits for ids). |
+
+相关：[FoliumPlatformDescription](#foliumplatformdescription) · [FoliumJsonValue](#foliumjsonvalue) · [FoliumPlatformResponse](#foliumplatformresponse)
+
 ## main 入口（Node）
 
 `mod.json` 的 `main` 指向一个 `.cjs` / `.js` 文件，它导出的 `activate(api)`（[FoliumMainModule](#foliummainmodule)）在 Folia 的主进程里运行，参数是 [FoliumMainApi](#foliummainapi)。这一节来自 [`src/mods/folium/mainContract.ts`](../../src/mods/folium/mainContract.ts)。
@@ -1558,13 +2115,14 @@ rejects with that error.
 | `readonly host` | `FoliumHostInfo` | Host versions; the same as the client entry's `folium.host`. |
 | `readonly log` | `FoliumLogger` | Logging; `error` entries show in the mods panel under the mod. |
 | `readonly storage` | `FoliumMainStorage` | This mod's data file: the same file the client entry's `folium.storage` reads and writes, so both sides see one state. Needs the `filesystem.data` permission. |
+| `readonly secrets` | `FoliumSecretAccess` | Folium 1.7: the values of this mod's `secret` settings fields, the same store the client entry's `folium.secrets` reads and writes. A listener given to `subscribe` stops when the mod stops. |
 | `readonly paths` | `FoliumMainPaths` | Folders to write into: this mod's own folder and the user's folders. |
 | `onDispose()` | `(disposer: FoliumDisposer): void` | Runs `disposer` when the mod stops: it is turned off, reloaded, or the app quits. Release here what `activate` started: timers, watchers, listeners, child processes. Cleanups run last registered first (the function `activate` returned counts as registered when `activate` returned), and one that throws does not stop the others. After the mod has stopped, `disposer` runs at once. Returns nothing. |
 | `readonly runtime` | `FoliumMainRuntime` | What the app is playing. |
-| `readonly rpc` | `FoliumMainRpc` | Answers calls from this mod's client entry. |
+| `readonly rpc` | `FoliumMainRpc` | Answers calls from this mod's client entry, and (Folium 1.7) sends it messages. |
 | `readonly render` | `FoliumMainRender` | Video export. |
 
-相关：[FoliumManifest](#foliummanifest) · [FoliumHostInfo](#foliumhostinfo) · [FoliumLogger](#foliumlogger) · [FoliumMainStorage](#foliummainstorage) · [FoliumMainPaths](#foliummainpaths) · [FoliumDisposer](#foliumdisposer) · [FoliumMainRuntime](#foliummainruntime) · [FoliumMainRpc](#foliummainrpc) · [FoliumMainRender](#foliummainrender)
+相关：[FoliumManifest](#foliummanifest) · [FoliumHostInfo](#foliumhostinfo) · [FoliumLogger](#foliumlogger) · [FoliumMainStorage](#foliummainstorage) · [FoliumSecretAccess](#foliumsecretaccess) · [FoliumMainPaths](#foliummainpaths) · [FoliumDisposer](#foliumdisposer) · [FoliumMainRuntime](#foliummainruntime) · [FoliumMainRpc](#foliummainrpc) · [FoliumMainRender](#foliummainrender)
 
 ### FoliumManifest
 
@@ -1650,6 +2208,7 @@ of the user's folders; keep the mod's own files under `api.storage.paths`.
 | 成员 | 类型 | 说明 |
 | --- | --- | --- |
 | `handle()` | `(name: string, handler: (...args: any[]) => unknown): void` | Answers the client entry's `folium.rpc.call(name, ...args)`: `handler` gets the call's arguments, and what it returns (or what its promise resolves to) is the call's result; a throw rejects the call. Arguments and results cross between processes, so both must be JSON-serializable. `name` must match `/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/`, and a second handler for the same name throws. |
+| `send()` | `(name: string, payload?: unknown): void` | Folium 1.7: sends `payload` to this mod's client entry in the main window, where `folium.rpc.on(name, ...)` receives it; no other mod's client hears it, and the export window never does. Fire-and-forget: nothing is queued, so a message sent while the client is not running (the window rebuilt, the client not activated yet) or while there is no main window is dropped without an error. `payload` must be JSON-serializable, at most 64 KB as JSON text; left out, the client gets `null`. `name` follows the same rule as `handle`. A bad name or payload throws at the call (`rpc-payload-too-large:65536` for one over the limit). Older 1.x hosts lack it: check `api.host.folium.minor >= 7`. |
 
 ### FoliumMainRender
 
@@ -1699,7 +2258,7 @@ What `api.render.exportVideo` resolves to.
 The Folium version this host implements; mods read it at runtime as `folium.host.folium`.
 
 ```ts
-const FOLIUM_VERSION = Object.freeze({ major: 1, minor: 6 })
+const FOLIUM_VERSION = Object.freeze({ major: 1, minor: 7 })
 ```
 
 ### FoliumId

@@ -10,6 +10,7 @@ import {
     hasExploreWallEntries,
     markPlayingTile,
     MAX_FURTHER_READS,
+    pageEntryCountOf,
     sectionsOfTiles,
     summaryOfSection,
     withOneMoreRead,
@@ -24,8 +25,9 @@ import { faceOf } from '../../../src/components/app/home/explore/exploreFace';
 // The wall opened from the explore tab: which of the page's entries become tiles and in what
 // order, what a song tile plays with, which tile is the playing one, and that a tile is called
 // what the explore page calls the entry. The sections the wall is laid out by, as the tiles hand
-// them out. And its further reads of the page: when it asks, how often for one read of the
-// page, and that what they bring reaches the wall as one change.
+// them out. The app's own sections, each a list of its own before the page's. And its further
+// reads of the page: when it asks, how often for one read of the page, and that what they bring
+// reaches the wall as one change.
 
 const t = (key: string) => key;
 
@@ -126,6 +128,42 @@ describe('buildExploreTiles', () => {
         const [tile] = buildExploreTiles([section('a', [card('playlist', '1', { wideCoverUrl: 'wide-of-1' })])], t);
 
         expect(tile.coverUrl).toBe('cover-of-1');
+    });
+
+    it('keeps a song of the app\'s own sections in each of them, and in the page\'s sections too', () => {
+        const own = new Set(['recent', 'again']);
+        const tiles = buildExploreTiles([
+            section('recent', [songEntry('s1'), songEntry('s2')]),
+            section('again', [songEntry('s2'), songEntry('s3')]),
+            section('a', [songEntry('s1'), card('album', '1'), songEntry('s4')]),
+            section('b', [songEntry('s4')]),
+        ], t, own);
+        const queueOf = (id: string) => {
+            const tile = tiles.find(candidate => candidate.id === id);
+            return tile?.kind === 'song' ? tile.queue?.map(entry => entry.id) : undefined;
+        };
+
+        // Each own section a list of its own, as on the explore page; among the page's sections an entry stands once still.
+        expect(tiles.map(tile => tile.id)).toEqual([
+            'recent:online:ytm:s1',
+            'recent:online:ytm:s2',
+            'again:online:ytm:s2',
+            'again:online:ytm:s3',
+            'online:ytm:s1',
+            'collection:album:1',
+            'online:ytm:s4',
+        ]);
+        expect(tiles.map(tile => tile.queueIndex)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+        expect(sectionsOfTiles(tiles).map(entry => entry.key)).toEqual(['recent', 'again', 'a']);
+        // A song plays with the songs of the section it stands in.
+        expect(queueOf('again:online:ytm:s2')).toEqual(['s2', 's3']);
+        expect(queueOf('online:ytm:s1')).toEqual(['s1', 's4']);
+        // Only the page's tile of a song is taken for the song on the player.
+        expect(markPlayingTile(tiles, song('s1')).filter(tile => tile.section === 'now').map(tile => tile.id)).toEqual(['online:ytm:s1']);
+        expect(markPlayingTile(tiles, song('s2'))).toBe(tiles);
+        // What the wall counts for its further reads: the page's entries alone.
+        expect(pageEntryCountOf(tiles, own)).toBe(3);
+        expect(pageEntryCountOf(tilesOf(12), own)).toBe(12);
     });
 
     it('has no tile for a page without entries', () => {

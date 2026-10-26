@@ -3,6 +3,7 @@ import { usePlaybackStore, selectDisplaySong } from '@/stores/usePlaybackStore';
 import { getPlaybackSongKey, isStagePlaybackSong } from '@/utils/appPlaybackGuards';
 import type { FoliumQueueItem, FoliumQueueSnapshot } from '../folium/contract';
 import { resolveFoliumSongRef, toFoliumSong } from '../folium/dto';
+import { readFoliumQueueVersion } from './queue/queueVersion';
 
 // src/mods/runtime/hostQueue.ts
 // The play queue as folium.playback.getQueue / playQueueItem and the
@@ -49,11 +50,13 @@ export const buildFoliumQueueSnapshot = (
         song: Object.freeze(toFoliumSong(song)!),
         index: start + position,
     }));
+    const kind = resolveFoliumQueueKind(state);
     return Object.freeze({
         items: Object.freeze(items),
         length,
         currentIndex,
-        kind: resolveFoliumQueueKind(state),
+        kind,
+        version: readFoliumQueueVersion(queue, kind),
     });
 };
 

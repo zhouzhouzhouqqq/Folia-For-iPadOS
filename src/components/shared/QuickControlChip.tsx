@@ -20,6 +20,10 @@ interface QuickControlChipProps {
     title: string;
     /** Nothing to change to now (an uploaded picture is the other choice, and there is none): the chip only says what is set. */
     disabled?: boolean;
+    /** For a chip that opens a layer (the kit's Popover): the button it opens from. */
+    buttonRef?: React.Ref<HTMLButtonElement>;
+    /** For a chip that opens a layer: whether it is open. The chip then says it has one, and looks pressed while it is open. */
+    expanded?: boolean;
 }
 
 export const QuickControlChip: React.FC<QuickControlChipProps> = ({
@@ -27,14 +31,19 @@ export const QuickControlChip: React.FC<QuickControlChipProps> = ({
     label,
     title,
     disabled,
+    buttonRef,
+    expanded,
 }) => (
     <Tooltip text={title} className="flex">
         <button
+            ref={buttonRef}
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className={`${BASE} whitespace-nowrap bg-[var(--st-fill)] px-2.5 text-xs text-[color:var(--st-t2)] enabled:hover:bg-[var(--st-fill2)] enabled:hover:text-[color:var(--st-t1)]`}
+            className={`${BASE} whitespace-nowrap px-2.5 text-xs enabled:hover:text-[color:var(--st-t1)] ${expanded ? 'bg-[var(--st-fill2)] text-[color:var(--st-t1)]' : 'bg-[var(--st-fill)] text-[color:var(--st-t2)] enabled:hover:bg-[var(--st-fill2)]'}`}
             aria-label={title}
+            aria-haspopup={expanded === undefined ? undefined : 'true'}
+            aria-expanded={expanded}
         >
             {label}
         </button>

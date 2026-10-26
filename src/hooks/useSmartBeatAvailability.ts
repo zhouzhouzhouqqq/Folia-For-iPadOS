@@ -2,6 +2,7 @@ import { hasNativeAutomix } from '../platform/ios/automix';
 import { modelsPresent, subscribeModelAvailability } from '../services/analysis/modelAvailability';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { probeBeatThisGpu } from '../services/analysis/beatThisGpu';
+import type { SmartBeatMode } from '../types';
 
 // src/hooks/useSmartBeatAvailability.ts
 // Whether beat FX (智能动感模式, in every mode and background that draws them) can do anything on this
@@ -9,23 +10,26 @@ import { probeBeatThisGpu } from '../services/analysis/beatThisGpu';
 // is a preference - but a switch that is on and silently inert is the failure this is here to prevent.
 //
 // The model (Beat This! final0, shared with automix) ships with the desktop app, so there is no "not downloaded" state: what can be
-// missing is the desktop bridge (the web build) or a GPU that hands out an adapter.
+// missing is the desktop bridge (the web build) or a GPU that hands out an adapter. Under `cached`
+// the GPU does not matter - nothing runs, and a list automix stored from a CPU run plays as well - so
+// only the bridge is asked, the analyses being the desktop app's.
 
 export type SmartBeatAvailability = 'ready' | 'desktopOnly' | 'noGpu' | 'nativeModels';
 
 const hasBeatThisBridge = () => typeof window !== 'undefined' && typeof window.electron?.getBeatThisGpuWeights === 'function';
 
 /**
- * Asked only while `enabled` - the switch is on. Off, nothing is probed (no adapter request) and the
- * answer is 'ready', which a caller shows nothing for.
+ * The GPU is probed only under `on`. Off, nothing is probed (no adapter request) and the answer is
+ * 'ready', which a caller shows nothing for.
  */
-export function useSmartBeatAvailability(enabled: boolean): SmartBeatAvailability {
+export function useSmartBeatAvailability(mode: SmartBeatMode): SmartBeatAvailability {
     // Optimistic until the probe answers: a hint flashing "no GPU" on every open would be worse.
     const [gpu, setGpu] = useState(true);
     const present = useSyncExternalStore(subscribeModelAvailability, modelsPresent);
+    const probe = mode === 'on';
 
     useEffect(() => {
-        if (!enabled || hasNativeAutomix()) return;
+        if (!probe || hasNativeAutomix()) return;
         let cancelled = false;
         void probeBeatThisGpu().then((found) => {
             if (!cancelled) setGpu(found);
@@ -33,10 +37,10 @@ export function useSmartBeatAvailability(enabled: boolean): SmartBeatAvailabilit
         return () => {
             cancelled = true;
         };
-    }, [enabled]);
+    }, [probe]);
 
-    if (!enabled) return 'ready';
-    if (hasNativeAutomix()) return present.beat_this && present.htdemucs ? 'ready' : 'nativeModels';
+    if (mode === 'off') return 'ready';
+    if (hasNativeAutomix()) return mode === 'cached' || present.beat_this && present.htdemucs ? 'ready' : 'nativeModels';
     if (!hasBeatThisBridge()) return 'desktopOnly';
-    return gpu ? 'ready' : 'noGpu';
+    return gpu || !probe ? 'ready' : 'noGpu';
 }

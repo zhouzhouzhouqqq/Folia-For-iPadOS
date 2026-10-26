@@ -31,6 +31,7 @@ import { useShownTheme } from './useShownTheme';
 import { NO_LYRIC_LINES } from '../../utils/lyrics/noLyricLines';
 import { selectLibraryPlayerBackdrop, useLibraryPlayerOcclusionStore } from '../../stores/useLibraryPlayerOcclusionStore';
 import { resolveVisualizerShowText } from '../app/presentation/playerVisualizerBackdrop';
+import { useBackgroundLyricHoldStore } from '../app/backgroundThrottling/backgroundLyricHoldStore';
 
 // src/components/visualizer/useVisualizerRendererModel.ts
 //
@@ -104,6 +105,9 @@ export const useVisualizerRendererModel = ({
     const displayCoverUrl = usePlaybackStore(selectDisplayCoverUrl);
     const displayPlayerState = usePlaybackStore(selectDisplayPlayerState);
     const displayDuration = usePlaybackStore(selectDisplayDuration);
+    // 后台节流 holds the lyric animation while the window is minimised or hidden: drawn as if paused,
+    // which every style and background already settles into, and moving again once it is back on screen.
+    const backgroundLyricHeld = useBackgroundLyricHoldStore(state => state.held);
     // The theme too: the live one is the incoming song's once it comes (useShownTheme).
     const liveThemes = useMemo(() => ({ theme, subtitleTheme }), [theme, subtitleTheme]);
     const shownThemes = useShownTheme(liveThemes, usePlaybackStore(selectIsShowingTail), displaySong?.id);
@@ -159,7 +163,7 @@ export const useVisualizerRendererModel = ({
                 && background.latent?.tuning?.dynamicOnlyInPlayer
                 && currentView !== 'player'
             ),
-        paused: displayPlayerState !== PlayerState.PLAYING,
+        paused: displayPlayerState !== PlayerState.PLAYING || backgroundLyricHeld,
         visualizerOpacity,
         background,
         ...typography,

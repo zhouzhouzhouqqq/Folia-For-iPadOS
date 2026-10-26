@@ -25,11 +25,16 @@ import BackgroundPicture from '../preview/BackgroundPicture';
 import { usePlayerChromeSettingsStore } from '../../../stores/usePlayerChromeSettingsStore';
 import SmartBeatSettingsCard from '../SmartBeatSettingsCard';
 import BeatEffectsGroup from '../BeatEffectsGroup';
+import RandomPoolGroup from '../random/RandomPoolGroup';
+import { useRandomPool } from '../random/useRandomPool';
+import { useVisualizerSettingsStore } from '../../../stores/useVisualizerSettingsStore';
 
 // src/components/visualizer/window/VisPlaygroundSettingsPanel.tsx
-// The right column of the lyric style window: four tabs with one "default" action for the open
+// The right column of the lyric style window: five tabs with one "default" action for the open
 // tab, and the open tab's options as settings-kit groups. The chosen style's and the chosen
-// background's own options come from their registry entries and are stacked as they come.
+// background's own options come from their registry entries and are stacked as they come. With 随机
+// chosen on the shelf, the style tab is the random pool alone (RandomPoolGroup), no style's own
+// options; 智能动感模式 is a switch of the whole picture and has the 全局 tab to itself.
 interface PresetOption<T> {
     label: string;
     value: T;
@@ -106,13 +111,14 @@ interface VisPlaygroundSettingsPanelProps {
     onSliderCommit?: () => void;
 }
 
-const SECTION_OPTIONS: VisPlaygroundEditSection[] = ['visualizer', 'background', 'common', 'subtitle'];
+const SECTION_OPTIONS: VisPlaygroundEditSection[] = ['visualizer', 'background', 'common', 'subtitle', 'global'];
 
 const SECTION_LABEL_KEYS: Record<VisPlaygroundEditSection, string> = {
     visualizer: 'options.previewVisualizerSettings',
     background: 'options.previewBackgroundSettings',
     common: 'options.previewCommonSettings',
     subtitle: 'options.previewSubtitleSettings',
+    global: 'options.previewGlobalSettings',
 };
 
 // The window's own groups. A group without a heading still needs a name for assistive tech.
@@ -210,6 +216,8 @@ const VisPlaygroundSettingsPanel: React.FC<VisPlaygroundSettingsPanelProps> = (p
     const foliumBackgroundEntries = useFoliumRegistryEntries(backgroundsRegistry);
     const hasModTunings = useFoliumRegistryEntries(tuningsRegistry).some(entry => entry.def.target === visualizerMode);
     const missingFoliumSelections = useMissingFoliumSelections();
+    const randomEnabled = useVisualizerSettingsStore(state => state.randomVisualizerModePerSong);
+    const randomPool = useRandomPool();
 
     const enablePlayerPageNativeBlur = usePlayerChromeSettingsStore(state => state.enablePlayerPageNativeBlur);
     const resolvedBackgroundMode = backgroundConfig?.mode ?? DEFAULT_VISUALIZER_BACKGROUND_MODE;
@@ -231,8 +239,11 @@ const VisPlaygroundSettingsPanel: React.FC<VisPlaygroundSettingsPanelProps> = (p
     const fontWeightMarks = useMemo(() => toMarks(fontWeightOptions), [fontWeightOptions]);
 
     // What the one "default" action does for the open tab; nothing where the tab has nothing to reset.
+    // With 随机 chosen the style tab is the pool, and its default is every built-in style.
     const resetOpenTab: (() => void) | undefined = activeSection === 'visualizer'
-        ? (visualizerEntry.renderSettingsPanel ? styleDraft.reset : undefined)
+        ? (randomEnabled
+            ? (randomPool.allOn ? undefined : randomPool.selectAll)
+            : (visualizerEntry.renderSettingsPanel ? styleDraft.reset : undefined))
         : activeSection === 'background'
             ? (backgroundEntry.resetSettings ? () => backgroundEntry.resetSettings?.(backgroundActions) : undefined)
             : activeSection === 'common'
@@ -240,7 +251,9 @@ const VisPlaygroundSettingsPanel: React.FC<VisPlaygroundSettingsPanelProps> = (p
                     onPreviewPlaceholderChange('default');
                     onResetCommonSettings?.();
                 }
-                : onResetSubtitleSettings;
+                : activeSection === 'subtitle'
+                    ? onResetSubtitleSettings
+                    : undefined;
 
     const stylePanel = visualizerEntry.renderSettingsPanel?.({
         t,
@@ -270,16 +283,16 @@ const VisPlaygroundSettingsPanel: React.FC<VisPlaygroundSettingsPanelProps> = (p
                 )}
             />
             <StudioColumnBody>
-                <div key={activeSection} className="st-page-in">
-                    {activeSection === 'visualizer' && (
+                <div key={activeSection === 'visualizer' && randomEnabled ? 'random' : activeSection} className="st-page-in">
+                    {activeSection === 'visualizer' && randomEnabled && <RandomPoolGroup />}
+
+                    {activeSection === 'visualizer' && !randomEnabled && (
                         <>
                             {missingStyleNotice && (
                                 <Group def={STYLE_NOTICE_GROUP} bare>
                                     <Row notice={missingStyleNotice} />
                                 </Group>
                             )}
-                            {/* 智能动感模式: a setting of the whole picture, above whichever style's own options. */}
-                            <SmartBeatSettingsCard t={t} />
                             {/* The style's own options: kit groups, stacked as they come. */}
                             <div key={visualizerMode} className="st-page-in">
                                 {/* Its 智能动感模式 effects, each named, switched and scaled on its own. */}
@@ -288,6 +301,7 @@ const VisPlaygroundSettingsPanel: React.FC<VisPlaygroundSettingsPanelProps> = (p
                                     effects={visualizerEntry.beatEffects}
                                     onSliderPointerDown={onSliderPointerDown}
                                     onSliderCommit={onSliderCommit}
+                                    onOpenSmartBeat={() => onSectionChange('global')}
                                 />
                                 {stylePanel}
                                 {/* Folium tunings other mods registered for this mode (registries.tunings): cards of the mods' own make. */}
@@ -307,6 +321,9 @@ const VisPlaygroundSettingsPanel: React.FC<VisPlaygroundSettingsPanelProps> = (p
                             </div>
                         </>
                     )}
+
+                    {/* 智能动感模式: a setting of the whole picture, with no one style's options. */}
+                    {activeSection === 'global' && <SmartBeatSettingsCard t={t} />}
 
                     {activeSection === 'background' && (
                         <>

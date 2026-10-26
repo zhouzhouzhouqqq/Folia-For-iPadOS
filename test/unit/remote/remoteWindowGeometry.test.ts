@@ -70,4 +70,22 @@ describe('remote window geometry', () => {
     it('leaves a window that is on no screen at all alone', () => {
         expect(clampRemoteControlWindowX(windowAt(-5000, 100), [{ x: 0, y: 0, width: 1920, height: 1080 }])).toBe(-5000);
     });
+
+    it('lets the card in use reach the left edge when the cover is collapsed', () => {
+        const screens = [{ x: 0, y: 0, width: 1920, height: 1080 }];
+        // The empty strip left of the card may go off screen; the card itself (4 + 174 px in) stops at the edge.
+        expect(clampRemoteControlWindowX(windowAt(-120, 400), screens, false)).toBe(-120);
+        expect(clampRemoteControlWindowX(windowAt(-178, 400), screens, false)).toBe(-178);
+        expect(clampRemoteControlWindowX(windowAt(-300, 400), screens, false)).toBe(-178);
+        expect(clampRemoteControlWindowX(windowAt(-300, 400), screens, true)).toBe(0);
+    });
+
+    it('stops the collapsed card at the edge of the screen that holds it', () => {
+        const screens = [
+            { x: -1920, y: 600, width: 1920, height: 1080 },
+            { x: 0, y: 0, width: 1920, height: 1080 },
+        ];
+        expect(clampRemoteControlWindowX(windowAt(-260, 100), screens, false)).toBe(-178);
+        expect(clampRemoteControlWindowX({ x: -278, y: 100, width: 702, height: 184 }, screens, false)).toBe(-228);
+    });
 });

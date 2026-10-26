@@ -14,6 +14,7 @@ import type { ModManagerClasses } from './modManagerClasses';
 import { translateModError } from './modErrors';
 import { MOD_FILES_PERMISSION, ModStorageUsage, type ModNotice } from './ModStorageUsage';
 import { useFoliumOldNameStore } from '../folium/deprecated/warnings';
+import { omni } from '@/services/onlineMusic/omni';
 
 // src/mods/manager/ModListItem.tsx
 // One mod as a row of the manager's list card. The row expands in place to show the mod's
@@ -32,6 +33,15 @@ const describeModGrants = (mod: ModRuntimeInfo): string[] => [
     ...(mod.embedOrigins ?? []).map((origin) => `embed:${origin}`),
     ...(mod.folia ? [`folia:${mod.folia}`] : []),
 ];
+
+/*
+ * Folium 1.7: the platforms the mod may call as the user through the experimental platform.raw
+ * (`platform.<id>.read` / `.write`), by their names in the app.
+ */
+const platformGrantsOf = (mod: ModRuntimeInfo, access: 'read' | 'write'): string[] => mod.permissions
+    .map((permission) => /^platform\.([^.]+)\.(read|write)$/.exec(permission))
+    .filter((match): match is RegExpExecArray => match !== null && match[2] === access)
+    .map((match) => omni.getProviderLabel(match[1]));
 
 /*
  * The signature badge shown in the collapsed row. Unsigned mods get none there
@@ -159,6 +169,8 @@ export const ModListItem: React.FC<ModListItemProps> = ({
     const clientOldNames = useFoliumOldNameStore((state) => state.byMod[mod.id] ?? NO_OLD_NAMES);
     const oldNames = [...(mod.warnings ?? []), ...clientOldNames];
     const grants = describeModGrants(mod);
+    const readPlatforms = platformGrantsOf(mod, 'read');
+    const writePlatforms = platformGrantsOf(mod, 'write');
     const meta = [mod.id, `v${mod.version ?? '-'}`, mod.author].filter(Boolean).join(' · ');
 
     const activate = () => {
@@ -249,6 +261,25 @@ export const ModListItem: React.FC<ModListItemProps> = ({
                             <SignatureNotice mod={mod} isDaylight={isDaylight} classes={classes} />
                             {mod.devSource ? (
                                 <div className="text-[11px] opacity-50" style={{ color: 'var(--text-secondary)' }}>{t('mods.devSourceHint')}</div>
+                            ) : null}
+                            {readPlatforms.length > 0 ? (
+                                <div className="text-[11px] opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                                    {t('mods.platformReadHint', { platforms: readPlatforms.join(' / ') })}
+                                    {writePlatforms.length > 0
+                                        ? ` ${t('mods.platformWriteHint', { platforms: writePlatforms.join(' / ') })}`
+                                        : ''}
+                                </div>
+                            ) : null}
+                            {/* Folium 1.7: the one permission that lets a mod drop the user's queue, said in words. */}
+                            {mod.permissions.includes('playback.queue') ? (
+                                <div className="text-[11px] opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                                    {t('mods.queueReplaceHint')}
+                                </div>
+                            ) : null}
+                            {mod.permissions.includes('equalizer.control') ? (
+                                <div className="text-[11px] opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                                    {t('mods.equalizerControlHint')}
+                                </div>
                             ) : null}
                             {mod.trustStale ? (
                                 <div className={`flex items-start gap-2 text-xs rounded-lg border px-3 py-2 ${classes.warning}`}>

@@ -9,7 +9,7 @@ import {
     isNavidromePlaybackSong,
     isSamePlaybackSong,
     isStagePlaybackSong,
-    replacePlaybackSongInQueue,
+    replacePlaybackSongWhereQueued,
 } from '../../../../utils/appPlaybackGuards';
 import { setAudioSrc, setCurrentSong, setPlayQueue, usePlaybackStore } from '../../../../stores/usePlaybackStore';
 import { askedSongKeyRef, startOfAskedSong } from '../currentSong';
@@ -179,11 +179,14 @@ export const createOnlineRecoveryController = ({
                     });
                     // The queue as it is now: a retry can be pressed long after the error, and the
                     // queue's edits made meanwhile stay.
-                    const resolvedQueue = replacePlaybackSongInQueue(usePlaybackStore.getState().playQueue, resolvedSong);
-                    setPlayQueue(resolvedQueue);
+                    // Only the entry is refreshed with its gain: a song the queue no longer holds (the user
+                    // removed it, or a mod replaced the queue) is not put back in front of it.
+                    const liveQueue = usePlaybackStore.getState().playQueue;
+                    const resolvedQueue = replacePlaybackSongWhereQueued(liveQueue, resolvedSong);
+                    if (resolvedQueue) setPlayQueue(resolvedQueue);
                     void persistLastPlaybackCache(
                         resolvedSong,
-                        resolvedQueue,
+                        resolvedQueue ?? liveQueue,
                     );
                 }
 

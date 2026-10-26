@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Theme } from '@/types';
 import type { FoliumSetting, FoliumSettingAccess, FoliumSettingsSectionDef } from '../contract';
-import { resolveFoliumLabel, sanitizeFoliumParams } from '../../params/params';
+import { isFoliumSecretParam, resolveFoliumLabel, sanitizeFoliumParams } from '../../params/params';
 import { createFoliumParamAccess } from '../../params/paramStore';
 import { createFoliumRegistry, useFoliumRegistryEntries } from '../../runtime/registry';
 import { FoliumSettingsCard } from '../../params/FoliumSettingsCard';
@@ -12,26 +12,35 @@ import { foliumMountName } from '../kinds';
 // mods panel when that mod's row is expanded (next to its commands). The
 // schema is the store: values persist under `settings:<id>`, ride along in
 // visual config import/export, and the mod reads them through the handle's
-// `settings`.
+// `settings`. Folium 1.7 `secret` fields are allowed here and nowhere else:
+// they are drawn in the form, but their values live in the main process
+// (folium/secrets.ts), never in the section's values.
 
 export interface StoredFoliumSettingsSection {
     def: FoliumSettingsSectionDef;
     settings: FoliumSetting[];
     access: FoliumSettingAccess;
+    /** The keys of the section's `secret` fields, in declaration order. */
+    secretKeys: string[];
 }
 
 const SETTINGS_SECTION = foliumMountName('settingsSections', 'settings');
 
 export const settingsSectionsRegistry = createFoliumRegistry<FoliumSettingsSectionDef, StoredFoliumSettingsSection>('settingsSections', {
     validate: (def, { id, modId }) => {
-        const settings = sanitizeFoliumParams(def.settings, modId);
+        const settings = sanitizeFoliumParams(def.settings, modId, { allowSecret: true });
         if (settings.length === 0) {
             throw new Error('settingsSections.register: settings must declare at least one valid field');
         }
         if (def.settingsPanel !== undefined && typeof def.settingsPanel !== 'function') {
             throw new Error('settingsSections.register: settingsPanel must be a mount function');
         }
-        return { def, settings, access: createFoliumParamAccess(`settings:${id}`, settings) };
+        return {
+            def,
+            settings,
+            access: createFoliumParamAccess(`settings:${id}`, settings),
+            secretKeys: settings.filter(isFoliumSecretParam).map((param) => param.key),
+        };
     },
 });
 

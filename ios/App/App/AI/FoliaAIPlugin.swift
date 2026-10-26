@@ -44,7 +44,7 @@ public final class FoliaAIPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func request(_ call: CAPPluginCall) {
         run(call) { client in
             let reply = try await client.request(id: call.getString("id") ?? "", revision: call.getString("revision") ?? "",
-                url: call.getString("url") ?? "", body: call.getString("body") ?? "", timeoutMs: call.getDouble("timeoutMs") ?? 120_000)
+                url: call.getString("url") ?? "", body: call.getString("body") ?? "", timeoutMs: call.getDouble("timeoutMs") ?? 120_000, method: call.getString("method") ?? "POST")
             return ["status": reply.status, "contentType": reply.contentType, "body": reply.body]
         }
     }

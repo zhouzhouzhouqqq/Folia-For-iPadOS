@@ -1,8 +1,8 @@
 const { resolveModelFile } = require('./modelPaths.cjs');
 const mnn = require('./mnn.cjs');
 const htdemucs = require('./htdemucs.cjs');
+const { THREADS, HTDEMUCS_THREADS, htdemucsThreads } = require('./threads.cjs');
 const fs = require('fs');
-const os = require('os');
 
 // electron/analysis/worker.cjs
 // Both analysis models on the CPU, in a process that owns no window.
@@ -32,6 +32,8 @@ const os = require('os');
 // What runs here:
 //   - htdemucs. Loaded on first use and KEPT while automix is switched on, released in this process
 //     when the host says automix was switched off - see `release` below.
+//     (From the PR #750 re-review, 2026-10-19: no longer kept, on any machine - released
+//     STEMS_IDLE_MS after every run as well as when automix is switched off; see `stems` below.)
 //   - beat_this, only as the CPU fallback for automix's beat grid. The renderer runs it on its own GPU
 //     first (src/services/analysis/beatThisGpu.ts); what reaches this file is what that could not take.
 
@@ -42,37 +44,52 @@ const os = require('os');
  */
 const MODEL_DIRS = process.argv.slice(2);
 
-/**
- * How many cores beat_this may use.
- *
- * Not a timidity knob - more was measured to be SLOWER. On onnxruntime, whose default was one thread per
- * logical core, this 24-core machine ran an htdemucs segment in 3547ms against 1438ms at twelve threads:
- * the pool spent its time contending with itself. Measured, per segment:
- *
- *   default(24)  3547ms  51% of the machine        4  1873ms  32%
- *   12           1438ms  66%                       2  2908ms  19%
- *   6            1602ms  42%
- *
- * A quarter of the cores, because the number that matters is the FRACTION of the machine left for the
- * renderer's frames and the audio thread, and that fraction should not depend on how big the machine is.
- */
-const THREADS = Math.max(1, Math.floor(os.cpus().length / 4));
+// How many cores beat_this (THREADS) and htdemucs (HTDEMUCS_THREADS, or what a request asks for) may
+// use is in threads.cjs, with why: host.cjs reads the same counts to choose the worker a request goes to.
 
 /**
- * How many cores htdemucs may use: four, what the Python runner it replaced ran with
- * (htdemucs_runner.py's intra_op_num_threads), so a separation costs the machine what it did before.
- * At four, MNN with the FoliaDConv operator separates a 30s window in 3.2-3.6s on an M4 against the
- * runner's 3.7-4.1s; separation has minutes of lead time, it needs to be invisible, not fast.
+ * The threads MNN's thread pool in this process was made for, or null before any build asked for more
+ * than one. There is one pool per process, made by the first build with more than one thread - of
+ * either model - and never grown (MNN 3.6.1, CPURuntime::_resetThreadPool and ThreadPool::init), so a
+ * later build asking for more runs on this many.
+ * (Measured after PR #750, 2026-10-19, Ryzen 7 9700X, a 30 s window: a worker that had built htdemucs
+ * for four threads took 8.8 s rebuilt for eight - its four-thread time; eight in a worker of their own
+ * took 6.3-6.5 s - and one built for two took 12.6-12.8 s rebuilt for four, where four alone took
+ * 7.9-9.1 s.)
+ * (Measured after PR #750, 2026-10-19, later the same evening: and the other way round, a worker that
+ * had built for eight kept 7.7 cores busy rebuilt for four, where four in a worker of their own kept
+ * 3.9 busy - the pool's other threads spin for as long as a model runs. host.cjs has sent a build for
+ * another count to a worker of its own since (threads.cjs poolFits), so a load line saying either is
+ * the host and MNN disagreeing.)
  */
-const HTDEMUCS_THREADS = 4;
+let poolThreads = null;
+/** The threads a build asking for `threads` gets in this process; the first with more than one makes the pool. */
+const grantedThreads = (threads) => {
+    if (threads <= 1) return 1;
+    if (poolThreads === null) poolThreads = threads;
+    return Math.min(threads, poolThreads);
+};
+/**
+ * What a load line says about the threads: how many were asked for, and how many run when fewer.
+ * (Measured after PR #750, 2026-10-19: or how many more the pool has, spinning beside the build.)
+ */
+const threadsText = (threads, granted) => {
+    if (granted < threads) return `${threads} threads, running on the ${granted} this process's thread pool was made for`;
+    if (threads > 1 && poolThreads > threads) return `${threads} threads, beside the other ${poolThreads - threads} of this process's thread pool`;
+    return `${threads} threads`;
+};
 
 /**
- * htdemucs, once loaded: `{ model, file }`, or null.
+ * htdemucs, once loaded: `{ model, file, threads }`, or null.
  *
  * Kept for as long as automix is switched on, however long the gap between tracks. A reload is a 92MB
  * read and the network built over it, asked for the moment a track starts; holding ~400MB while the
  * feature that needs it is on is the trade the listener made by switching it on. Switching it off is what gives the
  * memory back - the host sends 'release' and `release` below frees it in this process.
+ * (From the PR #750 re-review, 2026-10-19: not kept any more, a machine without a GPU included - the
+ * maintainer would rather have the memory back than save the reload. It is released STEMS_IDLE_MS
+ * after each run ends, and on 'release' as before. A reload is about half a second - measured 516 ms
+ * at two threads, 500 ms at three - and releasing took this process from 487 MB to 137 MB rss.)
  */
 let stems = null;
 
@@ -144,7 +161,8 @@ const runBeatThis = async (chunks) => {
     } catch (error) {
         return decline('beat-this', `could not load ${file}: ${error?.message || error}`);
     }
-    console.log(`[beat_this] loaded on the CPU (${THREADS} threads, ${mnn.isa()}), rss ${rssMb()}MB`);
+    const granted = grantedThreads(THREADS);
+    console.log(`[beat_this] loaded on the CPU (${threadsText(THREADS, granted)}, ${mnn.isa()}), rss ${rssMb()}MB`);
     try {
         const beat = [];
         const downbeat = [];
@@ -177,11 +195,31 @@ const MODEL_RATE = 44100;
 const MAX_SAMPLES = 40 * MODEL_RATE;
 
 /**
+ * How long htdemucs stays after a run the renderer marked `resident: false` (analysis service plan,
+ * phase 4): a fallback for a machine whose GPU does the separating (a GPU run that could not, or a
+ * deadline it would have missed). Keeping ~400 MB for the rest of the session on the strength of
+ * one such window is the waste phase 4 is about; a machine without a GPU (`resident` true or absent)
+ * keeps it while automix is on, as before.
+ * (From the PR #750 re-review, 2026-10-19: after every run now, on every machine, and a request's
+ * `resident` is ignored - so it is STEMS_IDLE_MS rather than FALLBACK_IDLE_MS. The host stops an
+ * idle worker only after two minutes (host.cjs IDLE_MS), so this minute is the one that counts.)
+ */
+const STEMS_IDLE_MS = 60_000;
+let stemsIdleTimer = null;
+/**
+ * Bumped by every htdemucs request: a release the timer queued is dropped when a request came after
+ * it was armed (found by review: a queued run, a resident one included, could not stop it).
+ */
+let stemsGeneration = 0;
+
+/**
  * Frees htdemucs in this process. Sent by the host when automix is switched off; queued like any request,
  * so it never lands in the middle of a separation. mnn.cjs' release returns the memory to the system,
  * not only to the allocator (folia_mnn_free).
  */
 const release = () => {
+    if (stemsIdleTimer) clearTimeout(stemsIdleTimer);
+    stemsIdleTimer = null;
     if (!stems) return true;
     const before = rssMb();
     stems.model.release();
@@ -190,17 +228,19 @@ const release = () => {
     return true;
 };
 
-const loadStems = () => {
+const loadStems = (threads = HTDEMUCS_THREADS) => {
     const file = resolveModelFile(MODEL_DIRS, 'htdemucs_gpu');
     if (!file) return decline('htdemucs', `no weights in ${MODEL_DIRS.join(', ') || '(no directories)'}`);
-    if (stems?.file === file) return stems;
+    if (stems?.file === file && stems.threads === threads) return stems;
     // A different file than the one loaded: the directory is fixed for the process's life, so this is
-    // belt and braces rather than a path expected to run.
+    // belt and braces rather than a path expected to run. Or another thread count (see above).
+    if (stems?.file === file) console.log(`[htdemucs] rebuilding on the CPU for ${threads} threads (was ${stems.threads})`);
     release();
     try {
         const started = Date.now();
-        stems = { model: mnn.loadHtdemucs(file, { threads: HTDEMUCS_THREADS }), file };
-        console.log(`[htdemucs] loaded on the CPU (${HTDEMUCS_THREADS} threads, ${mnn.isa()}) in ${Date.now() - started}ms, rss ${rssMb()}MB`);
+        stems = { model: mnn.loadHtdemucs(file, { threads }), file, threads };
+        const granted = grantedThreads(threads);
+        console.log(`[htdemucs] loaded on the CPU (${threadsText(threads, granted)}, ${mnn.isa()}) in ${Date.now() - started}ms, rss ${rssMb()}MB`);
         return stems;
     } catch (error) {
         return decline('htdemucs', `could not load ${file}: ${error?.message || error}`);
@@ -218,12 +258,38 @@ const runHtdemucs = async (request) => {
     if (!left.length || left.length > MAX_SAMPLES) {
         return decline('htdemucs', `${left.length} samples, outside 1..${MAX_SAMPLES}`);
     }
-    const loaded = loadStems();
+    const threads = htdemucsThreads(request);
+    // How long this request spent building the model, 0 when it was built: sent with the stems, so the
+    // renderer's CPU estimate (src/services/automix/stems.ts) can learn from the rest of its wait.
+    const building = Date.now();
+    const loaded = loadStems(threads);
     if (!loaded) return null;
+    const buildMs = Date.now() - building;
+    if (stemsIdleTimer) clearTimeout(stemsIdleTimer);
+    stemsIdleTimer = null;
+    const generation = (stemsGeneration += 1);
     try {
-        return await htdemucs.separate(loaded.model, Float32Array.from(left), Float32Array.from(right));
+        const separated = await htdemucs.separate(loaded.model, Float32Array.from(left), Float32Array.from(right));
+        return { ...separated, buildMs };
     } catch (error) {
         return decline('htdemucs', error?.message || String(error));
+    } finally {
+        // Idle from when the run ends, not when it started (review: a slow run had its release queued
+        // right behind it).
+        // (From the PR #750 re-review, 2026-10-19: armed after every run, whatever `resident` says.)
+        if (generation === stemsGeneration) {
+            stemsIdleTimer = setTimeout(() => {
+                stemsIdleTimer = null;
+                // Queued like a request, so it never lands in the middle of a separation; dropped
+                // there if another request came meanwhile.
+                queue = queue.then(() => {
+                    if (generation !== stemsGeneration) return;
+                    console.log(`[htdemucs] idle for ${STEMS_IDLE_MS / 1000}s since its last run`);
+                    release();
+                }, () => undefined);
+            }, STEMS_IDLE_MS);
+            if (stemsIdleTimer.unref) stemsIdleTimer.unref();
+        }
     }
 };
 

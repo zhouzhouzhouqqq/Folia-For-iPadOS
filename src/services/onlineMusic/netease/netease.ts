@@ -172,6 +172,17 @@ const getApiBase = async () => {
   );
 };
 
+// A signal that aborts when either does: the caller's own (`options.signal`) and the time limit's.
+const eitherSignal = (caller: AbortSignal | null | undefined, limit: AbortSignal): AbortSignal => {
+  if (!caller) return limit;
+  if (caller.aborted) return caller;
+  const controller = new AbortController();
+  const abort = (from: AbortSignal) => () => controller.abort(from.reason);
+  caller.addEventListener('abort', abort(caller), { once: true });
+  limit.addEventListener('abort', abort(limit), { once: true });
+  return controller.signal;
+};
+
 // `limit`: the time limit the request gets, which starts when the request is sent: the wait for the
 // local backend's port above is not counted. 'sign-in': one of the requests a sign-in waits for, with
 // the sign-in's limit; an HTTP error answer to it throws NeteaseLoginHttpError instead of being read as
@@ -244,7 +255,7 @@ const fetchWithCreds = async (endpoint: string, options: RequestInit = {}, limit
   const send = async (signal?: AbortSignal) => {
     let res: Response;
     try {
-      res = await fetch(finalUrl, { ...defaultOptions, credentials: 'include', ...(signal ? { signal } : {}) });
+      res = await fetch(finalUrl, { ...defaultOptions, credentials: 'include', ...(signal ? { signal: eitherSignal(options.signal, signal) } : {}) });
     } catch (error) {
       // The API itself could not be reached (the local backend has exited, a remote API is down): not a
       // failure of NetEase's. The error names the route, keeps the fetch's own error as its cause, and
@@ -278,6 +289,15 @@ const fetchWithCreds = async (endpoint: string, options: RequestInit = {}, limit
 
   return data;
 };
+
+/**
+ * One request of the platform's raw endpoints (neteaseRaw.ts): `route` is the local backend's route
+ * (`/user/record`), `query` the parameters already written as a query string. The session is added like
+ * for every other request; it gets the limit of online requests, and `signal` aborts it as well.
+ */
+export const requestNeteaseRoute = (route: string, query: string, signal: AbortSignal) => (
+  fetchWithCreds(query ? `${route}?${query}` : route, { signal }, 'online')
+);
 
 const toHttps = (url?: unknown) => {
   if (typeof url !== 'string' || !url) return '';

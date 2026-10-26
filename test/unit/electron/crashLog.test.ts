@@ -240,6 +240,20 @@ describe('which failures reach the user', () => {
 
     const gone = (reason: string) => ({ reason, exitCode: 1 });
 
+    it('asks for the pages\' storage to be written before it exits after an uncaught exception, and exits when that fails', () => {
+        for (const flushed of [() => {}, () => { throw new Error('not ready'); }]) {
+            const order: string[] = [];
+            const flushStorage = vi.fn(() => { order.push('flush'); flushed(); });
+            withHandlers(app => {
+                app.exit.mockImplementation(() => { order.push('exit'); });
+                const ours = process.listeners('uncaughtException').at(-1)!;
+                ours(new Error('boom'), 'uncaughtException');
+                expect(order).toEqual(['flush', 'exit']);
+                expect(app.exit).toHaveBeenCalledWith(1);
+            }, { flushStorage });
+        }
+    });
+
     it('ignores a renderer that exited cleanly', () => {
         withHandlers((app, report) => {
             app.emit('render-process-gone', {}, { getURL: () => 'x' }, gone('clean-exit'));

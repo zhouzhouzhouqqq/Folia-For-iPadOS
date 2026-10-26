@@ -37,13 +37,14 @@ const purgeModuleCache = (dirPath) => {
  * `app` is Electron's. The rest is the loader's: `guard` is the gate every call
  * into a mod goes through and `RETHROW` its option for calls whose failure the
  * loader answers itself; `emitLog`, `hostInfo`, `getPublicSnapshot` and
- * `sendToRenderer` are its functions. Two things are asked for only when a
+ * `sendToRenderer` are its functions, `secrets` its store of `secret` settings
+ * values (modSecrets.cjs). Two things are asked for only when a
  * mod's code needs them, because they are not fixed when this is set up:
  * `getExportService()` (the loader makes the export service after this) and
  * `getRuntimeSnapshot()` (the window pushes a new snapshot as the app runs).
  */
 const createNodeEntryRuntime = ({
-    app, guard, RETHROW, emitLog, hostInfo, getPublicSnapshot, sendToRenderer, getExportService, getRuntimeSnapshot,
+    app, guard, RETHROW, emitLog, hostInfo, getPublicSnapshot, sendToRenderer, secrets, getExportService, getRuntimeSnapshot,
 }) => {
     const buildModRuntime = (manifest, entries) => {
         // mods-data/<id> (with files/ for api.storage.paths.data) and mods-cache/<id>.
@@ -51,6 +52,8 @@ const createNodeEntryRuntime = ({
         const dataStore = createModDataStore(dataDir);
         const rpcHandlers = new Map();
         const disposers = [];
+        // What api.secrets.subscribe added, removed when the mod stops.
+        const secretSubscriptions = new Set();
         let unloaded = false;
 
         const context = {
@@ -76,11 +79,43 @@ const createNodeEntryRuntime = ({
                 }
                 disposers.push(disposer);
             },
+            /*
+             * api.secrets, bound to this mod. A listener runs through the gate, so one that throws is
+             * logged on the mod's row and the others still hear the change.
+             */
+            secrets: {
+                get: (key) => secrets.get(manifest.id, key),
+                has: (key) => secrets.has(manifest.id, key),
+                set: (key, value) => secrets.set(manifest.id, key, value),
+                subscribe: (listener) => {
+                    if (typeof listener !== 'function') {
+                        throw new TypeError('secrets.subscribe requires a listener function');
+                    }
+                    if (unloaded) {
+                        // Nothing would remove it: the mod has already stopped.
+                        return () => {};
+                    }
+                    const off = secrets.subscribe(manifest.id, (key) => guard.call(manifest.id, 'secrets.subscribe listener', () => listener(key)));
+                    secretSubscriptions.add(off);
+                    return () => {
+                        secretSubscriptions.delete(off);
+                        off();
+                    };
+                },
+            },
             registerRpc: (name, handler) => {
                 if (rpcHandlers.has(name)) {
                     throw new Error(`duplicate rpc handler "${name}"`);
                 }
                 rpcHandlers.set(name, handler);
+            },
+            // api.rpc.send, already checked: to the main window only (the export window has no
+            // preload to hear it). Nothing is queued, so once the mod stopped a message is dropped.
+            sendToClient: (name, json) => {
+                if (unloaded) {
+                    return;
+                }
+                sendToRenderer(IPC.fRpcMessage, { modId: manifest.id, name, json });
             },
             requestExport: (spec) => getExportService().runExport({
                 modId: manifest.id,
@@ -151,6 +186,8 @@ const createNodeEntryRuntime = ({
                 runDisposer(disposers.pop());
             }
             rpcHandlers.clear();
+            secretSubscriptions.forEach((off) => off());
+            secretSubscriptions.clear();
         };
 
         return { load, unload, dataStore, getRpcHandler: (name) => rpcHandlers.get(name) ?? null };

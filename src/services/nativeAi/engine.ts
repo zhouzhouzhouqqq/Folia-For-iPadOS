@@ -7,15 +7,15 @@ interface CompletionOptions {
     sourcePrompt: string;
     schema: object;
     schemaName: string;
-    geminiResponseSchema?: object;
-    geminiGenerationConfig?: object;
+    task: 'theme' | 'segmentation';
+    geminiSchema?: object;
     customFetch: (url: string, init?: RequestInit) => Promise<Response>;
     timeoutMs?: number;
-    maxTokens?: number;
-    disableReasoning?: boolean;
+    answerTokens?: number;
 }
 export const aiTextClient = originalClient as unknown as {
-    detectOpenAICompatibleProvider(url: string): string;
+    aiProviderLabel(store: CompletionOptions['store']): Promise<string>;
+    listAiModels(input: AiConnectionTestPayload, options: { customFetch: CompletionOptions['customFetch'] }): Promise<AiModelListResult>;
     runAiJsonCompletion(options: CompletionOptions): Promise<string>;
     runAiConnectionTest(input: AiConnectionTestPayload, options: {
         customFetch: CompletionOptions['customFetch']; timeoutMs?: number;

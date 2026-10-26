@@ -14,7 +14,7 @@ import type { PonderSurfaceDeclarations, PonderSurfaceProps as SurfaceProps } fr
 
 // src/components/ponder/surfaces/studio/visPlayground.surface.tsx
 // 歌词样式窗口：标题栏，左边上面是实时预览、下面一架样式图，右边一条设置栏，
-// 栏顶四个文字标签（歌词动画、背景、通用、字幕）。
+// 栏顶五个文字标签（歌词动画、背景、通用、字幕、全局）。
 // 样式架、右栏一页这两件也导出给歌词样式那张图（lyricStyle.surface.tsx）用：它画的是同一个窗口。
 //
 // 这一屏本身就是被教的对象，每个部件都要能被锚点指住，所以位置一律走 visPlayground.geometry。
@@ -24,7 +24,7 @@ type Paint = Pick<SurfaceProps, 'accent' | 'line' | 'outline'>;
 /** 右栏那个槽位在登记表里的名字：换页的结果层用 replaces 指向它。 */
 export const VIS_PANEL_STATE = 'vis-panel';
 
-const TAB_RECTS = [V.tabAnimation, V.tabBackground, V.tabCommon, V.tabSubtitle] as const;
+const TAB_RECTS = [V.tabAnimation, V.tabBackground, V.tabCommon, V.tabSubtitle, V.tabGlobal] as const;
 
 /** 预览下面那一架样式图。chosen 是描着边的那一张。 */
 export const VisStyleShelf: React.FC<Paint & { chosen: number; marker?: string }> = ({ chosen, marker, line, outline, accent }) => (

@@ -705,12 +705,12 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
  * same source scaled back by the mix's std and mean (tstats[2], tstats[0]).
  */
 export const OVERLAP_ADD = /* wgsl */ `
-struct P { frames: u32, len: u32, source: u32 }
+struct P { frames: u32, len: u32, source: u32, out_at: u32 }
 @group(0) @binding(0) var<storage, read> fr: array<f32>;
 @group(0) @binding(1) var<storage, read> env: array<f32>;
 @group(0) @binding(2) var<storage, read> xt: array<f32>;      // [8, len]
 @group(0) @binding(3) var<storage, read> tstats: array<f32>;
-@group(0) @binding(4) var<storage, read_write> out: array<f32>; // [2, len]
+@group(0) @binding(4) var<storage, read_write> out: array<f32>; // [2, len] at out_at (one per source asked for)
 @group(0) @binding(5) var<uniform> p: P;
 @compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) id: vec3u, @builtin(num_workgroups) groups: vec3u) {
@@ -727,6 +727,6 @@ fn main(@builtin(global_invocation_id) id: vec3u, @builtin(num_workgroups) group
     if (n < 4096u) { acc += fr[(ch * p.frames + jj - 2u) * 4096u + n]; }
   }
   let t = xt[(p.source * 2u + ch) * p.len + j] * tstats[2] + tstats[0];
-  out[i] = acc / env[1536u + j] + t;
+  out[p.out_at + i] = acc / env[1536u + j] + t;
 }
 `;

@@ -42,6 +42,8 @@ export const FOLIUM_EVENT_TYPES = {
     'playback.loopModeChanged': { dispatch: 'notification', experimental: null },
     'playback.queueChanged': { dispatch: 'notification', experimental: null },
     'playback.failed': { dispatch: 'notification', experimental: null },
+    'account.changed': { dispatch: 'notification', experimental: null },
+    'equalizer.changed': { dispatch: 'notification', experimental: null },
     'lyrics.transform': { dispatch: 'hook', experimental: null },
     'playback.beforePlay': { dispatch: 'hook', experimental: null },
     'omni.lyricsResolved': { dispatch: 'hook', experimental: 'omni.hooks' },

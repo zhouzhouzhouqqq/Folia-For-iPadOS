@@ -54,6 +54,7 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     gridActionButton: { section: 'interaction' },
     gridPaletteHotkey: { section: 'interaction' },
     customShortcut: { section: 'interaction' },
+    globalShortcuts: { section: 'interaction' },
 
     nativeAi: { section: 'integration' },
 
@@ -79,9 +80,10 @@ export const SETTINGS_ANCHOR_DEFINITIONS = {
     wallpaperMode: { section: 'desktop' },
     updateCheck: { section: 'general' },
 
-    // pages/GraphicsPage
+    // pages/GraphicsPage; the render GPU row only in the Windows desktop app.
     graphicsPerformance: { section: 'graphics' },
     graphicsMotion: { section: 'graphics' },
+    gpuPreference: { section: 'graphics' },
 
     // pages/ModsPage
     modSystem: { section: 'mods' },

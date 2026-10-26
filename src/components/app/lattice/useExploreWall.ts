@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { SongResult } from '../../../types';
 import type { OmniExploreSection, OmniProviderId } from '../../../types/onlineMusic';
 import { useExploreFeedStore } from '../../../stores/useExploreFeedStore';
-import { listenedSongsOf } from '../home/explore/ownSections';
+import { OWN_SECTION_IDS, listenedSongsOf } from '../home/explore/ownSections';
 import {
     buildExploreTiles,
     furtherReadsAsked,
@@ -11,6 +11,7 @@ import {
     handedEntriesOf,
     markPlayingTile,
     MAX_FURTHER_READS,
+    pageEntryCountOf,
     sectionsOfTiles,
     withOneMoreRead,
     type FurtherReadCount,
@@ -28,6 +29,8 @@ import type { LatticeTile } from './latticeModel';
 // Those further pages reach the wall as one change, when the last of them is read: the number
 // of lots sets which lot stands where beside the first column, and a change of it puts other
 // posters there. When the wall asks and what it is handed are rules of exploreWall.ts.
+// The app's own sections are not in the store: a wall that shows them is handed them by its
+// caller, read when the caller chooses (Bravais' explore tab: when it is opened and at a refresh).
 // The wall renders from this when the page's content changes, never for a camera move.
 
 const NO_SECTIONS: OmniExploreSection[] = [];
@@ -47,7 +50,7 @@ export type ExploreWall = {
     emptyText: string | null;
 };
 
-export const useExploreWall = ({ isOn, currentSong, providerId, accountId, pageKey }: {
+export const useExploreWall = ({ isOn, currentSong, providerId, accountId, pageKey, ownSections = NO_SECTIONS }: {
     /** False on the queue wall, which takes nothing from here. */
     isOn: boolean;
     currentSong: SongResult | null;
@@ -56,6 +59,8 @@ export const useExploreWall = ({ isOn, currentSong, providerId, accountId, pageK
     accountId: string;
     /** The store's key of the page this wall shows (explorePageKey); without it, whatever page the store holds. */
     pageKey?: string | null;
+    /** The app's own sections (ownSections.ts), to stand before the page's, as the caller read them; none unless given. */
+    ownSections?: OmniExploreSection[];
 }): ExploreWall => {
     const { t } = useTranslation();
     // (Off, this answers null whatever the store holds: the queue wall is never rendered by it.)
@@ -63,9 +68,11 @@ export const useExploreWall = ({ isOn, currentSong, providerId, accountId, pageK
     // holds the one before.
     const feed = useExploreFeedStore(state => (isOn && (pageKey == null || state.key === pageKey) ? state.feed : null));
     const sections = feed?.sections ?? NO_SECTIONS;
+    const own = isOn ? ownSections : NO_SECTIONS;
     const read = feed?.read ?? null;
-    const entries = useMemo(() => buildExploreTiles(sections, t), [sections, t]);
-    const further = furtherReadsOf(feed, entries.length, furtherReadsAsked(counted, read));
+    const entries = useMemo(() => buildExploreTiles([...own, ...sections], t, OWN_SECTION_IDS), [own, sections, t]);
+    const pageEntryCount = pageEntryCountOf(entries, OWN_SECTION_IDS);
+    const further = furtherReadsOf(feed, pageEntryCount, furtherReadsAsked(counted, read));
     // The entries the wall has (`handedEntriesOf`): the page's, or the ones it was handed before
     // while further sections are being read. Set while rendering, as the wall's selection is
     // (useLatticePosterSelection): no render shows a list the wall is not to have.
@@ -94,9 +101,9 @@ export const useExploreWall = ({ isOn, currentSong, providerId, accountId, pageK
         const { feed: now, loadMore } = useExploreFeedStore.getState();
         if (!now || now.loadingMore) return;
         counted = withOneMoreRead(counted, now.read);
-        console.log(`[Lattice] Explore wall has ${entries.length} entries: reading further sections (${counted.count} of ${MAX_FURTHER_READS})`);
+        console.log(`[Lattice] Explore wall has ${pageEntryCount} entries of the page: reading further sections (${counted.count} of ${MAX_FURTHER_READS})`);
         void loadMore();
-    }, [further, entries.length]);
+    }, [further, pageEntryCount]);
 
     // As the page's own control does (`readAgain` in ExploreSurface): with what the listener
     // played here, which a provider may make sections of.

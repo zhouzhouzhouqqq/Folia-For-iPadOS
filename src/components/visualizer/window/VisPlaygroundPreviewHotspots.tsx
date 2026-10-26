@@ -4,8 +4,8 @@ import { colorWithAlpha } from '../colorMix';
 
 // src/components/visualizer/window/VisPlaygroundPreviewHotspots.tsx
 // Transparent click targets that map preview regions to the right-side settings panel.
-export type VisPlaygroundEditSection = 'common' | 'background' | 'visualizer' | 'subtitle';
-type VisPlaygroundHotspotSection = Exclude<VisPlaygroundEditSection, 'common'>;
+export type VisPlaygroundEditSection = 'common' | 'background' | 'visualizer' | 'subtitle' | 'global';
+export type VisPlaygroundHotspotSection = Exclude<VisPlaygroundEditSection, 'common' | 'global'>;
 
 interface HotspotConfig {
     section: VisPlaygroundHotspotSection;

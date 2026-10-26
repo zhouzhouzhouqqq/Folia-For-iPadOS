@@ -261,4 +261,15 @@ describe('buildVisualSettingsConfig', () => {
         expect(decompressConfig(JSON.stringify({ libraryWallSeamStyle: 'hatch' }))).toMatchObject({ libraryWallSeamStyle: 'hatch' });
         useLibraryWallLookStore.setState({ seamClear: false, seamStyle: 'paper', backdropLyrics: false, backdropBlur: false });
     });
+
+    // Which way the info strip opens (auto / vertical / horizontal) travels with the look (short code lwsd).
+    it('carries the info strip direction', () => {
+        useLibraryWallLookStore.setState({ seamDirection: 'horizontal' });
+        const config = buildVisualSettingsConfig();
+        expect(config.libraryWallSeamDirection).toBe('horizontal');
+        expect(decompressConfig(extractCfgFromInput(asObsUrl(compressConfig(config))))).toMatchObject({ libraryWallSeamDirection: 'horizontal' });
+        expect(decompressConfig(JSON.stringify({ lwsd: 'vertical' }))).toEqual({ libraryWallSeamDirection: 'vertical' });
+        expect(decompressConfig(JSON.stringify({ libraryWallSeamDirection: 'auto' }))).toMatchObject({ libraryWallSeamDirection: 'auto' });
+        useLibraryWallLookStore.setState({ seamDirection: 'auto' });
+    });
 });

@@ -241,12 +241,13 @@ describe('bravais explore display', () => {
     it('turns explore tiles into wall items', () => {
         const song = { id: 1, name: 'S', artists: [{ id: 1, name: 'X' }], album: { id: 1, name: 'Al' }, durationMs: 61000 };
         const tiles = [
-            { id: 'song-key', kind: 'song', queueIndex: 0, song, title: 'S', artist: 'X', section: 'upcoming', label: 'Song', entryKind: 'song' },
+            // A song of the app's own sections: the tile id is under the section's, the playback key is the song's own.
+            { id: 'folia-recent-plays:online:netease:1', kind: 'song', queueIndex: 0, song, title: 'S', artist: 'X', section: 'upcoming', label: 'Song', entryKind: 'song' },
             { id: 'collection:album:9', kind: 'collection', queueIndex: 1, collection: { id: 9 }, title: 'Al', artist: 'X', section: 'upcoming', label: 'Album', entryKind: 'album' },
             { id: 'collection:playlist:3', kind: 'collection', queueIndex: 2, collection: { id: 3 }, title: 'M', artist: '', section: 'upcoming', label: 'Mix', entryKind: 'mix' },
         ] as unknown as LatticeTile[];
         const [track, album, mix] = projectExploreItems(tiles);
-        expect(track).toMatchObject({ key: 'song-key', kind: 'track', playbackKey: 'song-key', album: 'Al', artists: ['X'], durationLabel: '1:01', badge: 'Song' });
+        expect(track).toMatchObject({ key: 'folia-recent-plays:online:netease:1', kind: 'track', playbackKey: 'online:netease:1', album: 'Al', artists: ['X'], durationLabel: '1:01', badge: 'Song' });
         expect(album).toMatchObject({ key: 'collection:album:9', kind: 'album', title: 'Al', badge: 'Album' });
         expect(mix.kind).toBe('playlist');
     });

@@ -87,6 +87,8 @@ import { resolveActiveProviderSummary } from './library/core/account/accountRule
 import { useAppPreferences } from './hooks/useAppPreferences';
 import { useElectronPlaybackBridge } from './components/app/playback/bridges/useElectronPlaybackBridge';
 import { useElectronDisplaySleepBlocker } from './hooks/useElectronDisplaySleepBlocker';
+import { useBackgroundLyricHold } from './components/app/backgroundThrottling/useBackgroundLyricHold';
+import { readLiveLyricTime, useBackgroundLyricHoldStore } from './components/app/backgroundThrottling/backgroundLyricHoldStore';
 import { useSleepTimer } from './hooks/useSleepTimer';
 import { useProviderNotices } from './components/app/useProviderNotices';
 import { useLocalLibraryAutoScan } from './hooks/useLocalLibraryAutoScan';
@@ -94,6 +96,7 @@ import { useElectronVideoExportController } from './hooks/useElectronVideoExport
 import { useElectronWindowPlaybackHandoff } from './components/app/playback/restore/useElectronWindowPlaybackHandoff';
 import { useMediaSessionBridge } from './hooks/useMediaSessionBridge';
 import { usePlayerChromeAutoHide } from './hooks/usePlayerChromeAutoHide';
+import { useMacWallpaperHitRegions } from './hooks/useMacWallpaperHitRegions';
 import { useIdleCursorHide } from './hooks/useIdleCursorHide';
 import { usePlaybackAudioBridge } from './components/app/playback/bridges/usePlaybackAudioBridge';
 import { useTranscodeFallback } from './hooks/useTranscodeFallback';
@@ -171,6 +174,7 @@ import { usePlayerBottomBarPositioningEntry } from './hooks/usePlayerBottomBarPo
 import { PlayerBottomBarLayoutContext } from './components/floating-player/PlayerBottomBarLayoutContext';
 import { useFoliumHostBridge } from './mods/runtime/hostBridge';
 import { useFoliumHostActions } from './mods/runtime/hostActions';
+import { refreshPrefetchAfterQueueEdit } from './services/prefetchService';
 import { FoliumStageLayerSlot } from './mods/folium/registries/stageLayers';
 import { errorFields } from './utils/errorText';
 import { runsOnWindows } from './utils/platform';
@@ -298,6 +302,8 @@ export default function App() {
     // The analysis worker keeps htdemucs loaded while automix can ask for it, and releases it the
     // moment it cannot - the switch off, or the crossfade mode, which reads no model. Sent on mount
     // too: the main process starts out assuming off. See electron/analysis/host.cjs.
+    // (From the PR #750 re-review, 2026-10-19: it no longer keeps htdemucs while automix can ask - it
+    // releases it a minute after each run - but the moment automix cannot still releases it at once.)
     useEffect(() => {
         window.electron?.setAutomixEnabled?.(automixEnabled && transitionMode === 'automix');
     }, [automixEnabled, transitionMode]);
@@ -418,6 +424,8 @@ export default function App() {
         preventDisplaySleepDuringPlayback,
         wallpaperMode,
     } = useDesktopSettingsStore(useShallow(selectDesktopSettingsSnapshot));
+    // macOS wallpaper mode: click catchers over the controls, so Stage Manager ignores those clicks.
+    useMacWallpaperHitRegions(wallpaperMode);
     const {
         stageTrackPillMode,
         stageTrackPillOnHome,
@@ -476,6 +484,7 @@ export default function App() {
     const {
         visualizerMode,
         randomVisualizerModePerSong,
+        randomVisualizerModes,
         handleSetVisualizerMode,
     } = useVisualizerSettingsStore(useShallow(selectVisualizerSettingsSnapshot));
 
@@ -483,6 +492,9 @@ export default function App() {
         preventDisplaySleepDuringPlayback,
         playerState === PlayerState.PLAYING,
     );
+    useBackgroundLyricHold();
+    // The app.overlay mod layers read the same lyric clock and line the hold keeps still: paused with it.
+    const backgroundLyricHeld = useBackgroundLyricHoldStore(state => state.held);
 
     const visualizerTunings = useVisualizerTunings();
 
@@ -510,6 +522,7 @@ export default function App() {
     useRandomVisualizerMode({
         currentSong,
         enabled: randomVisualizerModePerSong,
+        modes: randomVisualizerModes,
         visualizerMode,
         setVisualizerMode: handleSetVisualizerMode,
     });
@@ -1316,6 +1329,7 @@ export default function App() {
         syncOutputGain,
         getTargetPlaybackVolume,
         getCoverUrl,
+        isTransitionAudible: automix.isTransitionAudible,
     });
 
     const handleTranscodeFallback = useTranscodeFallback({
@@ -1620,8 +1634,10 @@ export default function App() {
         refreshObsBrowserSourceStatus,
     } = useObsBrowserSourcePublisher({
         isElectronWindow,
+        audioRef,
+        getDisplayAudioElement: automix.getDisplayElement,
         stageSource,
-        coverUrl,
+        coverUrl: displayCoverUrl,
         offsetMs: effectiveLyricTimelineOffsetMs,
         theme: visualizerTheme,
         subtitleTheme: visualizerSubtitleTheme,
@@ -1635,6 +1651,7 @@ export default function App() {
         isElectronWindow,
         lyrics,
         offset: effectiveLyricTimelineOffsetMs,
+        audioSrc,
     });
     const canGenerateAITheme = Boolean((lyrics?.lines.length ?? 0) > 0 || currentSong?.isPureMusic);
     const generateCurrentSongTheme = useCallback(() => {
@@ -2017,7 +2034,8 @@ export default function App() {
             return;
         }
 
-        const playbackTime = Math.max(0, lyricTimeSec + currentTime.get() - lyricCurrentTime.get());
+        // Not lyricCurrentTime itself: 后台节流 holds that still while the window is hidden and playback runs on.
+        const playbackTime = Math.max(0, lyricTimeSec + currentTime.get() - readLiveLyricTime());
         if (activePlaybackContext === 'stage' && stageActiveEntryKind === 'lyrics' && !audioSrc) {
             syncStageLyricsClock(playbackTime, duration, playerState, stageLyricsClockRef.current.startTimeSec);
             currentTime.set(playbackTime);
@@ -2063,6 +2081,8 @@ export default function App() {
         isLiked: commandPaletteContext.playback.isSongLiked,
         controlsDisabled: isNowPlayingControlDisabled,
         isLyricsLoading,
+        persistQueue: persistLastPlaybackCache,
+        refreshQueuePrefetch: (song, previous, next) => refreshPrefetchAfterQueueEdit(song, previous, next, audioQuality, user?.id),
     });
 
     const visualizerRendererModel = useVisualizerRendererModel({
@@ -2758,6 +2778,7 @@ export default function App() {
                                 currentSong={displaySong}
                                 playerState={displayPlayerState}
                                 currentTime={currentTime}
+                                lyricCurrentTime={lyricCurrentTime}
                                 playbackDuration={displayDuration}
                                 canTogglePlayback={canToggleCurrentPlayback}
                                 queue={playQueue}
@@ -2816,7 +2837,7 @@ export default function App() {
                 slot="app.overlay"
                 theme={theme}
                 isDaylight={isDaylight}
-                paused={displayPlayerState !== PlayerState.PLAYING}
+                paused={displayPlayerState !== PlayerState.PLAYING || backgroundLyricHeld}
                 className="fixed inset-0 pointer-events-none z-[1000]"
             />
 

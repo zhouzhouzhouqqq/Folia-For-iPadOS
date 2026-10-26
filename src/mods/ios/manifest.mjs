@@ -1,26 +1,16 @@
+import foliumShared from '../../../electron/modSystem/foliumShared.json' with { type: 'json' };
+
 // Portable mirror of the pure desktop manifest validators in electron/modSystem/manifest.cjs.
 // No Node APIs. Keep validation/range behavior aligned when updating the upstream host.
-const FOLIUM_VERSION = Object.freeze({ major: 1, minor: 5 });
+const FOLIUM_VERSION = Object.freeze({ ...foliumShared.version });
 
 // Folium 1 permission set. Anything else is rejected at validation time so a
 // mod can never claim a capability the loader does not implement (fail closed).
 // Permissions are a declaration shown in the trust dialog, not a sandbox.
-const KNOWN_PERMISSIONS = new Set([
-    'filesystem.data',
-    'render.export',
-    'runtime.playback',
-    'playback.control',
-    'net.fetch',
-    'net.embed',
-    'ui.stage',
-]);
+const KNOWN_PERMISSIONS = new Set(Object.keys(foliumShared.permissions));
 
 // Unfrozen surfaces a mod must opt into explicitly; they may change in any minor.
-const KNOWN_EXPERIMENTAL = new Set([
-    'omni.providers',
-    'omni.hooks',
-    'ponder.targets',
-]);
+const KNOWN_EXPERIMENTAL = new Set(Object.values(foliumShared.experimental));
 
 /*
  * Manifest fields that belonged to the pre-Folium draft. They are rejected with

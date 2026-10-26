@@ -1,3 +1,4 @@
+import type { PersonalFmCatalog, PersonalFmSelection } from './personalFm';
 import type { LyricData, ReplayGainInfo, SongResult, UnifiedSong } from '../types';
 
 // src/types/onlineMusic.ts
@@ -16,6 +17,20 @@ export interface ProviderCatalogRef {
     providerId: OnlineProviderId;
     kind: ProviderCatalogEntityKind;
     id: MediaId;
+}
+
+/** A catalog ref of a song's album or artist, with the name the song gives that album or artist. */
+export interface ProviderNamedCatalogRef extends ProviderCatalogRef {
+    name: string;
+}
+
+/**
+ * What a song's album and artists open as at its provider (`omni.getSongCatalogRefs`): null, and
+ * left out of `artists`, for one the provider cannot open.
+ */
+export interface ProviderSongCatalogRefs {
+    album: ProviderNamedCatalogRef | null;
+    artists: ProviderNamedCatalogRef[];
 }
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -57,6 +72,11 @@ export interface ProviderCapabilities {
     playbackReports?: boolean;
     /** The provider has a recommendation page of its own, read through `explore`. */
     explore?: boolean;
+    /**
+     * The provider can look a song up by id with `playback.getSongDetail`; absent reads as true
+     * wherever `playback` is there.
+     */
+    songDetail?: boolean;
 }
 
 export interface ProviderAvailability {
@@ -99,6 +119,12 @@ export interface ProviderAudioSource {
      * playback and the media cache ask.
      */
     preview?: boolean;
+    /**
+     * Where the preview clip starts inside the song, in milliseconds. Only meaningful with `preview`;
+     * absent means the clip starts at the song's start. Playback reads it with the URL
+     * (`omni.previewClipStartMsOfAudioSource`) to line the lyrics up with the clip.
+     */
+    clipStartMs?: number;
 }
 
 export type ProviderSongAvailabilityState = 'playable' | 'unavailable' | 'unknown';
@@ -175,6 +201,8 @@ export interface ProviderHistoryEntry {
 }
 
 export interface ProviderCollection {
+    /** A provider's named radio stream: selecting the card starts FM with this mode. */
+    personalFm?: PersonalFmSelection;
     providerId: OnlineProviderId;
     id: MediaId;
     name: string;
@@ -308,12 +336,42 @@ export class OnlineProviderError extends Error {
     }
 }
 
+/**
+ * Who is searching. `session` tells apart callers whose paging must not disturb each other; absent
+ * is the host's own UI.
+ */
+export interface ProviderSearchContext {
+    session?: string;
+}
+
 export interface OnlineSearchProvider {
-    searchSongs(query: string, limit: number, offset: number): Promise<ProviderPage<UnifiedSong>>;
+    /**
+     * A provider that keeps what it read of a search between its pages keeps it apart for each
+     * `context.session`; one that keeps nothing between pages ignores the context.
+     */
+    searchSongs(query: string, limit: number, offset: number, context?: ProviderSearchContext): Promise<ProviderPage<UnifiedSong>>;
 }
 
 export interface OnlinePlaybackProvider {
+    /**
+     * The song by id, or null where the platform has no song by it. Takes the song's `UnifiedSong.id`
+     * and also its `sourceRef.mediaId`; a platform whose two differ accepts both, in its own folder.
+     */
     getSongDetail(id: MediaId): Promise<UnifiedSong | null>;
+    /**
+     * Songs by id, many at once, in the order of `ids`: null for an id the platform has no song
+     * by. An id is either kind `getSongDetail` takes. Left out where the platform looks songs up
+     * one at a time; `omni.getSongDetails` then asks `getSongDetail` for each. An answer that
+     * refuses the request rejects: it is not a row of nulls.
+     */
+    getSongDetails?(ids: MediaId[]): Promise<(UnifiedSong | null)[]>;
+    /**
+     * How many ids one request of `getSongDetails` carries, for a platform whose request takes no
+     * more. `omni.getSongDetails` hands it groups of at most this many, one after another, each
+     * through the caller's runner, so that each request is counted. Left out: all the ids in one
+     * call. A positive integer; any other value counts as left out.
+     */
+    songDetailsPerRequest?: number;
     // 拿不到地址而知道为什么的抛错（provider 的 `describeFailure` 说它的意思）；null 是没有地址、也没有可说的。
     getAudioSource(song: SongResult, quality: AudioQualityPreference): Promise<ProviderAudioSource | null>;
     /**
@@ -500,6 +558,12 @@ export interface OnlineAuthProvider {
      * no snapshot is found; null where there is nothing. Only for an adapter that had such caches.
      */
     oldKeptAccount?(): Promise<{ user: ProviderUser; collections: ProviderCollection[]; likedSongIds: MediaId[] } | null>;
+    /**
+     * What `oldKeptAccount` answered has been saved as the snapshot: the adapter removes those caches,
+     * so that they are not made a snapshot again over a newer one. Not called where the save failed:
+     * the caches are then asked for again at the next start. Never rejects.
+     */
+    forgetOldKeptAccount?(): Promise<void>;
     // 登录窗口里这个平台自己的标题和说明。
     getLoginTexts?(): LoginTexts;
     // 登录要靠的本地服务：它没起来时登录窗口显示它的错误原话和重启的按钮。
@@ -608,6 +672,7 @@ export interface PersonalFmRequestOptions {
 }
 
 export interface OnlineRecommendationProvider {
+    getPersonalFmCatalog?(): Promise<PersonalFmCatalog>;
     getDailySongs?(refresh?: boolean): Promise<UnifiedSong[]>;
     getPersonalFm?(options?: PersonalFmRequestOptions): Promise<UnifiedSong[]>;
     getRecommendedCollections?(limit: number): Promise<ProviderCollection[]>;
@@ -719,6 +784,42 @@ export interface ProviderNotice {
     durationMs?: number;
 }
 
+// 平台后端原始接口的一类：read 只读，write 会改动账号里的数据，denied 永远拒绝（登录、会话、凭据，
+// 以及把任意请求转发出去的透传接口）。
+export type ProviderRawEndpointAccess = 'read' | 'write' | 'denied';
+
+// 分类表里的一行。
+export interface ProviderRawEndpoint {
+    access: ProviderRawEndpointAccess;
+    // 已经有对应能力的 omni 方法名（例如 'getLyrics'）：调用方应改用它。
+    omni?: string;
+    // 指明「当前登录用户」的参数名（例如 'uid'）：调用方没给时由 omni 填上当前账号的用户 id。
+    selfParam?: string;
+}
+
+/**
+ * 平台后端的原始接口：调用平台还没有做进 omni 的专有能力的后备通道（Folium 实验接口 `platform.raw`）。
+ * 只有 omni 调它；回答是平台原始的 JSON，跟随宿主钉住的后端库版本，不承诺稳定。会话由 provider 自己
+ * 补上，调用方碰不到凭据；接口分类表由平台自己维护，表外的接口按拒绝处理。
+ */
+export interface OnlineRawRequestProvider {
+    // 宿主钉住的后端库：名字和版本，取自包的元数据。
+    backend: { name: string; version: string };
+    // 由宿主自己设置、调用方不能给的参数名（会话、代理、来源 IP 这类）。
+    reservedParams: readonly string[];
+    // 这个平台自己的凭据字段名（例如它的会话 cookie 的名字）：回答里这些字段和共用的那几种
+    // （cookie、token 等，见 rawResponse.ts）一起剥掉。
+    credentialFields?: readonly string[];
+    // 一个接口属于哪一类；不在表里回 null。
+    describeEndpoint(endpoint: string): ProviderRawEndpoint | null;
+    // 检查参数的取值，名字之外的那一层：后端会把一些参数原样拼进上游请求的路径（例如 id），这些参数只收
+    // 平台认得的格式，免得 `../` 之类的取值把带着会话的请求引到表外的接口。有问题回一句说明，没有回 null。
+    checkParams?(endpoint: string, params: Record<string, JsonValue>): string | null;
+    // 发出请求，回平台原始的回答。参数已经过 omni 校验；`signal` 中止时请求跟着中止。时限由 provider
+    // 自己定（照它别的在线请求）。登录失效抛 auth-required，被限流抛带 HTTP 429 的 OnlineProviderError。
+    request(endpoint: string, params: Record<string, JsonValue>, signal: AbortSignal): Promise<unknown>;
+}
+
 export interface OnlineMusicProvider {
     id: OnlineProviderId;
     displayName: string;
@@ -753,6 +854,8 @@ export interface OnlineMusicProvider {
     recommendations?: OnlineRecommendationProvider;
     explore?: OnlineExploreProvider;
     mutations?: OnlineMutationProvider;
+    /** 平台后端的原始接口（OnlineRawRequestProvider）；没有它的平台不能直通。 */
+    raw?: OnlineRawRequestProvider;
 }
 
 // Public canonical contract consumed through the omni facade. Provider-prefixed
@@ -781,3 +884,25 @@ export type OmniExploreSection = ProviderExploreSection;
 export type OmniExplorePage = ProviderExplorePage;
 export type OmniExploreItemsPage = ProviderExploreItemsPage;
 export { OnlineProviderError as OmniError };
+
+/**
+ * Runs one request omni makes to a provider for a caller that counts or limits them
+ * (`omni.getSongDetails`). It may refuse a request by rejecting without running `work`, or stop
+ * waiting for one that runs by rejecting before `work` settles.
+ */
+export type OmniRequestRunner = <T>(work: () => Promise<T>) => Promise<T>;
+
+/**
+ * What `omni.getSongDetails` found for one id.
+ * `found`: the song. `missing`: the provider answered and has no song by that id.
+ * `failed`: the request to the provider that was to answer it failed with `error` (a request for
+ * many ids fails them all); the ids after it are still asked.
+ * `skipped`: no answer for it came through the caller's `run`, which refused that request or an
+ * earlier one, or stopped waiting for it; `error` is what `run` rejected with. Nothing after it was
+ * asked.
+ */
+export type OmniSongDetail =
+    | { status: 'found'; song: UnifiedSong }
+    | { status: 'missing' }
+    | { status: 'failed'; error: unknown }
+    | { status: 'skipped'; error: unknown };

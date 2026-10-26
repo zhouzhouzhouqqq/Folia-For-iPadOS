@@ -182,6 +182,38 @@ describe('Spotify lists', () => {
         expect(sent('searchTracks').map(variables => variables.offset)).toEqual([6]);
     });
 
+    // A mod reading through `folium.omni` names its session: its searches neither start the
+    // listener's search over nor push it out, however many it makes.
+    it('keeps a session\'s searches apart from the host\'s own, under a bound of their own', async () => {
+        const rows = (letters: string) => ({ searchV2: { tracksV2: { items: [...letters].map(letter => ({ item: { data: track(letter) } })) } } });
+        answerQueries({ searchTracks: variables => (variables.searchTerm !== 'calm' ? rows('xyz') : variables.offset === 0 ? rows('abc') : variables.offset === 3 ? rows('def') : rows('ghi')) });
+        const search = spotifyProvider.search!.searchSongs;
+        const mod = { session: 'folium:mod-a' };
+        const first = await search('calm', 3, 0);
+        // The mod reads the same search from its first page, then its second.
+        const modFirst = await search('calm', 3, 0, mod);
+        expect(modFirst.items.map(song => song.id)).toEqual([id('a'), id('b'), id('c')]);
+        request.mockClear();
+        const modSecond = await search('calm', 3, modFirst.nextOffset, mod);
+        expect(modSecond.items.map(song => song.id)).toEqual([id('d'), id('e'), id('f')]);
+        expect(sent('searchTracks').map(variables => variables.offset)).toEqual([3]);
+        // The listener's search goes on where it was: not begun anew by the mod's first page.
+        request.mockClear();
+        const second = await search('calm', 3, first.nextOffset);
+        expect(second.items.map(song => song.id)).toEqual([id('d'), id('e'), id('f')]);
+        expect(sent('searchTracks').map(variables => variables.offset)).toEqual([3]);
+        // Sessions page through many more searches than either side holds; only theirs make room.
+        for (let lookup = 0; lookup < 40; lookup += 1) {
+            const session = { session: `folium:mod-${lookup % 3}` };
+            const page = await search(`mod lookup ${lookup}`, 3, 0, session);
+            await search(`mod lookup ${lookup}`, 3, page.nextOffset, session);
+        }
+        request.mockClear();
+        const third = await search('calm', 3, second.nextOffset);
+        expect(third.items.map(song => song.id)).toEqual([id('g'), id('h'), id('i')]);
+        expect(sent('searchTracks').map(variables => variables.offset)).toEqual([6]);
+    });
+
     it('reads past a page of rows that are no songs, which the app would take for the end of the list', async () => {
         const episodes = [1, 2, 3].map(() => ({ itemV2: { data: track('e', { __typename: 'Episode' }) } }));
         answerQueries({ fetchPlaylist: variables => ({ playlistV2: { __typename: 'Playlist', content: { totalCount: 7,

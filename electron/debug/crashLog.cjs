@@ -243,14 +243,19 @@ const createCrashLog = ({ app, dialog, shell, getLocale, onLine }) => {
     };
 };
 
+// Asks Electron to write what the pages keep in their storage (localStorage, a sign-in among it)
+// to disk: app.exit() does not wait for that. It only asks, so the exit is not held by it.
+const flushPageStorage = () => require('electron').session.defaultSession.flushStorageData();
+
 /**
  * Points every way the app can fall over at one crash log.
  *
  * @param isRendererCrashRecovered the app's own answer to "am I about to fix this myself?".
  *        Wallpaper recovery and bounded main-window reloads gate on `reason === 'crashed'`.
  *        The file is still written; only the interruption is withheld while recovery runs.
+ * @param flushStorage asks for the pages' storage to be written before the app exits.
  */
-const installCrashHandlers = ({ app, crashLog, isRendererCrashRecovered = () => false }) => {
+const installCrashHandlers = ({ app, crashLog, isRendererCrashRecovered = () => false, flushStorage = flushPageStorage }) => {
     // A shutdown is not a crash: renderers legitimately go away while the app exits, and a modal
     // put up over a closing window is one nobody can act on. Tracked here rather than read off
     // main's own quit flag, so installing this needs nothing but `app`.
@@ -263,6 +268,9 @@ const installCrashHandlers = ({ app, crashLog, isRendererCrashRecovered = () => 
         // Registering this handler is what suppressed Electron's own fatal error box, so the quit it
         // would have done has to be done here. Continuing on a main process whose invariants have
         // already broken is how one crash becomes a corrupted store.
+        try {
+            flushStorage();
+        } catch { /* before the app is ready, or outside Electron: nothing to write */ }
         app.exit(1);
     });
 
@@ -300,4 +308,4 @@ const installCrashHandlers = ({ app, crashLog, isRendererCrashRecovered = () => 
     });
 };
 
-module.exports = { createCrashLog, installCrashHandlers, resolveCrashLogDir, orderedCrashFiles, describeError };
+module.exports = { createCrashLog, installCrashHandlers, resolveCrashLogDir, orderedCrashFiles, describeError, flushPageStorage };

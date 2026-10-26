@@ -91,6 +91,7 @@ export const buildOnlineRadioCards = (
             const description = collection.description || collection.creator?.nickname || '';
             return {
                 ...collection,
+                isFm: Boolean(collection.personalFm),
                 coverUrl: collection.coverUrl,
                 description,
                 summary: description,
@@ -102,7 +103,7 @@ export const buildOnlineRadioCards = (
         name: source.name,
         coverUrl: source.coverUrl,
         trackCount: source.trackCount,
-        description: (source.isFm && personalFmModeLabel) || source.description || t('home.radio'),
+        description: (source.isFm && source.id === PERSONAL_FM_CARD_ID && personalFmModeLabel) || source.description || t('home.radio'),
         summary: source.summary || '',
         type: source.isFm
             ? 'radio'
@@ -116,6 +117,7 @@ export const buildOnlineRadioCards = (
 /** 这张卡是私人 FM（直接播放，不打开集合）。 */
 export const isPersonalFmCard = (card: Pick<LibraryHomeCard, 'id' | 'raw'>): boolean => (
     card.id === PERSONAL_FM_CARD_ID || (card.raw as { id?: unknown } | undefined)?.id === PERSONAL_FM_CARD_ID
+    || Boolean((card.raw as ProviderCollection | undefined)?.personalFm)
 );
 
 /** 打开在线卡片时交给集合描述工厂的对象：来源对象带上卡片的类型（电台里的推荐歌单记作 playlist）。 */

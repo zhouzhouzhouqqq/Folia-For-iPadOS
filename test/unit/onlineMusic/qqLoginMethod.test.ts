@@ -9,6 +9,7 @@ vi.mock('@/services/onlineMusic/qq/qqTransport', () => ({
     getQqTransportAvailability: () => ({ configured: true }),
     hasQqSession: () => true,
     isQqDirect: () => false,
+    hasUsableQqSession: () => true,
     clearQqSession: vi.fn(),
     requestQq: requestMock,
 }));

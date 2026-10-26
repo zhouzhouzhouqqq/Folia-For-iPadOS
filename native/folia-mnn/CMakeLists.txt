@@ -4,6 +4,12 @@
 cmake_minimum_required(VERSION 3.24)
 project(folia_mnn CXX C)
 
+# MNN defines __STRICT_ANSI__ on Linux. GNU modes also define __GLIBCXX_TYPE_INT_N_0,
+# which makes libstdc++ declare its __int128 overloads twice; use ISO C++ for both targets.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+
 set(MNN_SOURCE_DIR "" CACHE PATH "MNN source tree (fetched by build/buildMnnRuntime.mjs)")
 if(NOT EXISTS "${MNN_SOURCE_DIR}/CMakeLists.txt")
     message(FATAL_ERROR "MNN_SOURCE_DIR does not point at an MNN source tree: '${MNN_SOURCE_DIR}'")

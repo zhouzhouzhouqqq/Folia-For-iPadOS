@@ -18,7 +18,7 @@ vi.mock('../../../src/platform/ios/ai', () => ({ FoliaAI: {
 vi.mock('../../../src/platform/ios/dataConsent', () => ({ requireNativeAiConsent: state.consent }));
 import { generateThemeFromLyrics } from '../../../src/services/aiText';
 import { segmentLyricsWithAi } from '../../../src/services/lyricSegmentationAi';
-import { nativeAIFetch, testNativeAIConnection } from '../../../src/services/nativeAi/client';
+import { nativeAIFetch, testNativeAIConnection, listNativeAIModels } from '../../../src/services/nativeAi/client';
 import { generateNativeAITheme, segmentNativeAILyrics } from '../../../src/services/nativeAi/generation';
 
 const variant = { name: '晨光', description: '听见风吹过夏天的那一瞬间我想起了你', backgroundColor: '#eeddcc',
@@ -28,14 +28,14 @@ const dual = { light: variant, dark: { ...variant, name: '夜航', backgroundCol
 const reply = (content: string) => ({ status: 200, contentType: 'application/json', body: JSON.stringify({ choices: [{ message: { content }, finish_reason: 'stop' }] }) });
 beforeEach(() => {
     vi.clearAllMocks(); state.native = true;
-    state.settings.provider = 'openai'; state.settings.stream = false; state.settings.hasKey = true;
+    state.settings.provider = 'openai'; state.settings.stream = false; state.settings.hasKey = true; state.settings.model = 'test-model';
     state.settings.apiUrl = 'https://ai.example/v1/chat/completions';
     state.request.mockResolvedValue(reply(JSON.stringify(dual))); state.cancel.mockResolvedValue({});
     vi.stubGlobal('window', { localStorage: { getItem: () => 'chaotic' } });
 });
 describe('native AI theme integration', () => {
-    it('keeps the browser client mechanically identical to the original provider engine', () => {
-        expect(fs.readFileSync('shared/aiTextClient.mjs', 'utf8')).toBe(browserAIClient(fs.readFileSync('shared/aiTextClient.cjs', 'utf8')));
+    it('keeps the browser client mechanically identical to the original provider engine', async () => {
+        expect(fs.readFileSync('shared/aiTextClient.mjs', 'utf8')).toBe(await browserAIClient());
     });
     it('keeps the exact desktop theme instructions, source prompt and Gemini schema', () => {
         const source = fs.readFileSync('electron/main.cjs', 'utf8');
@@ -101,6 +101,25 @@ describe('native AI theme integration', () => {
         expect(await testNativeAIConnection()).toMatchObject({ ok: true, text: 'hello back' });
         expect(JSON.parse(state.request.mock.calls[0][0].body).messages).toEqual([{ role: 'user', content: 'hello' }]);
         expect(state.consent).not.toHaveBeenCalled();
+    });
+    it('lists the saved model catalogue by GET without exposing or forwarding an editor key', async () => {
+        state.request.mockResolvedValue({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [{ id: 'model-one' }] }) });
+        const payload = { provider: 'openai' as const, apiUrl: state.settings.apiUrl, apiKey: '', model: '' };
+        expect(await listNativeAIModels(payload)).toMatchObject({ ok: true, models: [{ id: 'model-one' }] });
+        expect(state.request).toHaveBeenCalledWith({ id: expect.any(String), revision: 'test-revision', url: 'https://ai.example/v1/models', method: 'GET', body: '', timeoutMs: 120000 });
+        state.request.mockClear();
+        expect(await listNativeAIModels({ ...payload, apiUrl: 'https://other.example/v1' })).toEqual({ ok: false, errorKind: 'config' });
+        expect(await listNativeAIModels({ ...payload, apiKey: 'unsaved-key' })).toEqual({ ok: false, errorKind: 'config' });
+        expect(state.request).not.toHaveBeenCalled();
+    });
+    it('uses the upstream Anthropic Messages protocol for a saved native connection', async () => {
+        state.settings.apiUrl = 'https://api.anthropic.com/v1/messages'; state.settings.model = 'claude-sonnet-4-5';
+        state.request.mockResolvedValue({ status: 200, contentType: 'application/json', body: JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(dual) }], stop_reason: 'end_turn' }) });
+        expect((await generateNativeAITheme('sun')).light.name).toBe('晨光');
+        const call = state.request.mock.calls[0][0]; const body = JSON.parse(call.body);
+        expect(call.url).toBe(state.settings.apiUrl);
+        expect(body.model).toBe('claude-sonnet-4-5'); expect(body.max_tokens).toBe(8192);
+        expect(body).not.toHaveProperty('temperature'); expect(call).not.toHaveProperty('headers');
     });
     it('cancels a dispatched native request and maps late completion to AbortError', async () => {
         let complete!: (value: ReturnType<typeof reply>) => void;

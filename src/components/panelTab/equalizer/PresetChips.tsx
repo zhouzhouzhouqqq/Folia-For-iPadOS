@@ -10,7 +10,8 @@ import PanelIconButton from '../shell/PanelIconButton';
 
 type PresetChipsProps = {
     presetIds: readonly AudioEqualizerModeId[];
-    chosen: AudioEqualizerModeId;
+    /** Null while a mod's curve plays: no chip is lit, and choosing one is the listener's choice that ends it. */
+    chosen: AudioEqualizerModeId | null;
     onChoose: (presetId: AudioEqualizerModeId) => void;
     /** False while a built-in preset is chosen: there is nothing to clear, and the button is dimmed. */
     canReset: boolean;

@@ -31,6 +31,7 @@ const STYLES = [
     ['sonnet', '商籁', 'Pixi'],
     ['tempera', 'Tempera', 'Pixi'],
     ['lumiere', '绘光', 'Pixi'],
+    ['hanabi', '花火', 'Pixi'],
     ['cadenza', 'Mindscape', 'DOM + 2D 画布'],
     ['partita', '云阶', 'DOM'],
     ['fume', 'Fume', 'DOM + 2D 画布'],

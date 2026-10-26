@@ -22,6 +22,7 @@ import { resolveFoliumSongRef, toFoliumLines, toFoliumSong } from '../folium/dto
 import { emitFoliumEvent } from '../folium/events';
 import { registerFoliumHostActions } from '../folium/services';
 import { showRefreshedLyrics } from './hostEvents';
+import { registerFoliumQueueWriter, replaceFoliumQueue } from './queue/hostQueueReplace';
 
 // src/mods/runtime/hostActions.ts
 // App registers the real host actions behind folium.playback / folium.ui here.
@@ -55,6 +56,10 @@ export interface FoliumAppActions {
     controlsDisabled: boolean;
     /** The displayed song's lyrics are still loading (the player's loading mark). */
     isLyricsLoading: boolean;
+    /** Folium 1.7: saves a replaced queue for the next launch, as the host's own queue edits are saved. */
+    persistQueue: (song: SongResult | null, queue: SongResult[]) => Promise<void>;
+    /** Folium 1.7: fetches ahead again around the songs a replacement put next to the one playing. */
+    refreshQueuePrefetch: (song: SongResult | null, previous: readonly SongResult[], next: SongResult[]) => void;
 }
 
 type PlaybackStoreState = ReturnType<typeof usePlaybackStore.getState>;
@@ -139,6 +144,7 @@ export const useFoliumHostActions = (actions: FoliumAppActions) => {
                 await actionsRef.current.playQueueSong(request.song, request.queue, request.isFm);
                 return true;
             },
+            replaceQueue: (modId, refs, expectedVersion) => replaceFoliumQueue(modId, refs, expectedVersion),
             toast: (message, type, durationMs) => setStatusMessage({ type, text: message, ...(durationMs ? { durationMs } : {}) }),
             openPlayerPanel: (tab) => {
                 const view = useAppViewStore.getState();
@@ -156,7 +162,14 @@ export const useFoliumHostActions = (actions: FoliumAppActions) => {
                 if (next !== current) showRefreshedLyrics(next);
             },
         });
-        return () => registerFoliumHostActions(null);
+        registerFoliumQueueWriter({
+            persist: (song, queue) => actionsRef.current.persistQueue(song, queue),
+            refreshPrefetch: (song, previous, next) => actionsRef.current.refreshQueuePrefetch(song, previous, next),
+        });
+        return () => {
+            registerFoliumHostActions(null);
+            registerFoliumQueueWriter(null);
+        };
     }, []);
 
     // playback.likeChanged follows the value getState().liked reports, whatever changed it.

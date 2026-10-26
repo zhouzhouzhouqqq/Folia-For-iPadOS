@@ -192,3 +192,37 @@ CoreSimulator/LaunchServices在自动化环境不可启动；最初未测真实W
 ## 2026-10-24 Preview 3
 
 源码 0.7.21 合入及性能/触控布局更新已发布到 main（0daaaf9）。后续 Preview 3 使用 0.7.21 / build 5，重新完成 iOS Web 构建、Capacitor sync 与 arm64 Release 无签名归档。分发使用通用 Bundle ID，个人签名设置仅留在本机。安装包、对应源码 ZIP、校验清单与 manifest 发布到 `ipados-0.7.21-preview.3`；详情与未完成项见 `docs/ipados-preview3.md`。实际帧率、全模式视觉、账号、后台/锁屏/蓝牙等仍待真机回归，不把归档成功解释为完整验收。
+
+## 2026-10-26：官方 0.7.22 对齐（当前工作树）
+
+工作目录 `/Users/macbookpro/Developer/Folia-For-iPadOS`，分支 `codex/upstream-0.7.22`，起点 `71b30d0`。不在 iCloud。开始时仅有个人签名修改，已备份至源码树外并原样保留。当前 package 和 Xcode 均为 0.7.22 / build 6；未提交/推送/发布，不能把 GitHub 上旧 Preview 3 当作此版本。
+
+已取得并逐 blob 校验官方 `v0.7.22` / `1f6d0f468f5bc81b23a8b40ad7ca96ccd4b1ecbe` 完整树，按实际 692 个路径变化三方合并；16 处冲突已处理。合并脚本和 before/快照均在 `/Users/macbookpro/Developer/Folia-Migration/upstream-0722/`。不要再次执行 merge.py/resolve.py 覆盖之后的原生适配。
+
+已接入花火完整效果、随机歌词池、AI 官方适配器与模型列表/Anthropic/Keychain、QQ numeric detail 原生 HTTPS 和限流、试听偏移、新分析调度/缓存、汽水 0.2.2 设备内协议、Folium 1.7 前端与 secure secrets。视觉清单为 15 歌词 / 6 背景；保留 Preview 3 性能/触控优化和原生音频/模型/账号桥。native manifest 改为直接读取共享 Folium JSON，避免权限/实验项漂移；实验项必须用 Object.values，权限用 Object.keys，已用真实模组包安装测试覆盖。
+
+专项中 native AI/汽水完整模拟扫码签名/secret 19 项通过，新增模型目录及 Anthropic 后 AI 13 项通过，QQ musicu 2 项通过；花火等耗时专项 15 文件 / 182 项通过，官方独立快照同类 76 项也通过。初轮大范围运行的超时、缺少 jsdom/mock 和架构计数已分开定位，最终结果以测试报告为准，不将初次失败隐去或用旧结果代替新结果。
+
+详见 `docs/ipados-upstream-0.7.22.md`、功能矩阵和测试报告。后续重点仍为真机登录/音频生命周期、全视觉与模型内存；Spotify/YTM iOS bridge、DSD 解码/转码、Node main/RPC、桌面离线/透明导出尚未实现。本轮没有请求账号、真实 key 或上传本地音频。
+
+本轮收尾：Web/PWA、最终 iOS sync、App arm64 Release archive 均成功，已生成本地未签名 `Folia-iPadOS-0.7.22-build6-unsigned.ipa`（FoliaBuild 目录），版本与 bundle 实际核验。补充测试 87 文件/1041 项通过但 1 个 worker 启动失败；该 foliumGuard 随后 threads pool 的 8 项通过，Omni 计数已修复复测 3 项通过。初轮与重跑结果均保留，见最新版报告。
+
+本轮 WebKit 烟测不算通过：只有 claddagh 已记录动态挂载，其余已试模式或 AI form 遇页面/探针超时，27 场景未完成；没有足够证据将原因归为应用或 harness。不要把历史 0.7.21 全模式通过写到此版本。诊断进程已停止；下一轮优先稳定 probe/真机验证花火和 AI UI，然后连续音频生命周期。不要重新合并官方源码、覆盖个人签名或上传当前个人工程设置。
+
+### 2026-10-26：底部播放控制栏收起与隐藏
+
+新增 `PlayerBarDisclosure` 与会话状态 `usePlayerBarPresentationStore`。展开栏右上角向下箭头收起，眼睛图标隐藏；收起后保留可拖动音乐进度条和时间，点击向上箭头展开。隐藏后底部只保留“显示控制栏”。恢复动作同时解除已有的控制栏隐藏开关，避免恢复后仍不可见；收起/隐藏会取消未完成的定位拖动并回滚，切歌/切视图不强制展开。命令面板可搜索展开底栏、收起底栏、隐藏底栏。不新增外观持久化字段，不触碰音频图、原生播放或特效参数。
+
+typecheck 与 3 文件 / 93 项定向测试通过。Mac WebKit 的 390×844、844×390、1024×1366、507×768、320×568 五个尺寸通过真实点击的收起、播放键可点、隐藏、恢复和恢复按钮边界检查，无 pageerror。使用现有 `playerBottomBar` 探针的 `playerBarOnly=1` 排除仅首页才出现的控件；初次复用混合布局探针时两个窄屏场景被探针同时摆放的主页搜索按钮挡住，已保留原始失败记录，不能当作完整应用回归。证据在源码外 `Folia-Migration/upstream-0722/player-bar/`。实体触控、旋转、Stage Manager 和真实音乐播放未在本轮验证。iOS 资源同步最终结果见测试报告；旧 build 6 IPA 不包含本次改动，不应作为本次安装包发布。
+
+
+### 2026-10-26：按用户反馈恢复收起进度条
+
+用户明确要求收起后是音乐进度条，撤销上一轮的歌名/播放按钮迷你播放器。手动收起现在复用原 `CollapsedView` / `ProgressBar`：当前时间、可拖动进度、总时长和单个展开箭头；保留 Folium 的 progress 槽位与原 iOS seek 补偿。细条的 range 输入命中高度改为 44px，视觉轨道保持原尺寸。展开栏移除“播放控制”独立标题行，将收起与隐藏图标合入歌名行；隐藏恢复按钮仅显示向上箭头，保留完整无障碍标签。命令面板文案同步为“仅保留音乐进度条”。会话状态/音频/全部视觉模式均沿用已有实现。
+
+本轮类型检查、2 文件 / 17 项定向测试通过。首轮探针识别到进度拖动命中区域过窄后已在 `ProgressBar` 修正；确认轮遭遇 WebKit 导航超时，已终止诊断进程，不能把前一轮 5 尺寸通过套用到新样式。展开态截图已取得；新版拖动/恢复全流程待真机确认。日志 `/tmp/folia-progress-types.log`、`/tmp/folia-progress-unit.log`、`/tmp/folia-progress-confirm.log`；iOS sync 结果见测试报告最新补记。
+
+
+### Preview 4 发布准备
+
+已按用户授权准备公开 0.7.22 Preview 4（build 7）：App arm64 无签名 Release archive 成功，IPA 版本/CRC/权限/无个人签名检查通过，1,898 个内置 Web 文件与 dist 哈希一致。新源码 ZIP 从 sanitized 发布提交直接生成；保留本地个人 Team/Bundle 配置。发布位置 `zhouzhouzhouqqq/Folia-For-iPadOS`，不覆盖历史 Preview 3。GitHub 插件确认账号/仓库可访问，但当前工具不含 Release/附件写入，CLI 未登录且 github.com 直连超时；上传完成前不要宣称已发布。继续时使用 `docs/ipados-preview4.md` 与源码外 `FoliaBuild/preview.4/` 材料，先核对远端状态。

@@ -207,6 +207,14 @@ export const getBeatFxLastBeat = (): BeatFxEvent | null => state.lastBeat;
 /** The last fired downbeat of this track, or null. */
 export const getBeatFxLastDownbeat = (): BeatFxEvent | null => state.lastDownbeat;
 
+/**
+ * The installed track's whole beat list, sorted by time (empty until it is in). For a picture that
+ * schedules ahead of the beat rather than reacting to it - hanabi launches a shell so it bursts on the
+ * downbeat - and draws purely from the playback time. Read it rather than keep it: a new track or its
+ * accents replace the list.
+ */
+export const getBeatFxEvents = (): readonly BeatFxEvent[] => state.events;
+
 /** The playing track's typical beat length in seconds (median gap), for effects timed in beats. */
 export const getBeatFxBeatPeriod = (): number => beatPeriod;
 

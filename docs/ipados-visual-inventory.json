@@ -1,5 +1,5 @@
 {
-  "baseline": "33b25ff75252435a78006af45114fdf10e64727a",
+  "baseline": "1f6d0f468f5bc81b23a8b40ad7ca96ccd4b1ecbe",
   "modes": [
     {
       "kind": "lyrics",
@@ -1149,6 +1149,611 @@
     },
     {
       "kind": "lyrics",
+      "id": "hanabi",
+      "entry": "src/components/visualizer/hanabi/entry.tsx",
+      "files": [
+        {
+          "path": "src/components/visualizer/hanabi/HanabiSettingsPanel.tsx",
+          "sha256": "72769603660fe03b670316d4d261aa3ecedb169a97c0d077153cf3b97d04db86",
+          "imports": [
+            "react",
+            "../../modal/settings/kit",
+            "../definition",
+            "../panelRows",
+            "./types"
+          ],
+          "parameters": [
+            "colorMode",
+            "renderQuality"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/VisualizerHanabi.tsx",
+          "sha256": "730bad2e99a77880c468bd8d2b2a5b742545c6225a6f58874ecf6695ac44313b",
+          "imports": [
+            "react",
+            "react-i18next",
+            "../../../types",
+            "../../../services/lucideIconResolver",
+            "../../../utils/fontStacks",
+            "../../../utils/lyrics/renderHints",
+            "../definition",
+            "../pixi/pixiRuntimeHost",
+            "../runtime",
+            "../songHandover",
+            "../subtitleFontSizes",
+            "../VisualizerShell",
+            "../VisualizerSubtitleOverlay",
+            "./createHanabiPixiRuntime",
+            "./hanabiCreditsLayer",
+            "./hanabiProgram",
+            "./collage/collagePlan",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/catalog.ts",
+          "sha256": "1173d4e8481cadf50045307f46cd097e6d4225b9e183b5978e0497d8ab071fd2",
+          "imports": [
+            "./hanabiKernel",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/collage/collagePainters.ts",
+          "sha256": "c945cd00beaffab5f035d038f983a96bba8e9997da4d2214a83d841bc2d57ae0",
+          "imports": [
+            "lucide-react",
+            "pixi.js",
+            "../../../../services/lucideIconResolver",
+            "../types",
+            "./collagePlan"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/collage/collagePlan.ts",
+          "sha256": "b7f5e3f72c263c6534c595f82aa04c776c19a71c551c0d28e31d90eccac8643f",
+          "imports": [
+            "../../../../types",
+            "../../../../utils/lyrics/graphemeTiming",
+            "../../../../utils/lyrics/wordSegmentation",
+            "../hanabiKernel",
+            "../hanabiRandom",
+            "../mg/mgMath",
+            "../types"
+          ],
+          "parameters": [
+            "collage"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/collage/collageViews.ts",
+          "sha256": "f2bdd7a59dc48ce377b94c1c049da91c26b4686fea5aaed09bbd71b2484d7bab",
+          "imports": [
+            "pixi.js",
+            "../mg/mgMath",
+            "../types",
+            "./collagePainters",
+            "./collagePlan"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/collage/unitCollage.ts",
+          "sha256": "248f5bb116b19562f09cf03a998afac1c49b5bb257352c28754eed00a3737b62",
+          "imports": [
+            "pixi.js",
+            "../hanabiRandom",
+            "../types",
+            "./collagePainters",
+            "./collagePlan"
+          ],
+          "parameters": [
+            "collage"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/color.ts",
+          "sha256": "5263be55d3ad1707dc2346dbb1f639193f9c3a7a5570c7b9945db6e214cc5edf",
+          "imports": [
+            "../../../types",
+            "../colorMix",
+            "./types"
+          ],
+          "parameters": [
+            "colorMode"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/createHanabiPixiRuntime.ts",
+          "sha256": "8a8bab8e9f51134df37b44734c92d4f6e173df82d979fc0ce30eeb02b3dbdba6",
+          "imports": [
+            "framer-motion",
+            "pixi.js",
+            "../../../types",
+            "../../../services/beatFx/beatEffects",
+            "../../../services/beatFx/beatFxLive",
+            "../../../services/lucideIconResolver",
+            "../../../stores/motionSignals",
+            "../pixi/loadPixi",
+            "../pixi/pixiProgramLinks",
+            "../pixi/pixiWebGLContext",
+            "../pixi/pixiDisplayResources",
+            "../pixiSceneCache",
+            "../pixiSongSwap",
+            "./hanabiCreditsLayer",
+            "./hanabiProgram",
+            "./hanabiSceneEntry",
+            "./hanabiSceneFrames",
+            "./hanabiSky",
+            "./hanabiTuning",
+            "../pixi/bloomFilter",
+            "./hanabiBeatFx",
+            "./hanabiScreenBloom",
+            "./mg/textures",
+            "./scene",
+            "./overlay",
+            "./types"
+          ],
+          "parameters": [
+            "bloom",
+            "chorusBloom",
+            "colorMode",
+            "overlayFrame",
+            "sky",
+            "spin",
+            "textOnly"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/credits.ts",
+          "sha256": "6cbd470e80ed1ce1b840f9ee16923d4f21d4ba5856f3861a937f0960b2a29a03",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "../../../utils/fontStacks",
+            "./hanabiKernel",
+            "./catalog",
+            "./collage/collagePainters",
+            "./collage/collagePlan",
+            "./collage/collageViews",
+            "./color",
+            "./hanabiTuning",
+            "./mg/fireworks",
+            "./mg/glow",
+            "./text/lyricText",
+            "./types"
+          ],
+          "parameters": [
+            "blockOpacity",
+            "collage",
+            "colorMode",
+            "glow",
+            "renderQuality",
+            "sparkAmount",
+            "textMotion",
+            "textOnly"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/entry.tsx",
+          "sha256": "168cf02aab0c5991d3e1bede6dbaf45ed09b9b32d80e841fb1d8fd80d490b7dd",
+          "imports": [
+            "react",
+            "lucide-react",
+            "../../../services/beatFx/beatEffects",
+            "../../shared/QuickControlChip",
+            "../definition",
+            "./HanabiSettingsPanel",
+            "./tuning",
+            "./types"
+          ],
+          "parameters": [
+            "collage",
+            "overlayFrame"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiBeatFx.ts",
+          "sha256": "d9ff5593d0d8252ec2bd7d273b23e236f7233e5a91f93c7f97e2a9a6dedba0be",
+          "imports": [
+            "../../../services/beatFx/clock",
+            "./catalog",
+            "./hanabiRandom",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiCreditsLayer.ts",
+          "sha256": "0bf88e5a8002357d05a842c6a5c13b609f9b54eaa70534c6bfcc6ee3116d3cd2",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "./credits",
+            "./hanabiKernel",
+            "./hanabiProgram",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiKernel.ts",
+          "sha256": "9ab527b00b9cbeed87ad21982226f7848b55bb5fdb422e819944688fd2c6b1aa",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiProgram.ts",
+          "sha256": "b083abf97ef9343fe41e885db43e91e2db121ca4f2edcce91a9c886ba96de168",
+          "imports": [
+            "../../../types",
+            "../paragraphStructure",
+            "./hanabiScreenBloom",
+            "./hanabiTransitions",
+            "./program"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiRandom.ts",
+          "sha256": "1cd1773823732a4eb5783fbce26457088a3d6d8e63d3bb55b1a939676c61d03d",
+          "imports": [
+            "../visualizerSeedHash"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiSceneEntry.ts",
+          "sha256": "227722316688a330e70952722c78cc2f7e1bdaba895168a5d9886f3947a2176d",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "../visualizerSeedHash",
+            "./hanabiProgram",
+            "./program",
+            "./scene",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiSceneFrames.ts",
+          "sha256": "73fa0281a63810b7a563d54d2eecc3686273b82a279d9bfae5db9825a919aa2e",
+          "imports": [
+            "./hanabiProgram",
+            "./hanabiTransitions"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiScreenBloom.ts",
+          "sha256": "faa2ee4246bac37042912e024fac2ba574435887f9f808a6cc112706619a470b",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/renderHints"
+          ],
+          "parameters": [
+            "bloom",
+            "chorusBloom"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiSky.ts",
+          "sha256": "66058e919fd5b2de04b062e6d5a5cc4c88bfc4b472188469fc97b9d1f2a3160c",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "./color",
+            "./types"
+          ],
+          "parameters": [
+            "sky"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiTransitions.ts",
+          "sha256": "db8df523a65ecd02fd6b84983fb6325ea48b5ed58bcd90c7c1ef1f5de3161acd",
+          "imports": [
+            "./timeline"
+          ],
+          "parameters": [
+            "spin"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/hanabiTuning.ts",
+          "sha256": "25670ef7b7e9f0507e1e63a997e5b76a08c62f3772e401ae04333fd41d91f384",
+          "imports": [
+            "../pixi/pixiTextureBudget",
+            "../tuningDefinition",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/ambient.ts",
+          "sha256": "9b4346c7963ca2798faf80492b9b0a58cc03f0c49002a240aac336d082d7087e",
+          "imports": [
+            "pixi.js",
+            "../hanabiRandom",
+            "../types",
+            "./burstPlan",
+            "./mgMath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/burstPlan.ts",
+          "sha256": "152d2f2fbd30606a16b4d20f421263ed0c3eaef25592a12c2987f2d398d56842",
+          "imports": [
+            "../hanabiRandom",
+            "../types",
+            "./mgMath"
+          ],
+          "parameters": [
+            "sparkAmount"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/fireworks.ts",
+          "sha256": "325291d8e869b293b7833b818a9e18cc8c9dd902f9d9c96237b2263275d45d3e",
+          "imports": [
+            "pixi.js",
+            "../types",
+            "./burstPlan"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/glow.ts",
+          "sha256": "23b71a66baa9086fe706da0e6e986a362930f9b33af683acd4e12a428bc24321",
+          "imports": [
+            "../../pixi/bloomFilter",
+            "../types"
+          ],
+          "parameters": [
+            "glow"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/mgMath.ts",
+          "sha256": "b4c35beb71aed5ed5c8244a7d740c88bbfd813ab3a69167de57c29630072e9a2",
+          "imports": [],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/ornamentKit.ts",
+          "sha256": "807d8c817e95d236b7454ea8c5094be8ffc99d4229c62a615b1ed96d78241247",
+          "imports": [
+            "pixi.js",
+            "../hanabiRandom",
+            "../types",
+            "./mgMath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/ornamentLines.ts",
+          "sha256": "cea295773e893d8b941f2b87778ec8524d6e904f450233835125df218824397a",
+          "imports": [
+            "pixi.js",
+            "./ornamentKit",
+            "./mgMath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/ornamentParticles.ts",
+          "sha256": "c794b9c6f72db83f1bcdd0d861a1dfb101cf4db5aadeffdfdb1343d32ed4ee72",
+          "imports": [
+            "pixi.js",
+            "./ornamentKit",
+            "./mgMath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/ornamentShapes.ts",
+          "sha256": "5074ecad98a79881e17e78eb2f9e1f437f33e82b72be8a922b1773e26673a808",
+          "imports": [
+            "pixi.js",
+            "./ornamentKit",
+            "./mgMath"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/ornaments.ts",
+          "sha256": "b0f2edbbae6fbb73eecc36de33994e7bc363fcb38c83293bf05b68472e29b60c",
+          "imports": [
+            "../types",
+            "./ornamentKit",
+            "./ornamentLines",
+            "./ornamentParticles",
+            "./ornamentShapes"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/mg/textures.ts",
+          "sha256": "c3830fdaf280e34b9d947a1e04f0191dd15ffa8a8756d90b19df6f2171f4fa0f",
+          "imports": [
+            "pixi.js",
+            "../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/overlay.ts",
+          "sha256": "5ee10a21ad1131bf45b0da1d443db0ae5cfa763f76a34fc2577a6f84903af329",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "../../../utils/fontStacks",
+            "./color",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/program.ts",
+          "sha256": "adc55aa1aa17e700a9d2dbff8fef18f47704efe5c239501601cdf117acaa4c67",
+          "imports": [
+            "../../../types",
+            "../../../utils/lyrics/graphemeTiming",
+            "../../../utils/lyrics/wordSegmentation",
+            "../paragraphStructure",
+            "./hanabiKernel",
+            "./hanabiRandom",
+            "./catalog",
+            "./types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/scene.ts",
+          "sha256": "e871506dd2e9e4cd99f6910848a7292200ace2ee1a84cc6f1515deab6c9e2590",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "../../../services/beatFx/clock",
+            "./hanabiBeatFx",
+            "./hanabiRandom",
+            "./hanabiKernel",
+            "./catalog",
+            "./collage/collagePlan",
+            "./collage/collagePainters",
+            "./collage/collageViews",
+            "./collage/unitCollage",
+            "./color",
+            "./hanabiTuning",
+            "./mg/ambient",
+            "./mg/fireworks",
+            "./mg/glow",
+            "./mg/ornaments",
+            "../../../utils/fontStacks",
+            "./text/lyricText",
+            "./timeline",
+            "./types"
+          ],
+          "parameters": [
+            "ambient",
+            "blockOpacity",
+            "collage",
+            "colorMode",
+            "glow",
+            "launches",
+            "ornamentAmount",
+            "renderQuality",
+            "riseSpeed",
+            "sparkAmount",
+            "spin",
+            "textMotion",
+            "textOnly"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/text/animations.ts",
+          "sha256": "489b9044a3ead0d722fa677064717100be36e9e03e175b04166c9ce1126b2120",
+          "imports": [
+            "../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/text/blocks.ts",
+          "sha256": "027ac7909884a96368f5ef3c5df12ac378259803f8b107f0c9bdbf7271f63cae",
+          "imports": [
+            "pixi.js",
+            "../hanabiRandom",
+            "../types",
+            "./animations",
+            "./layout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/text/glyphs.ts",
+          "sha256": "edd2c32fabb76ef73ef37a1ebb8be23b83c20cb4d8dc560575de5162eb134c3f",
+          "imports": [
+            "pixi.js",
+            "../types"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/text/layout.ts",
+          "sha256": "0321648b8031ce6cec8d987614846bb2ddef44504553a3d0fc6ad1e79a6bce2e",
+          "imports": [
+            "../types",
+            "../hanabiRandom"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/text/lyricText.ts",
+          "sha256": "79ca0cb22fae804036d92d95d610457c18bd751e54a3e23073ba2315c4a75eee",
+          "imports": [
+            "pixi.js",
+            "../../../../utils/lyrics/graphemeTiming",
+            "../../../../utils/lyrics/wordSegmentation",
+            "../hanabiRandom",
+            "../../../../types",
+            "../../../../utils/fontStacks",
+            "../color",
+            "../types",
+            "./animations",
+            "./blocks",
+            "./glyphs",
+            "./layout"
+          ],
+          "parameters": []
+        },
+        {
+          "path": "src/components/visualizer/hanabi/timeline.ts",
+          "sha256": "808ccef7332ab3340b3a3b00c949d798e0adb03ccd4f7da003b000a56d6e5cb0",
+          "imports": [],
+          "parameters": [
+            "riseSpeed",
+            "spin"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/tuning.ts",
+          "sha256": "dd3c462a66507d5a5de023ae28b731bf58a1c758c107b3280d6f432f12b76074",
+          "imports": [
+            "../tuningDefinition",
+            "./hanabiTuning",
+            "./types"
+          ],
+          "parameters": [
+            "ts"
+          ]
+        },
+        {
+          "path": "src/components/visualizer/hanabi/types.ts",
+          "sha256": "55bca0bfee461b9fe4a63a8a41f7ee361a269737b052ed923e9fa70291bc167e",
+          "imports": [
+            "pixi.js",
+            "../../../types",
+            "./hanabiKernel"
+          ],
+          "parameters": [
+            "ambient",
+            "blockOpacity",
+            "ornamentAmount",
+            "sparkAmount",
+            "textMotion"
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "lyrics",
       "id": "lumiere",
       "entry": "src/components/visualizer/lumiere/entry.tsx",
       "files": [
@@ -1246,14 +1851,14 @@
         },
         {
           "path": "src/components/visualizer/lumiere/credits.ts",
-          "sha256": "df5473e735a921de831e36b0593a1fa4954b772cf3cbea237f75fcca8a41a153",
+          "sha256": "0993b99b38d7b1927d934d90c62936cb76f5854b1c734623925c7614d89202a6",
           "imports": [
             "../../../types",
             "./lumiereRandom",
             "../../../utils/fontStacks",
             "./lumiereKernel",
             "./color",
-            "./light/bloomFilter",
+            "../pixi/bloomFilter",
             "./light/lightFieldShader",
             "./light/motes",
             "./light/rig",
@@ -1294,15 +1899,6 @@
             "hideTrails",
             "overlayFrame"
           ]
-        },
-        {
-          "path": "src/components/visualizer/lumiere/light/bloomFilter.ts",
-          "sha256": "055c1bbc2674c83a5ab133eab88cf40b6f09f03ac9dd788db49940d1d0f7a291",
-          "imports": [
-            "pixi.js",
-            "../../pixiFilterVertex"
-          ],
-          "parameters": []
         },
         {
           "path": "src/components/visualizer/lumiere/light/crossBurst.ts",
@@ -1370,7 +1966,7 @@
         },
         {
           "path": "src/components/visualizer/lumiere/lineart/iconPaths.ts",
-          "sha256": "e84b2e904905c762736c180e3bc05af379e9dbb11a6c7935225bab6dcc66cb1d",
+          "sha256": "2fc321a57dc142c8fd274ab76309db523a03d4caa61ebaf7ef85e87bdba8d3fe",
           "imports": [
             "lucide-react",
             "../../../../services/lucideIconResolver",
@@ -1443,29 +2039,29 @@
         },
         {
           "path": "src/components/visualizer/lumiere/lumiereGroupFilters.ts",
-          "sha256": "e69ce3a541978ff80933eb9be94a063ad79e4561a113aa0e23ecb6f3f9352703",
+          "sha256": "4f6570485a65f18595b69d127b181fd75e302d933428bb442b3730f75d9e3fe8",
           "imports": [
             "pixi.js",
-            "./light/bloomFilter",
+            "../pixi/bloomFilter",
             "./types"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/lumiere/lumiereKernel.ts",
-          "sha256": "7acfb583fc8bf1145430ea99c1e96332865ef0d1a5422798a626f89cbe39712b",
+          "sha256": "76470d690551d531ab41d0cfd057c0347ed2b6e8a47be571ba541bf89f00a74f",
           "imports": [
-            "../../../types"
+            "../paragraphStructure"
           ],
           "parameters": []
         },
         {
           "path": "src/components/visualizer/lumiere/lumiereProgram.ts",
-          "sha256": "a970af5d8ffce9d8cc8166428bcd40dc03429a138d9c92a3d53b3d362e9c2581",
+          "sha256": "f7100a6971625d0d0a8261be2cce203e0b859fe2eca1a7dc478872fea44a2301",
           "imports": [
             "../../../types",
             "./lumiereKernel",
-            "./lumiereStructure",
+            "../paragraphStructure",
             "./lumiereSeamless",
             "./lumiereTransitions",
             "./program"
@@ -1474,7 +2070,7 @@
         },
         {
           "path": "src/components/visualizer/lumiere/lumiereRandom.ts",
-          "sha256": "3f882e630fd1531efaefbe1c8ac01e4e425a52548a23a4dde6c49756b5c1fb47",
+          "sha256": "33d9991e3483e795fe9b299d78ab4176a2cd709fefea22f62b6b80acdbdb81a8",
           "imports": [
             "../visualizerSeedHash"
           ],
@@ -1548,17 +2144,6 @@
           "parameters": [
             "seamlessTransitions"
           ]
-        },
-        {
-          "path": "src/components/visualizer/lumiere/lumiereStructure.ts",
-          "sha256": "fc646fcf0c52770a315741c157c7e705ca64a34da35e6119aaf3db8a003d6d9a",
-          "imports": [
-            "../../../types",
-            "../../../utils/lyrics/renderHints",
-            "../../../utils/lyrics/wordSegmentation",
-            "./lumiereKernel"
-          ],
-          "parameters": []
         },
         {
           "path": "src/components/visualizer/lumiere/lumiereTransitions.ts",
@@ -1750,14 +2335,14 @@
         },
         {
           "path": "src/components/visualizer/lumiere/scene.ts",
-          "sha256": "df6c5a809114b284a6cb650c7ad3f45bfd81dace99cb604720e26f640b6b0f80",
+          "sha256": "1de2ce02ecde7176ae709f1d926afa1c98a6d26775b7fc7d208a52967989bc33",
           "imports": [
             "pixi.js",
             "../../../types",
             "./lumiereRandom",
             "../../../utils/fontStacks",
             "./lumiereKernel",
-            "./light/bloomFilter",
+            "../pixi/bloomFilter",
             "./light/crossBurst",
             "./light/lightFieldShader",
             "./light/motes",
@@ -2020,11 +2605,12 @@
       "files": [
         {
           "path": "src/components/visualizer/monet/AudioOverlay.tsx",
-          "sha256": "6a2d7b5ae3b8406036de40d5a980569a57bd6cba088b8de3f02920c6613298aa",
+          "sha256": "c2f4b5a29bc0d6693acb75fd597f3e522d58f93cd7a26b121958da9db5de6fa8",
           "imports": [
             "react",
             "../../../types",
-            "../colorMix"
+            "../colorMix",
+            "./monetSpectrumSampler"
           ],
           "parameters": []
         },
@@ -2262,6 +2848,12 @@
           "parameters": []
         },
         {
+          "path": "src/components/visualizer/monet/monetSpectrumSampler.ts",
+          "sha256": "82ad868f1101ddb916a535f6d7e8ea33f3f843582b8562c01df471cba6f2a074",
+          "imports": [],
+          "parameters": []
+        },
+        {
           "path": "src/components/visualizer/monet/portraitUpload.ts",
           "sha256": "a9a0f685679b0aae6e6c22b2ad66a16d4aae631375c74dd9bba66425e2a78d19",
           "imports": [
@@ -2415,7 +3007,7 @@
         },
         {
           "path": "src/components/visualizer/pendolo/PendoloClockworkCanvas.tsx",
-          "sha256": "565956b60e27b71b62abe1733dc3621bdb9ef088d85506383287565012f0f911",
+          "sha256": "c1eb893b52d7ea86c6078bb91cf75cfdd906c369b106cb74c5a057712d813d4e",
           "imports": [
             "react",
             "framer-motion",
@@ -2458,7 +3050,7 @@
         },
         {
           "path": "src/components/visualizer/pendolo/VisualizerPendolo.tsx",
-          "sha256": "db81e135cca354e9691d073dc7f3f8d61e68fea017ecabfadea964b972a6e118",
+          "sha256": "4d8ec05a787230a8284351b9449ba71655af1fbd30645d94fb930cde5b520575",
           "imports": [
             "react",
             "framer-motion",
@@ -2481,7 +3073,8 @@
             "./pendoloTimeline",
             "./PendoloRotatingLine",
             "./usePendoloBeatFx",
-            "../../../stores/useVisualizerSettingsStore"
+            "../../../stores/useVisualizerSettingsStore",
+            "../../../services/beatFx/beatEffects"
           ],
           "parameters": []
         },
@@ -2671,7 +3264,7 @@
         },
         {
           "path": "src/components/visualizer/sonnet/VisualizerSonnet.tsx",
-          "sha256": "9e97d4500f19efab757d5fd762c4bb515cfe3659d8a3815b02d4647cd9add251",
+          "sha256": "d6eeaa8db14067efa6a2f06b4e78e415859c12b3393eca5dbdec7bcce499daeb",
           "imports": [
             "react",
             "framer-motion",
@@ -2686,6 +3279,7 @@
             "../songHandover",
             "@/mods/folium/registries/tunings",
             "../../../stores/useVisualizerSettingsStore",
+            "../../../services/beatFx/beatEffects",
             "../VisualizerShell",
             "../VisualizerSubtitleOverlay",
             "./createSonnetPixiRuntime",
@@ -2695,7 +3289,7 @@
         },
         {
           "path": "src/components/visualizer/sonnet/createSonnetPixiRuntime.ts",
-          "sha256": "61f7ffc4615b9d84394ada6b46d0e2cc20a7101923f8b7aca1c2d7e9e0068424",
+          "sha256": "489fd1077efbe2aaaef9b348ed505df019a9bed1fe7750c73049114ef479c0e8",
           "imports": [
             "framer-motion",
             "../../../types",
@@ -3025,7 +3619,7 @@
         },
         {
           "path": "src/components/visualizer/sonnet/sonnetSceneBuilder.ts",
-          "sha256": "6a402a151be200ea7d45ebcc1bf40e37873052fee2a2d8ae86fe3ad38cc7d7a5",
+          "sha256": "d504fa1cb428bc886c1c557b2e80e5dc0a2fc73f0152851b8cf1c52685b3af8b",
           "imports": [
             "../../../types",
             "../../../utils/fontStacks",
@@ -3083,7 +3677,7 @@
         },
         {
           "path": "src/components/visualizer/sonnet/sonnetShotFrame.ts",
-          "sha256": "38ab469cc00e4ac2add164cbaa04b9d6cbac854b23778349305452cdca7447c6",
+          "sha256": "cd45ec753f2a5751888c12c1bf265730e01791cb452edd95b90c0aea9b609579",
           "imports": [
             "framer-motion",
             "../../../types",
@@ -4617,7 +5211,7 @@
       "files": [
         {
           "path": "src/components/visualizer/backgrounds/sora/SoraBackground.tsx",
-          "sha256": "ae6b38062123bdd96f6af2390a6710d4dec03db21c3a36ff9ec06fa3962cf6e1",
+          "sha256": "6e798b30d511b609973b8e7fb0511affbf0928f796d0b4868c581a2c4cfaae1a",
           "imports": [
             "react",
             "framer-motion",
@@ -5000,11 +5594,11 @@
   "sharedSources": [
     {
       "path": "src/types.ts",
-      "sha256": "91fef680917c48124f295b1335ad044f8f5232737fa32f7ccb556aac3e7fa628"
+      "sha256": "27e9dafb319bbdcf6b518cc7aaae06ef932f54c315742fa1c82cb612b79b8625"
     },
     {
       "path": "src/types/visualizerModes.ts",
-      "sha256": "b5c630459cb08b3007767099f67e6f6c73e3f5315c021465b2df0c673b149eb4"
+      "sha256": "4f66e1c2de1df9ad38d5956ae5f2b8d4fe5645f34b853946c567c6a56260e3fa"
     },
     {
       "path": "src/components/visualizer/registry.tsx",

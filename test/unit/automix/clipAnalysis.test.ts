@@ -58,6 +58,8 @@ const { clearTrackProfileRuntime, ensureTrackProfile, getTrackProfile, recordPla
 const { ensureStems, setWantedStems, stemWindowKey } = await import('@/services/automix/stems');
 const { refreshModelAvailability } = await import('@/services/analysis/modelAvailability');
 const { TRACK_PROFILE_VERSION } = await import('@/services/automix/trackProfile');
+const { decodeTrackAtRate, peekTrackBytes, resetTrackBytesForTests } = await import('@/services/analysis/trackBytes');
+const { getPlaybackAnalysisKey } = await import('@/services/playbackRecovery/representationRegistry');
 
 const songOf = (id: string) => ({
     id, name: `Song ${id}`, artists: [], album: { id: '', name: '' }, durationMs: 200_000,
@@ -263,5 +265,59 @@ describe('the separated windows', () => {
         playLength = 30;
         await separate(songOf('12'));
         expect(decode).toHaveBeenCalledTimes(1);
+    });
+});
+
+// From the PR #750 review (I6): what the profile hands the shared bytes (analysis/trackBytes.ts), and
+// that a head-only read is decoded on its own.
+describe('the automix profile and the shared bytes', () => {
+    beforeEach(() => resetTrackBytesForTests());
+
+    it('hands over a whole download, once checked to be the song', async () => {
+        const song = songOf('b1');
+        setAnalysisScope([song]);
+        await ensureTrackProfile({ song, wantGrid: false, audioUrl: 'https://cdn.test/whole.mp3', enableMediaCache: true });
+        await vi.waitFor(() => expect(peekTrackBytes(getPlaybackAnalysisKey(song))?.byteLength).toBe(32 * 1024));
+    });
+
+    it('still checks a file its provider keeps before handing it over: a clip is not', async () => {
+        const song = songOf('b4');
+        ownCache.add('b4');
+        playLength = 30;
+        setAnalysisScope([song]);
+        await ensureTrackProfile({ song, wantGrid: false, audioUrl: 'https://cdn.test/kept.mp3', enableMediaCache: true });
+        await new Promise(resolve => setTimeout(resolve, 0));
+        expect(peekTrackBytes(getPlaybackAnalysisKey(song))).toBeNull();
+    });
+
+    it('hands over nothing for a song dropped while it was read', async () => {
+        const song = songOf('b2');
+        setAnalysisScope([song]);
+        vi.mocked(fetch).mockImplementationOnce(async () => {
+            setAnalysisScope([]);
+            return { ok: true, blob: async () => new Blob([new Uint8Array(32 * 1024)]) } as unknown as Response;
+        });
+        await ensureTrackProfile({ song, wantGrid: false, audioUrl: 'https://cdn.test/whole.mp3', enableMediaCache: true });
+        await new Promise(resolve => setTimeout(resolve, 0));
+        expect(peekTrackBytes(getPlaybackAnalysisKey(song))).toBeNull();
+        expect(decode).not.toHaveBeenCalled();
+    });
+
+    it('decodes a head-only read on its own: a whole-track decode of the key does not join it', async () => {
+        const song = songOf('b3');
+        setAnalysisScope([song]);
+        vi.mocked(fetch).mockImplementationOnce(async () => ({ status: 206, arrayBuffer: async () => new ArrayBuffer(1024) }) as unknown as Response);
+        let finishHead: (error: Error) => void = () => undefined;
+        decode.mockImplementationOnce(() => new Promise((_resolve, reject) => { finishHead = reject; }));
+        const profile = ensureTrackProfile({ song, wantGrid: false, audioUrl: 'https://cdn.test/whole.mp3', enableMediaCache: false });
+        await vi.waitFor(() => expect(decode).toHaveBeenCalledTimes(1));
+
+        const wholeDecode = vi.fn(async () => null);
+        await decodeTrackAtRate(getPlaybackAnalysisKey(song), 22050, new ArrayBuffer(8), wholeDecode, 'test', 'read');
+        expect(wholeDecode).toHaveBeenCalledTimes(1);
+
+        finishHead(new Error('no decoder here'));
+        await profile;
+        expect(peekTrackBytes(getPlaybackAnalysisKey(song))).toBeNull();
     });
 });

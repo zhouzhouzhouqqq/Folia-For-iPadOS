@@ -2,7 +2,7 @@ import type { UnifiedSong } from '../../../types';
 import type { OnlineRecommendationProvider, ProviderCollection } from '../../../types/onlineMusic';
 import { OnlineProviderError } from '../../../types/onlineMusic';
 import { normalizeQqCollection, normalizeQqSong } from './qqNormalize';
-import { hasQqSession, requestQq, type QqOperation } from './qqTransport';
+import { hasUsableQqSession, requestQq, type QqOperation } from './qqTransport';
 
 // src/services/onlineMusic/qq/qqRecommendations.ts
 // QQ 音乐的推荐：猜你喜欢（私人 FM）、每日 30 首、推荐歌单。猜你喜欢与推荐歌单是 qq-music-api 3.2.0 加的，每日 30 首是 3.3.0，
@@ -14,9 +14,9 @@ const isEmptyAnswer = (error: unknown): boolean => error instanceof OnlineProvid
     || (error.code === 'network' && error.httpStatus === 422)
 );
 
-/** 读一条回 `{ songs }` 的推荐路由。这几条都要登录：没有会话就不发请求，免得一个 401 把空会话再清一遍。 */
+/** 读一条回 `{ songs }` 的推荐路由。这几条都要登录：没有会话、或会话这次停用（不带）时不发请求，免得白收一个 401。 */
 const loadRecommendedSongs = async (operation: QqOperation): Promise<UnifiedSong[]> => {
-    if (!hasQqSession()) return [];
+    if (!hasUsableQqSession()) return [];
     try {
         const response = await requestQq<any>(operation);
         const songs = Array.isArray(response?.songs) ? response.songs : [];

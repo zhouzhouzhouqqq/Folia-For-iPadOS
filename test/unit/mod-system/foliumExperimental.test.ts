@@ -41,6 +41,7 @@ import { findPonderTarget } from '@/components/ponder/ponderRegistry';
 import i18n from '@/i18n/config';
 import { createFoliumExperimental, ponderTargetsRegistry } from '@/mods/folium/experimental';
 import { omniProvidersRegistry } from '@/mods/folium/registries/omniProviders';
+import { foliumProviderId, isFoliumProviderId } from '@/mods/folium/omni/providerIds';
 import { remoteActionsRegistry } from '@/mods/folium/registries/remoteActions';
 import { createFoliumClientApi } from '@/mods/folium/api';
 import { clientApiOptions } from './clientApiOptions';
@@ -166,6 +167,42 @@ describe('omni.providers', () => {
 
     it('refuses a provider with no capability', () => {
         expect(() => omniProvidersRegistry.register('mod-a', { id: 'empty', displayName: 'x' })).toThrow('at least one');
+    });
+
+    // `songDetail` tells a source that can look songs up by id (`getSong`) from one that cannot,
+    // before anything is asked; what `getSongDetail` answers stays as it was.
+    it('says whether songs can be looked up by id, and looks them up as before', async () => {
+        const getSong = vi.fn(async (id: string) => ({ id, title: `Song ${id}`, artists: ['X'] }));
+        const audio = async (song: { id: string }) => ({ url: `https://cdn.example/${song.id}.mp3` });
+        omniProvidersRegistry.register('mod-a', { id: 'full', displayName: 'Full', getSong, getAudioUrl: audio });
+        omniProvidersRegistry.register('mod-a', { id: 'noget', displayName: 'No getSong', getAudioUrl: audio });
+        omniProvidersRegistry.register('mod-a', { id: 'noaudio', displayName: 'No audio', getSong, getLyrics: async () => ({ main: { format: 'lrc', text: '' } }) });
+
+        const full = getOnlineMusicProvider('folium.mod-a.full')!;
+        expect(full.capabilities).toMatchObject({ playback: true, songDetail: true });
+        const found = await omni.getSongDetail('folium.mod-a.full', 's7');
+        expect(found).toMatchObject({ id: 's7', name: 'Song s7', sourceRef: { kind: 'online', providerId: 'folium.mod-a.full', mediaId: 's7' } });
+        expect(getSong).toHaveBeenCalledWith('s7');
+
+        expect(getOnlineMusicProvider('folium.mod-a.noget')!.capabilities).toMatchObject({ playback: true, songDetail: false });
+        await expect(omni.getSongDetail('folium.mod-a.noget', 's7')).resolves.toBeNull();
+
+        // A source without audio has no playback, and no lookup by id however it declares getSong.
+        getSong.mockClear();
+        const noAudio = getOnlineMusicProvider('folium.mod-a.noaudio')!;
+        expect(noAudio.capabilities).toMatchObject({ playback: false, songDetail: true });
+        expect(noAudio.playback).toBeUndefined();
+        await expect(omni.getSongDetail('folium.mod-a.noaudio', 's7')).resolves.toBeNull();
+        expect(getSong).not.toHaveBeenCalled();
+    });
+
+    it('names a mod\'s source by the id omni/providerIds.ts makes, which tells it from a built-in one', () => {
+        expect(foliumProviderId('mod-a:radio')).toBe('folium.mod-a.radio');
+        omniProvidersRegistry.register('mod-a', { id: 'radio', displayName: 'Radio', search: async () => ({ items: [], hasMore: false }) });
+        expect(getOnlineMusicProvider(foliumProviderId('mod-a:radio'))?.displayName).toBe('Radio');
+        expect(isFoliumProviderId('folium.mod-a.radio')).toBe(true);
+        expect(isFoliumProviderId('netease')).toBe(false);
+        expect(isFoliumProviderId('local')).toBe(false);
     });
 });
 
@@ -336,7 +373,7 @@ describe('player.layout declaration without a standalone experimental service', 
         for (const experimental of [[], ['player.layout']]) {
             const descriptor = mod({ experimental });
             const api = createFoliumClientApi(descriptor, clientApiOptions('main', { experimental: createFoliumExperimental(descriptor) }));
-            expect(api.host.folium).toEqual({ major: 1, minor: 6 });
+            expect(api.host.folium).toEqual({ major: 1, minor: 7 });
             expect(() => api.experimental['player.layout']).toThrow(
                 experimental.length ? 'experimental-unknown:player.layout' : 'experimental-not-declared:player.layout',
             );

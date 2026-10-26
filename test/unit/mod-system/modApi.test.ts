@@ -8,12 +8,13 @@ import path from 'path';
 // The permission gate is the whole point of the `permissions` manifest field:
 // a capability a mod did not declare has to be unreachable, not merely
 // undocumented. These cover both directions for every guarded API family, the
-// shared data store (queueing, quota), rpc registration and the deactivate
-// hook the loader relies on to stop a disabled mod. Folium 1.5's
-// `api.storage.paths` is covered here too: gated, frozen, and re-created on read.
+// shared data store (queueing, quota), rpc registration, rpc.send's checks
+// (Folium 1.7) and the deactivate hook the loader relies on to stop a
+// disabled mod. Folium 1.5's `api.storage.paths` is covered here too: gated,
+// frozen, and re-created on read.
 
 const require = createRequire(import.meta.url);
-const { createModApi, createModDataStore } = require('../../../electron/modSystem/modApi.cjs');
+const { createModApi, createModDataStore, RPC_SEND_MAX_BYTES } = require('../../../electron/modSystem/modApi.cjs');
 
 const temporaryDirectories: string[] = [];
 
@@ -34,6 +35,7 @@ const createApi = (permissions: string[], overrides: Record<string, unknown> = {
     getPlaybackSnapshot: () => ({ song: null }),
     registerDisposer: () => {},
     registerRpc: () => {},
+    sendToClient: () => {},
     requestExport: () => Promise.resolve({ ok: true }),
     ...overrides,
 });
@@ -228,6 +230,45 @@ describe('mod api rpc and host info', () => {
         expect(() => api.rpc.handle('ok', 'nope')).toThrow('handler function');
     });
 
+    it('sends checked JSON text to the client, and throws at the call for a bad name or payload', () => {
+        const sendToClient = vi.fn();
+        const api = createApi([], { sendToClient });
+        api.rpc.send('status.changed', { playing: true, title: '歌' });
+        api.rpc.send('ping');
+        api.rpc.send('zero', 0);
+        expect(sendToClient.mock.calls).toEqual([
+            ['status.changed', '{"playing":true,"title":"歌"}'],
+            // Left out, the payload arrives as null, as an rpc.call answer of undefined does.
+            ['ping', 'null'],
+            ['zero', '0'],
+        ]);
+
+        sendToClient.mockClear();
+        expect(() => api.rpc.send('bad name', 1)).toThrow('rpc.send requires a name');
+        expect(() => api.rpc.send('', 1)).toThrow('rpc.send requires a name');
+        expect(() => api.rpc.send(42 as unknown as string, 1)).toThrow('rpc.send requires a name');
+        expect(() => api.rpc.send('big', 10n)).toThrow('JSON-serializable');
+        const circular: Record<string, unknown> = {};
+        circular.self = circular;
+        expect(() => api.rpc.send('loop', circular)).toThrow('JSON-serializable');
+        expect(() => api.rpc.send('fn', () => {})).toThrow('JSON-serializable');
+        expect(() => api.rpc.send('sym', Symbol('x'))).toThrow('JSON-serializable');
+        expect(sendToClient).not.toHaveBeenCalled();
+    });
+
+    it('caps a payload at 64 KB of JSON text, counted in UTF-8 bytes', () => {
+        const sendToClient = vi.fn();
+        const api = createApi([], { sendToClient });
+        // A JSON string is its characters plus two quotes.
+        api.rpc.send('fits', 'a'.repeat(RPC_SEND_MAX_BYTES - 2));
+        expect(sendToClient).toHaveBeenCalledTimes(1);
+        expect(() => api.rpc.send('over', 'a'.repeat(RPC_SEND_MAX_BYTES - 1))).toThrow(`rpc-payload-too-large:${RPC_SEND_MAX_BYTES}`);
+        // Three bytes each in UTF-8: fewer characters than the cap, more bytes.
+        expect(() => api.rpc.send('wide', '歌'.repeat(RPC_SEND_MAX_BYTES / 3))).toThrow('rpc-payload-too-large');
+        expect(sendToClient).toHaveBeenCalledTimes(1);
+        expect(RPC_SEND_MAX_BYTES).toBe(64 * 1024);
+    });
+
     it('exposes the frozen host version info', () => {
         const api = createApi([]);
         expect(api.host).toEqual({ folium: { major: 1, minor: 6 }, folia: '0.7.8' });
@@ -260,5 +301,27 @@ describe('mod api lifecycle', () => {
         const handler = () => {};
         api.onDispose(handler);
         expect(registerDisposer).toHaveBeenCalledWith(handler);
+    });
+});
+
+describe('mod api secrets (Folium 1.7)', () => {
+    it('hands api.secrets to the store bound to this mod, without asking for a permission', async () => {
+        const off = vi.fn();
+        const secrets = {
+            get: vi.fn(async () => 'value'),
+            has: vi.fn(async () => true),
+            set: vi.fn(async () => undefined),
+            subscribe: vi.fn(() => off),
+        };
+        const api = createApi([], { secrets });
+        expect(Object.isFrozen(api.secrets)).toBe(true);
+        await expect(api.secrets.get('apiKey')).resolves.toBe('value');
+        await expect(api.secrets.has('apiKey')).resolves.toBe(true);
+        await api.secrets.set('apiKey', null);
+        const listener = () => {};
+        expect(api.secrets.subscribe(listener)).toBe(off);
+        expect(secrets.get).toHaveBeenCalledWith('apiKey');
+        expect(secrets.set).toHaveBeenCalledWith('apiKey', null);
+        expect(secrets.subscribe).toHaveBeenCalledWith(listener);
     });
 });

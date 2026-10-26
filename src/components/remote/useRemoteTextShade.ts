@@ -11,7 +11,7 @@ const LEFT_MARGIN_PX = 14;
 const RIGHT_MARGIN_PX = 40;
 const TOP_MARGIN_PX = 4;
 const BOTTOM_MARGIN_PX = 10;
-/** The shade only shows in the sleeve, and there every text starts here. */
+/** The shade only shows when idle, and there everything starts here: the song in the sleeve, the small cover outside it. */
 const SLEEVE_TEXT_LEFT_PX = 22;
 /** What changes the size of the type without adding or removing a node. */
 const WATCHED_ATTRIBUTES = ['data-remote-shade', 'data-size', 'data-lines', 'data-mode'];

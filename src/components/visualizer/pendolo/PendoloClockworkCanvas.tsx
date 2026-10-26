@@ -242,9 +242,13 @@ const PendoloClockworkCanvas: React.FC<PendoloClockworkCanvasProps> = ({
             const rawBass = audioBassMotionValue ? audioBassMotionValue.get() : p.audioBass;
             // The gears step on beat_this' beats only while 齿轮随拍 plays; it is retired (2026-10-17),
             // so they keep their own motion, and beat_this does not run for 时计 at all.
-            const beatFx = beatFxRef?.current.active && getBeatEffectStrength(BEAT_EFFECT_IDS.pendoloGearBeats) > 0 ? beatFxRef.current : null;
+            const gearBeats = beatFxRef?.current.active && getBeatEffectStrength(BEAT_EFFECT_IDS.pendoloGearBeats) > 0;
+            // What 仿真鼓面 lights on this canvas - the jewels, the tick and outer dials - is drawn whenever the
+            // effect frame is active, not only under 齿轮随拍: gated on that retired effect, the drumhead's
+            // jewels and dials were never drawn, only its DOM halo and shake (2026-10-18).
+            const beatFx = beatFxRef?.current.active ? beatFxRef.current : null;
             let beatInput: PendoloClockworkBeatInput | null = null;
-            if (beatFx) {
+            if (gearBeats) {
                 const triggers = readPendoloBeatTriggers(beatCounterRef.current, beatTriggersRef.current);
                 beatInput = beatInputRef.current;
                 beatInput.beats = triggers.beats;

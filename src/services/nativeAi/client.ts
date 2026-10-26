@@ -6,7 +6,7 @@ import { requireNativeAiConsent } from '../../platform/ios/dataConsent';
 export const nativeAIStore = (settings: NativeAISettings) => ({
     get: (key: string) => ({
         AI_PROVIDER: settings.provider, OPENAI_API_URL: settings.apiUrl, OPENAI_API_MODEL: settings.model,
-        OPENAI_API_TEMPERATURE: settings.temperature, OPENAI_API_STREAM: settings.stream,
+        GEMINI_API_MODEL: settings.model, OPENAI_API_TEMPERATURE: settings.temperature, OPENAI_API_STREAM: settings.stream,
         OPENAI_API_KEY: settings.hasKey ? 'native-keychain' : '', GEMINI_API_KEY: settings.hasKey ? 'native-keychain' : '',
     } as Record<string, unknown>)[key],
 });
@@ -21,7 +21,7 @@ export const nativeAIFetch = (settings: NativeAISettings, signal?: AbortSignal) 
     init.signal?.addEventListener('abort', abort, { once: true });
     try {
         // Bridge carries prompts and a settings revision, never the stored API key or arbitrary headers.
-        const request = FoliaAI.request({ id, revision: settings.revision, url, body: String(init.body ?? ''), timeoutMs: 120_000 });
+        const request = FoliaAI.request({ id, revision: settings.revision, url, ...(init.method === 'GET' ? { method: 'GET' as const } : {}), body: String(init.body ?? ''), timeoutMs: 120_000 });
         // Cancellation can happen while the asynchronous bridge is registering the native task.
         if (signal?.aborted || init.signal?.aborted) abort();
         const reply = await request;
@@ -53,4 +53,12 @@ export async function testNativeAIConnection(): Promise<AiConnectionTestResult> 
         apiKey: 'native-keychain', model: settings.model, stream: settings.stream }, {
         customFetch: nativeAIFetch(settings),
     });
+}
+
+/** Lists only the saved connection; unsaved keys and foreign endpoints never reach this transport. */
+export async function listNativeAIModels(payload: AiConnectionTestPayload): Promise<AiModelListResult> {
+    const settings = await FoliaAI.getSettings();
+    if (!settings.hasKey || payload.provider !== settings.provider || payload.apiKey.trim()
+        || settings.provider !== 'gemini' && payload.apiUrl !== settings.apiUrl) return { ok: false, errorKind: 'config' };
+    return aiTextClient.listAiModels({ ...payload, apiKey: 'native-keychain' }, { customFetch: nativeAIFetch(settings) });
 }

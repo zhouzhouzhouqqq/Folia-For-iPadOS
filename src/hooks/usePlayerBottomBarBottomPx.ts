@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { playerBottomBarLiveOffset } from '../stores/motionSignals';
 import { usePlayerChromeSettingsStore } from '../stores/usePlayerChromeSettingsStore';
+import { usePlayerBarPresentationStore } from '../stores/usePlayerBarPresentationStore';
 import { useIsPlayerBottomBarHost, usePreviewBottomBarOffset } from '../components/floating-player/PlayerBottomBarLayoutContext';
 import { useMediaQuery } from './useMediaQuery';
 import {
@@ -61,8 +62,9 @@ export const usePlayerSubtitleBottomPx = (isPlayerChromeHidden: boolean): Motion
     const isBottomBarHost = useIsPlayerBottomBarHost();
     const previewOffset = usePreviewBottomBarOffset();
     const isControlBarHidden = usePlayerChromeSettingsStore(state => state.hidePlayerProgressBar);
+    const isManuallyHidden = usePlayerBarPresentationStore(state => state.presentation === 'hidden');
     // 底栏被整条关掉只对播放页成立；预览里那个全局开关和它无关。
-    const isControlBarAbsent = isPlayerChromeHidden || (isBottomBarHost && isControlBarHidden);
+    const isControlBarAbsent = isPlayerChromeHidden || (isBottomBarHost && (isControlBarHidden || isManuallyHidden));
     const controlBarPresence = useSpring(isControlBarAbsent ? 0 : 1, SUBTITLE_PRESENCE_SPRING);
 
     useEffect(() => {

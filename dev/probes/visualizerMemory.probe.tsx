@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMotionValue } from 'framer-motion';
 import { DAYLIGHT_THEME, DEFAULT_THEME } from '../../src/services/baseThemes';
 import { getVisualizerRegistryEntry } from '../../src/components/visualizer/registry';
+import { normalizeHanabiTuning } from '../../src/components/visualizer/hanabi/hanabiTuning';
 import { DEFAULT_LUMIERE_TUNING, DEFAULT_PENDOLO_TUNING, DEFAULT_SONNET_TUNING, type Line, type LumiereRenderQuality, type Theme } from '../../src/types';
 import type { ProbeDefinition } from './definition';
 
@@ -181,6 +182,8 @@ const LUMIERE_THEME_MIX = params.has('mix') ? Number(params.get('mix')) : DEFAUL
 /** 绘光图形 / 文字辉光倍率（两者同值）；不给用默认值。bloom=0 用来排查辉光滤镜的问题。 */
 const LUMIERE_BLOOM = params.has('bloom') ? Number(params.get('bloom')) : null;
 const THEME_COLORS = params.get('colors')?.split(',').map(hex => `#${hex}`) ?? null;
+/** 花火 tuning 覆盖：hanabi=<JSON>（例如 {"sky":0,"collage":2}），缺的字段走默认。 */
+const HANABI_TUNING = normalizeHanabiTuning(params.has('hanabi') ? JSON.parse(params.get('hanabi')!) : {});
 
 /** 时刻 time 的当前行（第一行之前算第一行）。 */
 const lineIndexAt = (time: number) => {
@@ -313,6 +316,7 @@ const VisualizerMemoryProbe: React.FC = () => {
                     themeColorMix: LUMIERE_THEME_MIX,
                     ...(LUMIERE_BLOOM === null ? {} : { bloom: LUMIERE_BLOOM, textBloom: LUMIERE_BLOOM }),
                 },
+                visualizerTunings: { hanabi: HANABI_TUNING },
                 songTitle: META ? 'Lantern Tide' : null,
                 songArtist: META ? 'Probe Ensemble' : null,
                 songAlbum: META ? 'Synthetic Nights' : null,
@@ -329,7 +333,7 @@ const definition: ProbeDefinition = {
         + ' tail=<秒> start=<秒> keywords=1 daylight=1 meta=1 quality=full|balanced|low（后四个给绘光这类读主题关键字 / 片尾卡 / 画质的模式）'
         + ' cjk=1（中文长短句歌词，测折行） dark=<0..1>（绘光暗场强度）'
         + ' postprocess=1（商籁开启后处理，测滤镜纹理池缩放释放）'
-        + ' long=1（80 行约 5 分钟的中英混排长歌，带段落空隙） seamless=1（绘光轨迹过渡：整首歌一个单元） textonly=1（绘光仅显示歌词文字） mix=<0..1>（绘光主题色占比） colors=<强调>,<主>,<次>（覆盖主题色，十六进制不带 #） bloom=<0..2>（绘光辉光倍率）',
+        + ' long=1（80 行约 5 分钟的中英混排长歌，带段落空隙） seamless=1（绘光轨迹过渡：整首歌一个单元） textonly=1（绘光仅显示歌词文字） mix=<0..1>（绘光主题色占比） colors=<强调>,<主>,<次>（覆盖主题色，十六进制不带 #） bloom=<0..2>（绘光辉光倍率） hanabi=<JSON>（花火 tuning 覆盖）',
     Component: VisualizerMemoryProbe,
 };
 

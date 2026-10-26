@@ -34,6 +34,9 @@ const PILL_ACCOUNT = probeAccountController([{
  * 探针把 liveOffset 的当前值镜像到 data 属性上，好让用例断言它。
  */
 const PlayerBottomBarProbe: React.FC = () => {
+    // The layout probe normally puts home controls beside the player for baseline comparisons.
+    // A real player page does not mount those home-only controls; isolate it for touch hit testing.
+    const playerBarOnly = new URLSearchParams(window.location.search).get('playerBarOnly') === '1';
     const isPositioning = usePlayerBottomBarLayoutStore(state => state.isPositioning);
     const startPositioning = usePlayerBottomBarLayoutStore(state => state.startPositioning);
     const [committedOffset, setCommittedOffset] = useState(PLAYER_BOTTOM_BAR_BASE_OFFSET_PX);
@@ -73,7 +76,7 @@ const PlayerBottomBarProbe: React.FC = () => {
             </div>
 
             {/* 预览里的字幕：不在 Provider 内，必须始终停在默认位置，不受底栏偏移影响 */}
-            <div data-probe-subtitle-preview className="absolute inset-0">
+            <div data-probe-subtitle-preview className={`absolute inset-0 ${playerBarOnly ? 'hidden' : ''}`}>
                 <VisualizerSubtitleOverlay
                     showText
                     activeLine={{ startTime: 0, endTime: 9, fullText: 'Preview line', translation: 'Preview subtitle' } as never}
@@ -131,14 +134,14 @@ const PlayerBottomBarProbe: React.FC = () => {
             />
 
             {/* 详情页右下操作按钮也消费同一抬升量。 */}
-            <GridListSearchButton
+            {!playerBarOnly && <GridListSearchButton
                 isDaylight={false}
                 accentColor={DEFAULT_THEME.accentColor}
                 listTitle="Probe list"
                 searchTitle="Probe search"
                 onOpenList={() => { }}
-            />
-            <SwitcherPill account={PILL_ACCOUNT} onBackToPlayer={() => { }} />
+            />}
+            {!playerBarOnly && <SwitcherPill account={PILL_ACCOUNT} onBackToPlayer={() => { }} />}
         </div>
     );
 };

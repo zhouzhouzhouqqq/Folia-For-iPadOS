@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 const require = createRequire(import.meta.url);
 const { createSpotifyApiBridge, CHANGES, QUERIES, SPOTIFY_OPERATIONS } = require('../../../electron/spotify/spotifyApiBridge.cjs');
 const { createSpotifySignIn, REDIRECT_URI } = require('../../../electron/spotify/signIn.cjs');
-const { publicAccountId, SESSION_KEY } = require('../../../electron/spotify/session.cjs');
+const { createSpotifySessionRepository, publicAccountId, SESSION_KEY } = require('../../../electron/spotify/session.cjs');
 
 const createStore = () => {
     const values = new Map<string, unknown>();
@@ -62,6 +62,82 @@ const setup = (answer: (url: string, init: any) => any, { now = () => 1_000_000,
     return { bridge, store, server, fetch, openExternal, logs };
 };
 const stateOf = (openExternal: any) => new URL(openExternal.mock.calls.at(-1)[0]).searchParams;
+
+describe('Spotify stored sign-in', () => {
+    const credentials = { access_token: 'access-new', refresh_token: 'refresh-new', expires_at: 2_000_000 };
+    const account = { id: publicAccountId('fixture-private'), nickname: 'Fixture', avatarUrl: '', premium: false };
+
+    it('replaces what is stored where a new sign-in cannot be sealed, and leaves it where it cannot be written', () => {
+        const store = createStore();
+        seal(store, 1_500_000);
+        const sealed = store.values.get(SESSION_KEY);
+        const warn = vi.fn();
+        const unsealed = createSpotifySessionRepository({ store, safeStorage: { isEncryptionAvailable: () => false }, log: vi.fn(), warn });
+        unsealed.set({ credentials, user: account });
+        unsealed.update({ credentials: { ...credentials, access_token: 'access-renewed' } });
+        expect(store.values.has(SESSION_KEY)).toBe(false);
+        store.set(SESSION_KEY, sealed);
+        expect(unsealed.get().credentials.access_token).toBe('access-renewed');
+        expect(warn).toHaveBeenCalledTimes(1);
+        const locked = { ...store, set: () => { throw Object.assign(new Error('locked'), { code: 'EPERM' }); } };
+        const lockedWarn = vi.fn();
+        createSpotifySessionRepository({ store: locked, safeStorage: cipher(), log: vi.fn(), warn: lockedWarn }).set({ credentials, user: account });
+        expect(store.values.get(SESSION_KEY)).toBe(sealed);
+        expect(lockedWarn).toHaveBeenLastCalledWith('[Spotify] Sign-in could not be stored; what is stored stays as it was', expect.objectContaining({ code: 'EPERM' }));
+        // Another account's sign-in that cannot be written: the one stored before goes, so it does not come back at a later start.
+        createSpotifySessionRepository({ store: locked, safeStorage: cipher(), log: vi.fn(), warn: lockedWarn })
+            .set({ credentials, user: { ...account, id: publicAccountId('fixture-another') } });
+        expect(store.values.has(SESSION_KEY)).toBe(false);
+        expect(lockedWarn).toHaveBeenLastCalledWith('[Spotify] Sign-in could not be stored; the one of another account stored before was removed', expect.objectContaining({ code: 'EPERM' }));
+    });
+
+    it.each([
+        ['without OS encryption', { ...cipher(), isEncryptionAvailable: (): boolean => false }],
+        ['on the plaintext Linux backend', { ...cipher(), getSelectedStorageBackend: (): string => 'basic_text' }],
+    ])('does not answer a stored sign-in it cannot read %s as nobody, and nobody once signed out', async (_case, keychain) => {
+        const store = createStore();
+        seal(store, 1_500_000);
+        const fetch = vi.fn();
+        const bridge = createSpotifyApiBridge({ store, safeStorage: keychain, fetch, openExternal: vi.fn(), now: () => 1_000_000, log: vi.fn(), warn: vi.fn() });
+        expect(await bridge.request('login_status')).toEqual({ ok: false, error: { code: 'unavailable', message: 'The stored Spotify sign-in cannot be read now' } });
+        expect(fetch).not.toHaveBeenCalled();
+        await bridge.request('logout');
+        expect(store.values.get(SESSION_KEY)).toBeUndefined();
+        expect(await bridge.request('login_status')).toEqual({ ok: true, data: null });
+    });
+
+    it('answers nobody for a stored sign-in the keychain will not unseal while encryption works', async () => {
+        const store = createStore();
+        seal(store, 1_500_000);
+        const keychain = { ...cipher(), decryptString: () => { throw new Error('refused'); } };
+        const bridge = createSpotifyApiBridge({ store, safeStorage: keychain, fetch: vi.fn(), openExternal: vi.fn(), now: () => 1_000_000, log: vi.fn(), warn: vi.fn() });
+        expect(await bridge.request('login_status')).toEqual({ ok: true, data: null });
+    });
+});
+
+describe('Spotify quitting', () => {
+    it('holds a quit for a token renewal under way until its answer is stored, and not without one', async () => {
+        const store = createStore();
+        seal(store, 1_000_000);
+        let renewed!: (credentials: unknown) => void;
+        const signIn = { renew: vi.fn(() => new Promise(resolve => { renewed = resolve; })), cancel: vi.fn() };
+        const wait = vi.fn(() => new Promise<void>(() => {}));
+        const bridge = createSpotifyApiBridge({ store, safeStorage: cipher(), fetch: vi.fn(async () => json({})), openExternal: vi.fn(),
+            now: () => 1_000_000, log: vi.fn(), warn: vi.fn(), signIn, wait });
+        expect(bridge.shutdown()).toBeNull();
+        await bridge.request('login_status');
+        expect(signIn.renew).toHaveBeenCalledWith('refresh-private');
+        const quit = bridge.shutdown();
+        expect(wait).toHaveBeenCalledWith(3000);
+        let done = false;
+        void quit.then(() => { done = true; });
+        await new Promise(resolve => { setImmediate(resolve); });
+        expect(done).toBe(false);
+        renewed({ access_token: 'access-renewed', refresh_token: 'refresh-private', expires_at: 5_000_000 });
+        await quit;
+        expect(stored(store).credentials.access_token).toBe('access-renewed');
+    });
+});
 
 describe('Spotify sign-in from the browser', () => {
     const spotify = (url: string, init: any) => {

@@ -11,6 +11,8 @@ const path = require('path');
 //   npx rolldown dev/htdemucs-wgsl/harness.ts -o $OUT/harness.js -f iife -p browser
 //   HTW_DIR=$OUT HTW_WEIGHTS=htdemucs-wgsl.bin HTW_MIX=segments.f32 [HTW_STAGES=1] [HTW_REPEAT=5] npx electron dev/htdemucs-wgsl/main.cjs
 //
+// HTW_SOURCES=0,1,2,3 returns those sources (htdemucs' drums, bass, other, vocals) from every run, and
+// out.f32 is then [n, sources, 2, 172032] in that order.
 // HTW_F16=1 opens the device with shader-f16 and runs the GEMMs in f16 (kernels.ts GemmMode).
 // HTW_TIMINGS=1 also runs the first segment cut one dispatch per submit and writes timings.json
 // (median ms per dispatch over five runs) - the dispatches a busy visualizer frame would wait behind.
@@ -39,6 +41,7 @@ ipcMain.handle('htw-config', () => ({
     slice: process.env.HTW_SLICE || 'none',
     timings: process.env.HTW_TIMINGS === '1',
     f16: process.env.HTW_F16 === '1',
+    sources: process.env.HTW_SOURCES || '',
 }));
 ipcMain.on('htw-log', (_event, line) => console.log(line));
 ipcMain.on('htw-done', (_event, code) => app.exit(code));
